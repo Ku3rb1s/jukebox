@@ -1,0 +1,14 @@
+{
+  "_hinweis": "Alle Spiele der Jukebox und welche gemeinsamen Dateien sie aus shared/ bekommen. Ordner relativ zu Documents/Claude. Neues Spiel: Eintrag ergänzen, dann node scripts/share.js --write",
+  "sets": {
+    "basis": ["css/base.css", "css/fonts.css", "fonts/OFL.txt", "fonts/outfit-latin.woff2", "fonts/outfit-latin-ext.woff2", "js/i18n.js", "js/profile.js", "js/sync.js", "js/pwa.js", "sw.js"],
+    "app": ["js/pwa.js", "sw.js"]
+  },
+  "games": [
+    { "name": "Jukebox",       "dir": "Spiele-Hub",           "repo": "Ku3rb1s/jukebox",           "url": "https://ku3rb1s.github.io/jukebox/",           "port": 8891, "sw": "jb",  "storage": "hub. / jb.", "set": "basis" },
+    { "name": "Needle Drop",   "dir": "Musik-Quiz",           "repo": "Ku3rb1s/needle-drop",       "url": "https://ku3rb1s.github.io/needle-drop/",       "port": 8890, "sw": "nd",  "storage": "mq.",        "set": "basis" },
+    { "name": "Older or Newer","dir": "Older-or-Newer",       "repo": "Ku3rb1s/older-or-newer",    "url": "https://ku3rb1s.github.io/older-or-newer/",    "port": 8892, "sw": "oon", "storage": "oon.",       "set": "basis" },
+    { "name": "Gold Record",   "dir": "Gold-Record",          "repo": "Ku3rb1s/gold-record",       "url": "https://ku3rb1s.github.io/gold-record/",       "port": 8893, "sw": "gr",  "storage": "gr.",        "set": "basis" },
+    { "name": "Musik-Bingo",   "dir": "Musik-Bingo-Lobby/mb", "repo": "Ku3rb1s/musik-bingo-lobby", "url": "https://ku3rb1s.github.io/musik-bingo-lobby/", "port": 8888, "sw": "mb",  "storage": "mb_",        "set": "app" }
+  ]
+}

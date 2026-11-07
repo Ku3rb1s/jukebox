@@ -1,0 +1,418 @@
+/* Basis-Aussehen 1:1 aus Musik-Bingo übernommen (css/app.css dort) – Änderungen am Look am besten in beiden Projekten machen. */
+/* Musik-Bingo – Aussehen */
+/* Farbthemen: --surf/--deep sind RGB-Werte für getönte Glasflächen, --blob1/2 die Farbflächen im Hintergrund */
+:root,[data-theme="graphit"]{--bg:#0c0c0f;--sheet:#141418;--surf:44,44,52;--deep:4,4,6;--blob1:#2c3442;--blob2:#1f3a32;--text:#f4f4f6;--muted:#a1a1ad}
+[data-theme="lila"]{--bg:#0d0a1a;--sheet:#15112a;--surf:40,33,76;--deep:5,3,12;--blob1:#4a22a0;--blob2:#8a1458;--text:#f5f2ff;--muted:#a49dc6}
+[data-theme="ozean"]{--bg:#05111a;--sheet:#0a1a26;--surf:24,46,64;--deep:2,6,10;--blob1:#0b4f75;--blob2:#0d6e66;--text:#eef6fb;--muted:#93b4c8}
+[data-theme="abend"]{--bg:#130a0b;--sheet:#1c0f11;--surf:62,34,38;--deep:8,3,4;--blob1:#7a2e1c;--blob2:#7d1f4a;--text:#fbf1f1;--muted:#cfa9ab}
+[data-theme="wald"]{--bg:#08110c;--sheet:#0d1a13;--surf:30,52,40;--deep:3,7,5;--blob1:#1d5a3a;--blob2:#4c5b1a;--text:#f0f7f2;--muted:#a3bfae}
+:root{
+  --glass:rgba(var(--surf),.62);
+  --accent:#1ed760;--accent2:#ff4fa3;--warn:#ffb020;--danger:#ff5a6a;--line:rgba(255,255,255,.09);
+  --cell:rgba(255,255,255,.055);--cat:#ffa03c;--radius:24px;
+  --sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:var(--bg);touch-action:manipulation}
+html,body{margin:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;color:var(--text);letter-spacing:-.01em;
+  min-height:100vh;min-height:100dvh;background:var(--bg);overflow-x:hidden;overscroll-behavior-y:none;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+body.locked{overflow:hidden}
+/* Feste Fläche hinter der iPhone-Statusleiste, damit dort nichts verschwommen durchscheint */
+body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);background:var(--bg);z-index:40;pointer-events:none}
+input,textarea{-webkit-user-select:text;user-select:text}
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+/* Akku: Die Farbflächen wandern nur in 5 Schritten pro Sekunde (steps) statt 60 – bei der starken Unschärfe ist jeder Schritt
+   kleiner als ein Pixel, also unsichtbar. Sonst müssten alle Milchglas-Flächen darüber 60× pro Sekunde neu berechnet werden. */
+.bg i{position:absolute;border-radius:50%;opacity:.55;animation:float 22s steps(110) infinite alternate;will-change:transform}
+.bg i:nth-child(1){width:55vmax;height:55vmax;left:-15vmax;top:-20vmax;background:var(--blob1)}
+.bg i:nth-child(2){width:45vmax;height:45vmax;right:-15vmax;top:5vmax;background:var(--blob2);animation-delay:-8s}
+.bg i:nth-child(3){width:40vmax;height:40vmax;left:20vmax;bottom:-25vmax;background:var(--cat);opacity:.18;transition:background 1s;animation-delay:-14s}
+@keyframes float{to{transform:translate(6vmax,4vmax) scale(1.1)}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:0s!important;animation-iteration-count:1!important}}
+
+/* ---------- Grundelemente ---------- */
+button,input,select{font:inherit;color:inherit}
+input,select,textarea{font-size:16px} /* < 16px lässt iOS beim Antippen hineinzoomen */
+button{cursor:pointer;border:0;border-radius:14px;padding:.75em 1.25em;background:var(--accent);color:#06150b;font-weight:700;
+  transition:transform .1s,filter .15s,background .2s,opacity .2s;display:inline-flex;align-items:center;justify-content:center;gap:.45em;
+  white-space:nowrap;touch-action:manipulation}
+button:active{transform:scale(.96)}
+button:disabled{opacity:.4;cursor:not-allowed}
+@media (hover:hover){button:hover{filter:brightness(1.08)} button.ghost:hover{background:rgba(255,255,255,.11)}}
+button.ghost{color:var(--text);font-weight:600;border:1px solid var(--line)}
+button.pink{background:var(--accent2);color:#fff}
+button.big{font-size:1.12rem;padding:.95em 1.7em;border-radius:18px;box-shadow:0 10px 30px -10px var(--accent)}
+button.link{background:none;color:var(--muted);padding:0;text-decoration:underline;font-weight:500}
+input,select{background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:12px;padding:.65em .85em;min-width:0}
+input:focus,select:focus{outline:2px solid var(--accent2);outline-offset:1px}
+code{background:rgba(0,0,0,.35);padding:.1em .45em;border-radius:6px;font-size:.88em;word-break:break-all;-webkit-user-select:all;user-select:all}
+a{color:var(--accent)}
+.hidden{display:none!important}
+.invisible{visibility:hidden}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+.ic{width:1.25em;height:1.25em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Schieberegler */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;padding:0;border:0;background:transparent;cursor:pointer;--p:50%}
+input[type=range]:focus{outline:none}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;
+  background:linear-gradient(var(--accent),var(--accent)) 0/var(--p) 100% no-repeat,rgba(255,255,255,.16)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-11px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+input[type=range]::-moz-range-track{height:4px;border-radius:4px;background:rgba(255,255,255,.16)}
+input[type=range]::-moz-range-progress{height:4px;border-radius:4px;background:var(--accent)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border:0;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+input[type=range]:disabled{opacity:.4}
+
+/* iOS-Schalter */
+.switch{position:relative;width:51px;height:31px;flex:none}
+.switch input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer;z-index:1}
+.switch span{position:absolute;inset:0;border-radius:99px;background:rgba(120,120,128,.36);transition:background .2s}
+.switch span::after{content:'';position:absolute;left:2px;top:2px;width:27px;height:27px;border-radius:50%;background:#fff;
+  box-shadow:0 3px 8px rgba(0,0,0,.3);transition:transform .25s cubic-bezier(.3,1.3,.5,1)}
+.switch input:checked+span{background:var(--accent)}
+.switch input:checked+span::after{transform:translateX(20px)}
+
+/* ---------- Kopfzeile ---------- */
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:960px;margin:0 auto;
+  padding:calc(var(--sat) + 16px) 20px 14px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:1.4rem;letter-spacing:.2px;min-width:0}
+.logo img{width:38px;height:38px;border-radius:11px;box-shadow:0 6px 20px -6px var(--accent2)}
+.logo span{background:linear-gradient(90deg,#fff,#d9cfff);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+.hdr-r{display:flex;gap:8px;align-items:center}
+.hbtn{border:1px solid var(--line);color:var(--text);font-weight:600;padding:.6em .95em}
+.hbtn .ic{width:1.15em;height:1.15em}
+
+main{max-width:960px;margin:0 auto;padding:0 16px 40px}
+.glass{border-radius:var(--radius)}
+
+/* ---------- Spielfläche ---------- */
+/* z-index: Die Spielfläche (mit der fixen Bedienleiste darin) muss über Lobby-Leiste und Verlauf liegen */
+.stage{text-align:center;padding:22px 24px 26px;position:relative;z-index:3}
+.round-meta{display:flex;justify-content:space-between;gap:8px;margin-bottom:18px}
+.pill{font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:.35em .85em;white-space:nowrap}
+.cat{display:flex;flex-direction:column;align-items:center;gap:8px}
+.cat-kicker{text-transform:uppercase;letter-spacing:3px;font-size:.7rem;color:var(--cat);font-weight:800;transition:color .4s}
+.cat-badge{display:inline-flex;align-items:center;gap:14px;padding:12px 24px 12px 12px;border-radius:22px;max-width:100%;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--cat) 22%,transparent),rgba(255,255,255,.03));
+  border:1px solid color-mix(in srgb,var(--cat) 45%,transparent);transition:background .4s,border-color .4s}
+.cat-icon{width:52px;height:52px;flex:none;border-radius:16px;display:grid;place-items:center;font-size:1.6rem;background:var(--cat);transition:background .4s}
+.cat-name{font-size:clamp(1.35rem,5.2vw,2.5rem);font-weight:900;line-height:1.12;text-align:left;overflow-wrap:anywhere}
+.cat.idle .cat-badge{background:rgba(255,255,255,.04);border-color:var(--line)}
+.cat.idle .cat-icon{background:linear-gradient(135deg,#ffa03c,#ff3878);overflow:hidden}
+.cat-icon img{width:100%;height:100%;object-fit:cover;display:block}
+.cat.spin .cat-name{opacity:.55;filter:blur(1.5px)}
+.cat.land .cat-badge{animation:land .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes land{0%{transform:scale(1.18)}100%{transform:scale(1)}}
+
+.disc-wrap{position:relative;width:min(260px,62vw);aspect-ratio:1;margin:26px auto 24px}
+.disc-wrap svg.ring-svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);opacity:0;transition:opacity .3s}
+.disc-wrap.counting svg.ring-svg{opacity:1}
+.ring-svg circle{fill:none;stroke-width:5}
+.ring-svg .trk{stroke:rgba(255,255,255,.07)}
+/* Ring + Schein: weichgezeichnete Kopie des Rings direkt in der Grafik (SVG-Filter) statt CSS drop-shadow – der malte
+   in Chrome ein dunkles Quadrat vor das Milchglas. overflow:visible, damit der Schein am Rand nicht abgeschnitten wird.
+   Fortschritt über --len/--off (gilt für Ring und Schein). */
+.disc-wrap svg.ring-svg{overflow:visible}
+.ring-svg .ring,.ring-svg .ring-glow{stroke:var(--cat);stroke-linecap:round;stroke-dasharray:var(--len,0);stroke-dashoffset:var(--off,0)}
+.ring-svg .ring-glow{stroke-width:6;opacity:.85}
+.disc-wrap.urgent .ring,.disc-wrap.urgent .ring-glow{stroke:var(--danger)}
+.disc{position:absolute;inset:9%;border-radius:50%;
+  background:
+    radial-gradient(circle,transparent 0 31%,rgba(255,255,255,.05) 31.5% 32%,transparent 32.5% 40%,rgba(255,255,255,.04) 40.5% 41%,transparent 41.5% 52%,rgba(255,255,255,.05) 52.5% 53%,transparent 53.5% 66%,rgba(255,255,255,.04) 66.5% 67%,transparent 67.5%),
+    conic-gradient(from 30deg,#111 0deg,#2a2a2a 40deg,#111 90deg,#1d1d1d 180deg,#111 230deg,#2a2a2a 270deg,#111 360deg);
+  box-shadow:0 20px 50px -15px rgba(0,0,0,.8),inset 0 0 0 2px rgba(255,255,255,.04);
+  animation:rot 3.2s linear infinite;animation-play-state:paused}
+.disc-wrap.playing .disc{animation-play-state:running}
+@keyframes rot{to{transform:rotate(360deg)}}
+.disc-label{position:absolute;inset:0;margin:auto;width:40%;height:40%;border-radius:50%;
+  background:radial-gradient(circle,var(--bg) 0 7%,transparent 7.5%),linear-gradient(135deg,var(--cat),#ff3878);transition:background .4s}
+/* Startbildschirm: Etikett wie im Logo (Sunset-Verlauf mit Bingo-Diagonale) */
+.label-grid{position:absolute;left:22%;top:22%;width:56%;height:56%;opacity:0;transition:opacity .3s}
+.disc-wrap.idle .label-grid{opacity:1}
+.disc-wrap.idle .disc-label{background:linear-gradient(135deg,#ffa03c,#ff3878)}
+.disc-num{position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(2.4rem,9vw,3.6rem);font-weight:900;
+  font-variant-numeric:tabular-nums;text-shadow:0 4px 18px rgba(0,0,0,.7);pointer-events:none}
+.disc-wrap.urgent .disc-num{color:var(--danger);animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.12)}}
+
+.controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.volume{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:20px;color:var(--muted)}
+.volume input{width:200px}
+.volume button{background:none;color:var(--muted);padding:.3em}
+.volume.off{opacity:.45}
+.hint{margin:16px 0 0;font-size:.8rem;color:var(--muted)}
+.hint kbd{font-family:inherit;background:rgba(255,255,255,.08);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:.05em .45em}
+
+.reveal{margin:22px auto 24px;max-width:640px;animation:pop .5s cubic-bezier(.3,1.4,.5,1)}
+@keyframes pop{0%{opacity:0;transform:translateY(14px) scale(.97)}100%{opacity:1;transform:none}}
+.rv-answer{border-radius:20px;padding:16px 18px;margin-bottom:12px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--cat) 25%,transparent),rgba(255,255,255,.03));
+  border:1px solid color-mix(in srgb,var(--cat) 50%,transparent)}
+.rv-q{color:var(--muted);font-size:.85rem}
+.rv-a{font-size:clamp(1.5rem,5vw,2.4rem);font-weight:900;color:var(--cat);margin-top:2px;overflow-wrap:anywhere;line-height:1.15}
+.rv-a .small{display:block;color:var(--muted);font-weight:500;margin-top:2px}
+.rv-song{text-align:center;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:20px;padding:14px 16px}
+.rv-title{font-size:1.3rem;font-weight:800;line-height:1.2;overflow-wrap:anywhere}
+.rv-artist{font-size:1.02rem;color:var(--accent2);font-weight:600;margin:3px 0 6px}
+.rv-meta{color:var(--muted);font-size:.85rem}
+
+.hist{margin-top:16px;padding:4px 20px}
+.hist summary{cursor:pointer;font-weight:700;padding:14px 0;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.hist summary::-webkit-details-marker{display:none}
+.hist summary::after{content:'';width:9px;height:9px;border:solid var(--muted);border-width:0 2px 2px 0;transform:rotate(45deg);transition:transform .2s;margin-right:4px}
+.hist[open] summary::after{transform:rotate(-135deg)}
+#hist{margin:0 0 12px;padding:0;list-style:none;max-height:340px;overflow:auto}
+#hist li{padding:9px 0;border-top:1px solid var(--line);font-size:.9rem;display:flex;gap:12px;align-items:center}
+#hist li b{color:var(--accent2);min-width:2.4em}
+#hist li img,#hist li .ph{width:40px;height:40px;border-radius:8px;object-fit:cover;flex:none;background:rgba(0,0,0,.3)}
+
+/* ---------- Sheets (Playlists / Einstellungen) im iOS-Stil ---------- */
+dialog{color:var(--text);padding:0;border:0}
+dialog::backdrop{backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.sheet{border:1px solid var(--line);border-radius:22px;width:min(560px,calc(100vw - 24px));
+  height:min(780px,calc(100dvh - 48px));max-height:none;overflow:hidden}
+.sheet[open]{display:flex;flex-direction:column;animation:pop .28s ease}
+.sheet-head{position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:14px 8px 10px;
+  border-bottom:1px solid var(--line);flex:none}
+.grab{display:none;position:absolute;top:6px;left:50%;width:38px;height:5px;margin-left:-19px;border-radius:3px;background:rgba(255,255,255,.22)}
+.nav-back,.nav-done{background:none;color:var(--accent);padding:8px 10px;font-weight:500;font-size:1.02rem;border-radius:10px}
+.nav-back{justify-self:start;gap:0}
+/* Zurück-Knopf und Sprachknopf teilen sich die linke Ecke der Kopfzeile (nie beide gleichzeitig sichtbar) */
+.sheet-head>.nav-back,.sheet-head>.nav-lang{grid-column:1;grid-row:1}
+.sheet-head>.nav-title{grid-column:2;grid-row:1}
+.sheet-head>.nav-done{grid-column:3;grid-row:1}
+.nav-lang{justify-self:start;margin-left:8px}
+.nav-back .ic{width:1.35em;height:1.35em;margin-left:-6px}
+.nav-done{justify-self:end;font-weight:700}
+.nav-title{font-weight:700;font-size:1.05rem;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
+.sheet-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:8px 16px calc(28px + var(--sab))}
+.page{display:none}
+.page.active{display:block;animation:slideIn .28s cubic-bezier(.2,.8,.3,1)}
+.page.active.back{animation-name:slideBack}
+@keyframes slideIn{from{opacity:0;transform:translateX(28px)}}
+@keyframes slideBack{from{opacity:0;transform:translateX(-28px)}}
+
+.group-h{display:flex;justify-content:space-between;align-items:center;font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:24px 16px 8px}
+.group-h button{background:none;color:var(--accent);padding:0;text-transform:none;letter-spacing:0;font-size:.9rem;font-weight:600}
+.group-f{font-size:.8rem;color:var(--muted);margin:8px 16px 0;line-height:1.45}
+.group{border-radius:14px;overflow:hidden;margin-top:8px}
+.cell{display:flex;align-items:center;gap:12px;min-height:52px;padding:10px 14px;position:relative;width:100%;
+  background:none;border:0;border-radius:0;color:var(--text);font-weight:500;font-size:1rem;text-align:left;justify-content:flex-start;white-space:normal}
+.cell+.cell::before,.cell+details::before{content:'';position:absolute;top:0;left:14px;right:0;height:1px;background:var(--line)}
+.group.icons .cell+.cell::before{left:58px}
+button.cell{transform:none!important;filter:none!important}
+.cell.tap{cursor:pointer}
+.cell.tap:active{background:rgba(255,255,255,.07)}
+.cell.accent{color:var(--accent);font-weight:600}
+.cell.danger{color:var(--danger)}
+.cell.col{flex-direction:column;align-items:stretch;gap:2px}
+.cell .grow{flex:1;min-width:0}
+/* Untertitel: bis zu 2 Zeilen (vorher einzeilig und abgeschnitten – z. B. „Lobby schließen – alle Mitspieler kommen zur Code-Ein…“) */
+.cell .sub{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;font-size:.8rem;color:var(--muted);font-weight:400;margin-top:1px;line-height:1.3}
+.cell .chev{color:rgba(255,255,255,.3);width:1.1em;height:1.1em}
+.cell .trail{color:var(--muted);display:grid;place-items:center;min-width:24px;font-weight:700}
+.cell .trail.ok{color:var(--accent)}
+.cell-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex:none;font-size:1.05rem;color:#fff}
+.cell-ic .ic{width:18px;height:18px}
+.row-b{display:flex;justify-content:space-between;align-items:center}
+.cell select{background-color:transparent;border:0;border-radius:0;color:var(--muted);padding:6px 22px 6px 0;max-width:58%;text-align:right;text-align-last:right;
+  -webkit-appearance:none;appearance:none;cursor:pointer;text-overflow:ellipsis;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a49dc6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 10l4-4 4 4M8 14l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right center;background-size:16px}
+.cell select:focus{outline:none}
+.cell input.bare{flex:1;background:none;border:0;border-radius:0;padding:4px 0;outline:none;color:var(--text)}
+.cell input.bare::placeholder{color:rgba(164,157,198,.7)}
+.cell input.num{flex:none;width:64px;text-align:right}
+.cell .mini{padding:.5em .95em;border-radius:99px;font-size:.9rem}
+.icon-btn{background:none;color:var(--muted);padding:8px;border-radius:10px}
+.icon-btn.del{color:var(--muted);transition:color .15s}
+.icon-btn.del:active{color:var(--danger)}
+@media (hover:hover){.icon-btn.del:hover{color:var(--danger)}}
+.pl-cover{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:none;background:rgba(0,0,0,.35);display:grid;place-items:center;color:var(--muted);font-size:1.2rem}
+.group.icons .pl-cover+.grow{margin-left:0}
+.loader{width:18px;height:18px;border:2px solid rgba(255,255,255,.18);border-top-color:var(--accent);border-radius:50%;animation:rot .8s linear infinite}
+
+.lib-hero{text-align:center;padding:18px 10px 6px}
+.lib-num{font-size:3.2rem;font-weight:900;line-height:1;color:var(--text)}
+.lib-sub{color:var(--muted);margin-top:6px;font-size:.92rem}
+.profile{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 10px 8px;text-align:center}
+.avatar{width:84px;height:84px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#ffa03c,#ff3878);display:grid;place-items:center;font-size:2.2rem;font-weight:800;color:#fff}
+.profile .name{font-size:1.35rem;font-weight:800}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:.25em .8em;border-radius:99px;font-size:.82rem;font-weight:600;background:rgba(30,215,96,.14);color:var(--accent)}
+.badge.free{background:rgba(255,176,32,.14);color:var(--warn)}
+.welcome{text-align:center;padding:18px 8px 4px}
+.welcome .big-ic{width:72px;height:72px;border-radius:20px;margin:0 auto 12px;display:block;box-shadow:0 10px 30px -10px var(--accent2)}
+.welcome h3{margin:0 0 6px;font-size:1.35rem}
+.welcome p{margin:0;color:var(--muted);line-height:1.45}
+.steps{counter-reset:s;margin:0;padding:0;list-style:none}
+.steps li{counter-increment:s;display:flex;gap:12px;padding:12px 14px;line-height:1.45;font-size:.93rem;position:relative}
+.steps li+li::before{content:'';position:absolute;top:0;left:52px;right:0;height:1px;background:var(--line)}
+.steps li::after{content:counter(s);order:-1;flex:none;width:26px;height:26px;border-radius:50%;background:rgba(30,215,96,.16);color:var(--accent);font-weight:800;display:grid;place-items:center;font-size:.85rem}
+.full{width:100%;margin-top:14px}
+.warn{background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.35);color:var(--warn);border-radius:14px;padding:10px 12px;font-size:.88rem;margin-top:12px}
+.notice{background:var(--cell);border-radius:14px;padding:16px;margin-top:12px;text-align:center}
+.notice p{margin:0 0 12px;color:var(--muted)}
+.cat-chip{display:inline-flex;align-items:center;gap:6px;padding:.38em .85em;border-radius:99px;font-weight:600;font-size:.86rem;white-space:nowrap;
+  background:color-mix(in srgb,var(--c) 20%,transparent);border:1px solid color-mix(in srgb,var(--c) 55%,transparent)}
+.seg{display:flex;gap:4px;border-radius:14px;padding:4px;margin-top:8px}
+.seg button{flex:1;flex-direction:column;gap:1px;background:none;color:var(--text);padding:.6em .4em;border-radius:11px;font-weight:700;font-size:1rem}
+.seg button small{font-size:.72rem;font-weight:500;color:var(--muted)}
+/* Längere Texte (z. B. Französisch) dürfen umbrechen statt über den Rand zu laufen */
+.seg button{min-width:0;white-space:normal;text-align:center;line-height:1.2}
+.seg button small{line-height:1.2;overflow-wrap:anywhere}
+.seg button.on{background:rgba(255,255,255,.16)}
+.check-res{text-align:center;margin:10px 0 4px;font-weight:800;font-size:1.15rem}
+.check-res.won{color:var(--accent)}
+.check-res.no{color:var(--muted);font-weight:600;font-size:.98rem}
+.chip-scroll{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0}
+/* ---------- Glas-Look (angelehnt an iOS Liquid Glass) ---------- */
+:root{
+  --g-bg:rgba(255,255,255,.075);--g-brd:rgba(255,255,255,.17);
+  --g-hi:inset 0 1px 0 rgba(255,255,255,.24),inset 0 -1px 0 rgba(0,0,0,.18);
+  --g-blur:blur(26px) saturate(175%);
+  --g-sheen:linear-gradient(140deg,rgba(255,255,255,.17),rgba(255,255,255,0) 34%,rgba(255,255,255,0) 68%,rgba(255,255,255,.06));
+}
+/* Unschärfe + Glanz liegen auf Pseudo-Elementen: so bleibt die fixe Bedienleiste in der Karte am Bildschirm verankert */
+.glass{background:transparent;border:1px solid var(--g-brd);backdrop-filter:none;-webkit-backdrop-filter:none;position:relative;isolation:isolate;
+  box-shadow:var(--g-hi),0 30px 60px -30px rgba(0,0,0,.65)}
+.glass::before,.glass::after{content:'';position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none}
+.glass::before{background:var(--g-bg);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur)}
+.glass::after{background:var(--g-sheen)}
+/* Unschärfe nur auf großen Flächen – kleine Elemente liegen schon auf Glas (schont das iPhone beim Scrollen) */
+/* Kopfzeilen-Knöpfe ohne Milchglas: Safari (v. a. iPad) zeichnet Schrift über den animierten Hintergrund sonst unscharf */
+.hbtn{backdrop-filter:none;-webkit-backdrop-filter:none}
+.hbtn,.pill,button.ghost,.chip-btn,.cat-chip,.scorebar .sc{box-shadow:var(--g-hi)}
+.hbtn{background:rgba(var(--surf),.82) var(--g-sheen);border-color:var(--g-brd);border-radius:99px}
+.logo span{-webkit-font-smoothing:antialiased}
+.pill{background:var(--g-bg);border-color:var(--g-brd)}
+button.ghost{background:rgba(255,255,255,.09) var(--g-sheen);border-color:var(--g-brd)}
+.chip-btn{background:rgba(255,255,255,.08) var(--g-sheen);border-color:var(--g-brd)}
+.chip-btn.on{background:var(--accent) linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0) 60%)}
+/* Farbige Knöpfe mit Lichtkante oben */
+button.big,button.mini,.seg button.on{background-image:linear-gradient(180deg,rgba(255,255,255,.32),rgba(255,255,255,0) 58%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(0,0,0,.15),0 12px 30px -12px var(--accent)}
+button.pink.big{box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 12px 30px -12px var(--accent2)}
+.cat-badge{
+  box-shadow:var(--g-hi),0 14px 34px -16px var(--cat);background-image:var(--g-sheen),linear-gradient(135deg,color-mix(in srgb,var(--cat) 24%,transparent),rgba(255,255,255,.03))}
+.cat-icon{background-image:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,0) 60%);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 24px -8px var(--cat)}
+.rv-answer,.rv-song,.award{box-shadow:var(--g-hi)}
+.rv-answer{background-image:var(--g-sheen),linear-gradient(135deg,color-mix(in srgb,var(--cat) 25%,transparent),rgba(255,255,255,.03))}
+.rv-song,.award{background:rgba(255,255,255,.06) var(--g-sheen);border-color:var(--g-brd)}
+/* Menüs als Glasfläche */
+dialog::backdrop{background:rgba(var(--deep),.42)}
+.sheet{background:rgba(var(--surf),.66);backdrop-filter:blur(36px) saturate(180%);-webkit-backdrop-filter:blur(36px) saturate(180%);
+  border-color:var(--g-brd);box-shadow:var(--g-hi),0 40px 80px -20px #000}
+.sheet-head{background:transparent;border-bottom-color:rgba(255,255,255,.08)}
+.group{background:rgba(255,255,255,.075);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.seg{background:rgba(255,255,255,.075);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.seg button.on{background-color:rgba(255,255,255,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 3px 10px rgba(0,0,0,.3)}
+.alert,#toast{background:rgba(var(--surf),.62);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);
+  border:1px solid var(--g-brd);box-shadow:var(--g-hi),0 20px 50px -10px rgba(0,0,0,.7)}
+.alert{border-radius:22px}
+.bcell{box-shadow:inset 0 1px 0 rgba(255,255,255,.14);background-image:linear-gradient(160deg,rgba(255,255,255,.1),rgba(255,255,255,0) 50%)}
+.bcell.on,.bcell.free{background-image:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0) 60%)}
+.qr-box{box-shadow:0 20px 50px -15px rgba(0,0,0,.6),inset 0 1px 0 #fff}
+
+/* ---------- Schrift: Systemschrift für Bedienung, Outfit nur für große Überschriften ---------- */
+.logo,.cat-name,.cat-kicker,.rv-a,.rv-title,.lib-num,.disc-num,.win .big-word,.welcome h3,.profile .name,.pl-row .score,.check-res,
+button.big{font-family:Outfit,-apple-system,system-ui,sans-serif;letter-spacing:0}
+
+/* ---------- Auflösung: Platte dreht sich um und zeigt das Cover ---------- */
+.disc-wrap{perspective:1200px;transition:margin .5s}
+.flipper{position:absolute;inset:0;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.25,1.3,.4,1)}
+.disc-wrap.flipped .flipper{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.face.back{transform:rotateY(180deg)}
+.disc-cover{position:absolute;inset:6%;border-radius:24px;overflow:hidden;display:grid;place-items:center;font-size:5rem;color:#fff;
+  background:linear-gradient(135deg,var(--cat),var(--accent2));box-shadow:0 28px 60px -18px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.12)}
+.disc-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.disc-cover::after{content:'';position:absolute;inset:0;background:linear-gradient(140deg,rgba(255,255,255,.28),rgba(255,255,255,0) 38%);pointer-events:none}
+.disc-wrap.flipped{margin-bottom:6px}
+
+/* ---------- Platte antippen = Play/Pause ---------- */
+.disc-wrap.tappable{cursor:pointer}
+.disc-state{position:absolute;left:50%;top:50%;width:68px;height:68px;margin:-34px 0 0 -34px;border-radius:50%;display:grid;place-items:center;z-index:2;
+  background:rgba(var(--surf),.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--g-brd);box-shadow:var(--g-hi),0 10px 30px -8px rgba(0,0,0,.6);
+  color:#fff;opacity:0;transform:scale(.8);transition:opacity .25s,transform .25s;pointer-events:none}
+.disc-state .ic{width:30px;height:30px}
+.disc-wrap.paused .disc-state{opacity:1;transform:scale(1)}
+/* Nach der Auflösung: Symbol nur kurz zeigen, dann ausblenden – das Cover bleibt sichtbar, Antippen spielt trotzdem weiter */
+.disc-wrap.flipped.paused:not(.peek) .disc-state{opacity:0;transform:scale(.9);transition:opacity .6s,transform .6s}
+.disc-wrap.tapped .disc-state{animation:tapFlash .7s ease}
+@keyframes tapFlash{0%{opacity:1;transform:scale(1.3)}60%{opacity:1;transform:scale(1)}}
+.disc-wrap.paused:not(.counting):not(.flipped) .disc-num{opacity:0}
+.disc-wrap:active .flipper{transform:scale(.97)}
+.disc-wrap.flipped:active .flipper{transform:rotateY(180deg) scale(.97)}
+.action-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:-8px 0 18px}
+.action-row:empty{display:none}
+.pill-btn{background:rgba(255,255,255,.08) var(--g-sheen);border:1px solid var(--g-brd);box-shadow:var(--g-hi);color:var(--text);
+  font-weight:600;font-size:.88rem;padding:.6em 1.05em;border-radius:99px;gap:.45em}
+.pill-btn .ic{width:1.1em;height:1.1em}
+/* Themen-Auswahl */
+.theme-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:8px}
+.theme-pick{flex-direction:column;gap:6px;background:none;color:var(--muted);font-weight:600;font-size:.78rem;padding:6px 2px;border-radius:14px;
+  min-width:0;white-space:normal;hyphens:auto;overflow-wrap:anywhere;line-height:1.15;text-align:center}
+.theme-pick i{width:46px;height:46px;border-radius:50%;display:block;border:2px solid transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.theme-pick.on{color:var(--text)}
+.theme-pick.on i{border-color:var(--text);box-shadow:0 0 0 3px rgba(255,255,255,.12)}
+
+/* ---------- Handy ---------- */
+@media (max-width:640px){
+  header{padding:calc(var(--sat) + 16px) 14px 12px}
+  .logo{font-size:1.18rem;gap:9px}.logo img{width:34px;height:34px;border-radius:9px}
+  .hbtn .lbl{display:none}
+  .hbtn{width:44px;height:44px;padding:0;border-radius:50%}
+  .hbtn .ic{width:21px;height:21px}
+  main{padding:0 12px calc(160px + var(--sab))}
+  .stage{padding:16px 14px 18px}
+  .round-meta{margin-bottom:14px}
+  .cat-badge{padding:10px 18px 10px 10px;gap:11px;border-radius:20px}
+  .cat-icon{width:44px;height:44px;font-size:1.35rem;border-radius:13px}
+  .disc-wrap{margin:18px auto 6px;width:min(250px,64vw)}
+  /* Bedienleiste unten als schwebende Glas-Kapsel */
+  .controls{position:fixed;left:10px;right:10px;bottom:calc(max(var(--sab), 6px) + 6px);z-index:20;padding:8px;gap:6px;border-radius:32px;
+    background:rgba(var(--surf),.5);backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);
+    border:1px solid var(--g-brd);box-shadow:var(--g-hi),0 20px 44px -14px rgba(0,0,0,.75)}
+  .controls{flex-wrap:nowrap;align-items:stretch}
+  .controls .big{flex:1 1 auto;min-width:0;padding:.9em .8em;border-radius:26px;font-size:1.02rem}
+  .controls .ghost{flex:0 0 auto;min-width:64px;flex-direction:column;gap:3px;padding:.55em .3em;font-size:.74rem;font-weight:600;border-radius:22px;
+    background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+  .controls .ghost:active{background:rgba(255,255,255,.12)}
+  .controls .ghost .ic{width:22px;height:22px}
+  .volume,.hint{display:none}
+  .reveal{margin:14px auto 6px}
+  .rv-song{padding:12px}
+  .hist{padding:2px 16px}
+  /* Sheets kommen von unten wie in iOS */
+  .sheet{width:100vw;max-width:100vw;height:calc(100dvh - max(var(--sat), 20px) - 24px);margin:auto 0 0;border-radius:28px 28px 0 0;border-bottom:0}
+  .sheet[open]{animation:sheetUp .38s cubic-bezier(.2,.9,.3,1)}
+  .grab{display:block}
+  .sheet-head{padding-top:18px}
+}
+@keyframes sheetUp{from{transform:translateY(100%)}}
+/* Sehr kleine Handys (z. B. iPhone SE 1. Gen.): Kopfzeile und Designs etwas kompakter */
+@media (max-width:350px){
+  header{gap:8px}
+  .logo{font-size:1.02rem;gap:7px}.logo img{width:30px;height:30px}
+  .hdr-r{gap:6px}
+  .hbtn{width:40px;height:40px}
+  .theme-pick{font-size:.68rem}.theme-pick i{width:40px;height:40px}
+}
+.logo span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+/* Lautstärke-Regler und Tastatur-Hinweise nur am PC/Laptop – auf Handy und iPad (auch mit Tastatur) ausblenden */
+@media (pointer:coarse){.volume,.hint{display:none}}
+html.ios .volume,html.ios .hint{display:none}
+[data-theme="oled"]{--bg:#000;--sheet:#000;--surf:16,16,18;--deep:0,0,0;--blob1:#000;--blob2:#000}
+[data-theme="oled"] body{background:#000}
+[data-theme="oled"] .bg{display:none}
+[data-theme="oled"] *,[data-theme="oled"] *::before,[data-theme="oled"] *::after,[data-theme="oled"] ::backdrop{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+[data-theme="oled"] .sheet{background:#09090a}
+[data-theme="oled"] .sheet-head{background:#09090a}
+[data-theme="oled"] dialog::backdrop{background:rgba(0,0,0,.8)}
+[data-theme="oled"] .alert,[data-theme="oled"] #toast{background:#151517}
