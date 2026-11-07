@@ -1,0 +1,288 @@
+/* Jukebox – Spielstände auf allen Geräten (gleiche Datei in allen Spielen: Jukebox, Needle Drop, Older or Newer …)
+ *
+ * Mit einem persönlichen Code (z. B. „K7QM-2XD9-HF4P“) werden Rekorde, Statistik, Tages-Challenge und Profil
+ * zwischen Geräten abgeglichen. Ohne Konto, ohne E-Mail.
+ *
+ * Datenschutz: Alles wird hier im Browser mit dem Code verschlüsselt (AES-GCM, Schlüssel per PBKDF2 aus dem Code).
+ * Der Server (Cloudflare Worker „jukebox-sync“) bekommt nur eine Prüfsumme des Codes und einen unlesbaren Block.
+ * Wer den Code nicht kennt, kann nichts lesen – auch der Server nicht. Darum: Code gut aufheben, ohne ihn ist nichts wiederherstellbar.
+ *
+ * Was abgeglichen wird, steht in RULES (alles andere, z. B. Lautstärke oder Spotify-Anmeldung, bleibt auf dem Gerät):
+ *   latest – neueste Änderung gewinnt (Profil, Design, Sprache)
+ *   max    – höchster Wert gewinnt (Rekorde)
+ *   days   – Tages-Challenge: alle Tage zusammen, bei doppeltem Tag der am Tag selbst gespielte bzw. bessere
+ *   day    – ein einzelnes Tagesergebnis (Gold Record): wie bei days
+ *   mapmax – Liste Tag → Punkte: alle Tage, je Tag der höhere Wert
+ *   union  – Sammlung (Erfolge): alles, was auf irgendeinem Gerät freigeschaltet wurde
+ *   top    – Bestenliste (Gold Record): die 10 besten Runden aller Geräte
+ *   device – je Gerät getrennt gespeichert und für die Anzeige zusammengezählt (Statistik; sonst würde doppelt gezählt)
+ */
+const Sync = (() => {
+  const API = 'https://jukebox-sync.ku3rb1s.workers.dev/sync/';
+  const RULES = [
+    [/^jb\.profile$/, 'latest'],
+    [/^(mq|hub)\.(theme|lang)$/, 'latest'],
+    [/^(mq|oon)\.best2\./, 'max'],
+    [/^gr\.best\./, 'max'],
+    [/^mq\.dailyBest$/, 'max'],
+    [/^mq\.daily$/, 'days'],
+    [/^gr\.daily\.\d{4}-\d{2}-\d{2}$/, 'day'],
+    [/^gr\.dailyLog$/, 'mapmax'],
+    [/^gr\.ach$/, 'union'],
+    [/^gr\.top$/, 'top'],
+    [/^(mq|oon|gr)\.stats$/, 'device'],
+  ];
+  // Statistik mehrerer Geräte zusammenzählen (je Spiel eigener Aufbau)
+  const COMBINE = {
+    'mq.stats': (a, b) => {
+      const cats = { ...a.cats };
+      for (const [id, v] of Object.entries(b.cats || {})) { const c = cats[id] || { g: 0, s: 0, f: 0 }; cats[id] = { g: c.g + v.g, s: c.s + v.s, f: c.f + v.f }; }
+      return { games: a.games + b.games, songs: a.songs + b.songs, found: a.found + b.found, stageSum: a.stageSum + b.stageSum, cats,
+        best: [...(a.best || []), ...(b.best || [])].sort((x, y) => x.s - y.s).slice(0, 5) };
+    },
+    'gr.stats': (a, b) => {
+      const pairs = (x = {}, y = {}) => { const o = { ...x }; for (const [k, [r, n]] of Object.entries(y)) { const t = o[k] || [0, 0]; o[k] = [t[0] + r, t[1] + n]; } return o; };
+      return { games: a.games + b.games, right: a.right + b.right, asked: a.asked + b.asked, best: Math.max(a.best, b.best),
+        wins: (a.wins || 0) + (b.wins || 0), jokers: (a.jokers || 0) + (b.jokers || 0), types: pairs(a.types, b.types), dec: pairs(a.dec, b.dec) };
+    },
+    'oon.stats': (a, b) => ({ games: a.games + b.games, right: a.right + b.right, best: Math.max(a.best, b.best), years: Math.max(a.years || 0, b.years || 0) }),
+  };
+  const ALPHA = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // ohne 0/O und 1/I – nicht verwechselbar
+
+  const ruleOf = k => (RULES.find(([re]) => re.test(k)) || [])[1];
+  const ls = {
+    get(k, d = null) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+    del(k) { try { localStorage.removeItem(k); } catch {} },
+  };
+  const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return (h >>> 0).toString(36); };
+  const now = () => Date.now();
+
+  /* ---------- Zustand auf diesem Gerät ---------- */
+  // jb.sync = { code, rev, dev, snap: {key: hash}, ts: {key: zeit}, z: {präfix: zeit}, last, err }
+  let st = ls.get('jb.sync', null);
+  const save = () => st ? ls.set('jb.sync', st) : ls.del('jb.sync');
+  let others = ls.get('jb.syncOthers', {});          // Werte der anderen Geräte (nur für „device“-Schlüssel)
+  const listeners = new Set();
+  const emit = () => listeners.forEach(f => { try { f(status()); } catch {} });
+
+  /* ---------- Code und Verschlüsselung ---------- */
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  function newCode() {
+    const b = crypto.getRandomValues(new Uint8Array(12));
+    const s = [...b].map(x => ALPHA[x & 31]).join('');
+    return `${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8)}`;
+  }
+  /** Eingabe bereinigen: Leerzeichen, Striche und Groß-/Kleinschreibung sind egal */
+  function normCode(c) {
+    const s = String(c || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+    if (s.length !== 12 || [...s].some(ch => !ALPHA.includes(ch))) return null;
+    return `${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8)}`;
+  }
+  let keyCache = null;
+  async function keys(code) {
+    if (keyCache?.code === code) return keyCache;
+    const idBuf = await crypto.subtle.digest('SHA-256', enc.encode('jukebox-sync-id|' + code));
+    const id = [...new Uint8Array(idBuf)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+    const base = await crypto.subtle.importKey('raw', enc.encode(code), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: enc.encode('jukebox-sync-key-v1'), iterations: 150000, hash: 'SHA-256' },
+      base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    return keyCache = { code, id, key };
+  }
+  const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s); };
+  const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  async function pipe(u8, Stream) { return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new Stream('gzip'))).arrayBuffer()); }
+  async function seal(obj, key) {
+    let raw = enc.encode(JSON.stringify(obj)), flag = 0;
+    if (self.CompressionStream) { try { raw = await pipe(raw, CompressionStream); flag = 1; } catch {} }
+    const plain = new Uint8Array(raw.length + 1); plain[0] = flag; plain.set(raw, 1);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plain));
+    const out = new Uint8Array(12 + ct.length); out.set(iv); out.set(ct, 12);
+    return b64(out);
+  }
+  async function open(data, key) {
+    const u8 = unb64(data);
+    const plain = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u8.subarray(0, 12) }, key, u8.subarray(12)));
+    let raw = plain.subarray(1);
+    if (plain[0] === 1) raw = await pipe(raw, DecompressionStream);
+    return JSON.parse(dec.decode(raw));
+  }
+
+  /* ---------- Server ---------- */
+  async function api(method, id, body) {
+    const r = await fetch(API + id, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined, cache: 'no-store', keepalive: method === 'PUT' && JSON.stringify(body).length < 60000 });
+    const j = await r.json().catch(() => ({}));
+    return { status: r.status, ...j };
+  }
+
+  /* ---------- Lokale Daten einsammeln ---------- */
+  function watchedKeys() {
+    const out = [];
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (ruleOf(k)) out.push(k); } } catch {}
+    return out;
+  }
+  /** Lokale Werte mit Zeitstempel; was sich seit dem letzten Abgleich geändert hat, bekommt „jetzt“ */
+  function collect() {
+    const out = {}, t = now();
+    for (const k of watchedKeys()) {
+      let raw; try { raw = localStorage.getItem(k); } catch { continue; }
+      const h = hash(raw);
+      if (st.snap[k] !== h) { st.ts[k] = t; st.snap[k] = h; }
+      try { out[k] = { v: JSON.parse(raw), t: st.ts[k] || t }; } catch {}
+    }
+    return out;
+  }
+  const dirty = () => !!st && watchedKeys().some(k => { try { return st.snap[k] !== hash(localStorage.getItem(k)); } catch { return false; } });
+
+  /* ---------- Zusammenführen ---------- */
+  const zFor = (z, k) => Math.max(0, ...Object.entries(z).filter(([p]) => k.startsWith(p)).map(([, t]) => t));
+  /** Welches von zwei Ergebnissen desselben Tages zählt: am Tag selbst gespielt vor nachgespielt, fertig vor offen, dann mehr Punkte */
+  const dayRank = r => [r && !r.late ? 1 : 0, r && r.done !== false ? 1 : 0, (r && (r.score ?? r.final)) || 0];
+  function betterDay(l, r) {
+    if (!l) return r; if (!r) return l;
+    const a = dayRank(l), b = dayRank(r);
+    for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i] ? l : r;
+    return l;
+  }
+  function mergeDays(a = {}, b = {}) {
+    const out = { ...a };
+    for (const [d, r] of Object.entries(b)) out[d] = betterDay(out[d], r);
+    return out;
+  }
+  function mergeEntry(rule, a, b) {
+    if (!a) return b; if (!b) return a;
+    const t = Math.max(a.t, b.t);
+    if (rule === 'max') return { v: Math.max(+a.v || 0, +b.v || 0), t };
+    if (rule === 'days') return { v: mergeDays(a.v, b.v), t };
+    if (rule === 'day') return { v: betterDay(a.v, b.v), t };
+    if (rule === 'union') return { v: { ...b.v, ...a.v }, t };
+    if (rule === 'top') {                                                    // gleiche Sortierung wie in Gold Record
+      const seen = new Set(), all = [...(a.v || []), ...(b.v || [])].filter(x => { const k = JSON.stringify(x); return !seen.has(k) && seen.add(k); });
+      all.sort((x, y) => y.f - x.f || x.j - y.j || (x.d < y.d ? 1 : -1));
+      return { v: all.slice(0, 10), t };
+    }
+    if (rule === 'mapmax') { const v = { ...a.v }; for (const [k, x] of Object.entries(b.v || {})) v[k] = Math.max(+v[k] || 0, +x || 0); return { v, t }; }
+    return a.t >= b.t ? a : b;                                               // latest
+  }
+
+  /* ---------- Abgleich ---------- */
+  let running = null, timer = 0;
+  async function syncNow() {
+    if (!st) return false;
+    if (running) return running;
+    running = (async () => {
+      try {
+        const { id, key } = await keys(st.code);
+        const local = collect();
+        for (let attempt = 0; attempt < 4; attempt++) {
+          let doc = { v: 1, k: {}, d: {}, z: {} }, rev = 0;
+          const got = await api('GET', id);
+          if (got.status === 200) { doc = await open(got.data, key); rev = got.rev; }
+          else if (got.status !== 404) throw new Error('server ' + got.status);
+          else if (st.joined) { st.err = 'gone'; save(); emit(); return false; }   // Code wurde gelöscht
+
+          // Löschmarken (z. B. „Rekorde löschen“) beider Seiten
+          for (const [p, t] of Object.entries(st.z || {})) doc.z[p] = Math.max(doc.z[p] || 0, t);
+          const before = JSON.stringify(doc);
+
+          // Gemeinsame Werte
+          for (const [k, e] of Object.entries(local)) {
+            const rule = ruleOf(k);
+            if (rule === 'device') ((doc.d[st.dev] ||= {})[k] = e);
+            else doc.k[k] = mergeEntry(rule, doc.k[k], e);
+          }
+          // Alles, was älter als eine Löschmarke ist, verwerfen
+          for (const k of Object.keys(doc.k)) if (doc.k[k].t < zFor(doc.z, k)) delete doc.k[k];
+          for (const dv of Object.values(doc.d)) for (const k of Object.keys(dv)) if (dv[k].t < zFor(doc.z, k)) delete dv[k];
+          if (doc.d[st.dev]) doc.d[st.dev]._t = now();
+
+          // Zurück in den lokalen Speicher, was sich durch andere Geräte geändert hat
+          const changed = [];
+          for (const [k, e] of Object.entries(doc.k)) {
+            const raw = JSON.stringify(e.v);
+            let cur = null; try { cur = localStorage.getItem(k); } catch {}
+            if (cur !== raw) { try { localStorage.setItem(k, raw); } catch {} changed.push(k); }
+            st.snap[k] = hash(raw); st.ts[k] = e.t;
+          }
+          for (const k of watchedKeys()) if (!(ruleOf(k) === 'device' ? doc.d[st.dev]?.[k] : doc.k[k]) && (st.ts[k] || 0) < zFor(doc.z, k)) { ls.del(k); delete st.snap[k]; delete st.ts[k]; changed.push(k); }
+          // Werte der anderen Geräte für die Anzeige merken
+          const oth = {};
+          for (const [dv, vals] of Object.entries(doc.d)) if (dv !== st.dev) for (const [k, e] of Object.entries(vals)) if (k !== '_t') (oth[k] ||= []).push(e.v);
+          const othChanged = JSON.stringify(oth) !== JSON.stringify(others);
+          others = oth; ls.set('jb.syncOthers', others);
+
+          // Hochladen, wenn sich am Gesamtstand etwas geändert hat
+          if (JSON.stringify(doc) !== before || rev === 0) {
+            const put = await api('PUT', id, { rev, data: await seal(doc, key) });
+            if (put.status === 409) continue;                                  // jemand war schneller → nochmal zusammenführen
+            if (put.status !== 200) throw new Error('server ' + put.status);
+            rev = put.rev;
+          }
+          st.rev = rev; st.last = now(); st.err = ''; st.joined = true; st.z = doc.z; save();
+          if (changed.length || othChanged) dispatchEvent(new CustomEvent('jukebox-sync', { detail: { changed } }));
+          emit();
+          return true;
+        }
+        throw new Error('busy');
+      } catch (e) {
+        if (st) { st.err = navigator.onLine === false ? 'offline' : 'error'; save(); emit(); }
+        return false;
+      } finally { running = null; }
+    })();
+    return running;
+  }
+  const soon = (ms = 2500) => { clearTimeout(timer); timer = setTimeout(syncNow, ms); };
+
+  /* ---------- Öffentliche Funktionen ---------- */
+  function status() { return st ? { connected: true, code: st.code, last: st.last || 0, err: st.err || '' } : { connected: false }; }
+  async function create() {
+    st = { code: newCode(), rev: 0, dev: newCode().slice(0, 4) + Date.now().toString(36), snap: {}, ts: {}, z: {}, last: 0, joined: false };
+    save(); emit();
+    const ok = await syncNow();
+    if (!ok) { st = null; save(); emit(); throw new Error('offline'); }
+    return st.code;
+  }
+  /** Mit bestehendem Code verbinden: Daten dieses Geräts werden mit denen des Codes zusammengeführt */
+  async function join(input) {
+    const code = normCode(input);
+    if (!code) throw new Error('invalid');
+    const { id } = await keys(code);
+    const got = await api('GET', id).catch(() => ({ status: 0 }));
+    if (got.status === 404) throw new Error('unknown');
+    if (got.status !== 200) throw new Error('offline');
+    st = { code, rev: 0, dev: newCode().slice(0, 4) + Date.now().toString(36), snap: {}, ts: {}, z: {}, last: 0, joined: true };
+    // Lokale Werte gelten als „alt“, damit beim Profil/Design der Stand vom Code gewinnt (Rekorde werden trotzdem zusammengeführt)
+    for (const k of watchedKeys()) st.ts[k] = 1;
+    for (const k of watchedKeys()) { try { st.snap[k] = hash(localStorage.getItem(k)); } catch {} }
+    save();
+    const ok = await syncNow();
+    if (!ok) { st = null; save(); emit(); throw new Error('offline'); }
+    return code;
+  }
+  /** Dieses Gerät trennen (Daten bleiben hier und beim Code) */
+  function leave() { st = null; save(); others = {}; ls.del('jb.syncOthers'); emit(); dispatchEvent(new CustomEvent('jukebox-sync', { detail: { changed: [] } })); }
+  /** Code samt Daten beim Server löschen (die Daten auf den Geräten bleiben) */
+  async function wipe() { if (!st) return; const { id } = await keys(st.code); await api('DELETE', id); leave(); }
+  /** Löschmarke setzen, z. B. „Alle Rekorde löschen“ (präfix = 'mq.best2.') – gilt dann auf allen Geräten */
+  function reset(prefix) { if (!st) return; (st.z ||= {})[prefix] = now(); save(); soon(500); }
+  /** Statistik über alle Geräte (eigener Wert + die der anderen Geräte) */
+  function view(k, own) {
+    const f = COMBINE[k], list = (others[k] || []).filter(Boolean);
+    if (!st || !f || !list.length) return own;
+    return list.reduce((acc, v) => acc ? f(acc, v) : v, own && own.games ? own : null) || own;
+  }
+  const onStatus = f => { listeners.add(f); return () => listeners.delete(f); };
+
+  /* ---------- Automatisch ---------- */
+  if (st) setTimeout(syncNow, 1200);                                         // beim Öffnen
+  setInterval(() => { if (dirty()) soon(); }, 8000);                         // neue Rekorde usw. bald hochladen
+  document.addEventListener('visibilitychange', () => {
+    if (!st) return;
+    if (document.visibilityState === 'hidden') { if (dirty()) syncNow(); }     // beim Wegwechseln sofort sichern
+    else if (now() - (st.last || 0) > 30000) soon(300);                       // beim Zurückkommen holen
+  });
+  addEventListener('storage', e => { if (e.key === 'jb.sync') { st = ls.get('jb.sync', null); emit(); } }); // anderer Tab
+
+  return { status, create, join, leave, wipe, reset, view, onStatus, syncNow, normCode };
+})();

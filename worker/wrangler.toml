@@ -1,0 +1,18 @@
+name = "jukebox-sync"
+main = "sync.js"
+compatibility_date = "2025-06-01"
+workers_dev = true
+
+# Verschlüsselte Spielstände pro Code (die Daten sind schon im Browser verschlüsselt – der Worker kann sie nicht lesen)
+[[d1_databases]]
+binding = "DB"
+database_name = "jukebox-sync"
+database_id = "0cbd1df8-ca6f-4704-a9d2-5ed650423204"
+
+# Einmal am Tag: Einträge löschen, die 18 Monate nicht mehr benutzt wurden
+[triggers]
+crons = ["17 3 * * *"]
+
+# Keine Logs/Analysen – es wird nichts über Nutzer gespeichert außer dem verschlüsselten Datenblock
+[observability]
+enabled = false
