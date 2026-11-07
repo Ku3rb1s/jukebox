@@ -29,7 +29,11 @@ const keep = res => res.ok && res.type === 'basic';
 async function page(r, u) {
   const key = u.origin + u.pathname;
   try {
-    const res = await fetch(r);
+    // no-cache: beim Server nachfragen statt den Browser-Speicher zu nehmen – GitHub Pages erlaubt sonst 10 Minuten lang
+    // die alte Seite (max-age=600). Unverändert → kurze 304-Antwort. (Navigations-Anfragen lassen sich nicht mit Optionen
+    // kopieren, darum über die Adresse.)
+    const res = await fetch(u.href, { cache: 'no-cache', credentials: 'same-origin' });
+    if (res.redirected) return Response.redirect(res.url, 302);               // z. B. /jukebox → /jukebox/ (Seitenaufrufe dürfen keine umgeleitete Antwort bekommen)
     if (keep(res)) { const c = res.clone(); caches.open(CACHE).then(ca => ca.put(key, c)).catch(() => {}); }
     return res;
   } catch (err) {
@@ -60,7 +64,7 @@ async function fixed(e, r, u) {
 // Übrige Dateien: Netz zuerst, Speicher nur ohne Netz
 async function fresh(r) {
   try {
-    const res = await fetch(r);
+    const res = await fetch(r, { cache: 'no-cache' });                       // wie oben: nicht 10 Minuten alt
     if (keep(res)) { const c = res.clone(); caches.open(CACHE).then(ca => ca.put(r, c)).catch(() => {}); }
     return res;
   } catch (err) {
