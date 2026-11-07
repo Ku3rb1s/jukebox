@@ -59,16 +59,24 @@ function weekStart() {                       // Montag dieser Woche (deutsche Ze
   const noon = Date.parse(berlinDay() + 'T12:00:00Z'), wd = (new Date(noon).getUTCDay() + 6) % 7;
   return new Date(noon - wd * 864e5).toISOString().slice(0, 10);
 }
-// Namen: unsichtbare Zeichen raus, Länge begrenzen, grobe Beleidigungen und Links ablehnen
-const BAD = ['nazi', 'hitler', 'siegheil', 'fick', 'fotze', 'hure', 'schlampe', 'wichser', 'missgeburt', 'spast', 'schwuchtel',
-  'neger', 'nigg', 'kanake', 'fuck', 'cunt', 'bitch', 'whore', 'faggot', 'retard', 'penis', 'vagina', 'porn', 'http', 'www'];
+// Namen: unsichtbare Zeichen raus, Länge begrenzen, grobe Beleidigungen und Links ablehnen.
+//   BAD_ANY:  eindeutig – auch mitten im Namen bzw. zusammengeschrieben („FickDich“, „Hurensohn“)
+//   BAD_WORD: kurz und steckt auch in harmlosen Namen („Ignazio“, „Scunthorpe“, „Penistone“, „Ansporn“) – darum nur als
+//             eigenes Wort, gern mit Endung („Spasti“, „Nazis“, „Bitchy“)
+const BAD_ANY = ['hitler', 'siegheil', 'fick', 'fotze', 'hurensohn', 'wichser', 'missgeburt', 'schwuchtel', 'nigg', 'kanake', 'fuck', 'faggot'];
+const BAD_WORD = ['nazi', 'hure', 'schlampe', 'spast', 'neger', 'cunt', 'bitch', 'whore', 'retard', 'penis', 'vagina', 'porn', 'porno'];
+const ENDINGS = ['', 's', 'e', 'en', 'er', 'in', 'innen', 'i', 'y', 'ie', 'ies', 'es'];
 const LEET = { 0: 'o', 1: 'i', 3: 'e', 4: 'a', 5: 's', 7: 't', 8: 'b', '@': 'a', '$': 's' };
 function cleanName(n) {
   const s = String(n || '').normalize('NFC').replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁯﻿]/g, '').replace(/\s+/g, ' ').trim();
   const len = [...s].length;
   if (len < 2 || len > 24) return null;
-  const flat = s.toLowerCase().replace(/[0134578@$]/g, c => LEET[c]).replace(/[^a-zäöüß]/g, '');
-  return BAD.some(b => flat.includes(b)) ? null : s;
+  if (/https?:|www\.|\.(de|com|net|org|io)\b/i.test(s)) return null;                       // keine Links
+  const low = s.toLowerCase().replace(/[0134578@$]/g, c => LEET[c]);
+  const flat = low.replace(/[^a-zäöüß]/g, ''), words = low.split(/[^a-zäöüß]+/).filter(Boolean);
+  if (BAD_ANY.some(b => flat.includes(b))) return null;
+  if (words.some(w => BAD_WORD.some(b => w.startsWith(b) && ENDINGS.includes(w.slice(b.length))))) return null;
+  return s;
 }
 const cleanEmoji = e => { const s = [...String(e || '')].slice(0, 8).join(''); return /^[\p{Extended_Pictographic}\p{Emoji_Component}‍️]+$/u.test(s) ? s : '🎧'; };
 
