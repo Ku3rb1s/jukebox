@@ -26,7 +26,9 @@ function setTheme(t) {
   theme = t;
   store.set('hub.theme', t);
   store.set('mq.theme', t);                                        // Needle Drop
-  const mb = store.get('mb_settings'); if (mb && typeof mb === 'object') { mb.theme = t; store.set('mb_settings', mb); } // Musik-Bingo (nur wenn schon benutzt)
+  // Musik-Bingo: ergänzt fehlende Einstellungen selbst mit Standardwerten – ein Objekt nur mit theme ist darum unbedenklich
+  const mb = store.get('mb_settings');
+  store.set('mb_settings', { ...(mb && typeof mb === 'object' ? mb : {}), theme: t });
   applyTheme();
 }
 
