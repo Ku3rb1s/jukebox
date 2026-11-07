@@ -118,7 +118,8 @@ function renderSync() {
       tx('Mit deinem persönlichen Code hast du Rekorde, Statistik, Tages-Challenge und Profil auf jedem Gerät – ohne Konto und ohne E-Mail.');
     $('#syncNew').onclick = async () => {
       $('#syncNew').disabled = true; syncMsg = '';
-      try { await Sync.create(); } catch { syncMsg = tx('Keine Verbindung – versuch es gleich nochmal.'); }
+      try { await Sync.create(); }
+      catch (e) { syncMsg = e.message === 'limit' ? tx('Heute wurden über diesen Internetanschluss schon 3 Codes erstellt. Morgen geht es wieder – oder verbinde dich mit einem vorhandenen Code.') : tx('Keine Verbindung – versuch es gleich nochmal.'); }
       renderSync();
     };
     const join = async () => {

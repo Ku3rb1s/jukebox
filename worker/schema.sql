@@ -7,3 +7,10 @@ CREATE TABLE IF NOT EXISTS sync (
   updated INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sync_updated ON sync(updated);
+
+-- Zähler für neue Codes pro Anschluss und Tag. k = Prüfsumme aus IP + geheimem Schlüssel + Datum (keine IP gespeichert).
+CREATE TABLE IF NOT EXISTS limits (
+  k TEXT PRIMARY KEY,
+  n INTEGER NOT NULL,
+  day TEXT NOT NULL
+);

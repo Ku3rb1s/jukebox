@@ -3,6 +3,7 @@
   name: 'Français',
   flag: '🇫🇷',
   dict: {
+    "Heute wurden über diesen Internetanschluss schon 3 Codes erstellt. Morgen geht es wieder – oder verbinde dich mit einem vorhandenen Code.": "Trois codes ont déjà été créés aujourd’hui depuis cette connexion internet. Réessaie demain – ou connecte-toi avec un code existant.",
     "noch nicht abgeglichen": "pas encore synchronisé",
     "gerade eben abgeglichen": "synchronisé à l’instant",
     "vor {n} Min. abgeglichen": "synchronisé il y a {n} min",

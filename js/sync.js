@@ -177,7 +177,7 @@ const Sync = (() => {
         const local = collect();
         for (let attempt = 0; attempt < 4; attempt++) {
           let doc = { v: 1, k: {}, d: {}, z: {} }, rev = 0;
-          const got = await api('GET', id);
+          const got = st.fresh && attempt === 0 ? { status: 404 } : await api('GET', id);   // neuer Code: gibt es noch nicht
           if (got.status === 200) { doc = await open(got.data, key); rev = got.rev; }
           else if (got.status !== 404) throw new Error('server ' + got.status);
           else if (st.joined) { st.err = 'gone'; save(); emit(); return false; }   // Code wurde gelöscht
@@ -195,7 +195,6 @@ const Sync = (() => {
           // Alles, was älter als eine Löschmarke ist, verwerfen
           for (const k of Object.keys(doc.k)) if (doc.k[k].t < zFor(doc.z, k)) delete doc.k[k];
           for (const dv of Object.values(doc.d)) for (const k of Object.keys(dv)) if (dv[k].t < zFor(doc.z, k)) delete dv[k];
-          if (doc.d[st.dev]) doc.d[st.dev]._t = now();
 
           // Zurück in den lokalen Speicher, was sich durch andere Geräte geändert hat
           const changed = [];
@@ -208,7 +207,7 @@ const Sync = (() => {
           for (const k of watchedKeys()) if (!(ruleOf(k) === 'device' ? doc.d[st.dev]?.[k] : doc.k[k]) && (st.ts[k] || 0) < zFor(doc.z, k)) { ls.del(k); delete st.snap[k]; delete st.ts[k]; changed.push(k); }
           // Werte der anderen Geräte für die Anzeige merken
           const oth = {};
-          for (const [dv, vals] of Object.entries(doc.d)) if (dv !== st.dev) for (const [k, e] of Object.entries(vals)) if (k !== '_t') (oth[k] ||= []).push(e.v);
+          for (const [dv, vals] of Object.entries(doc.d)) if (dv !== st.dev) for (const [k, e] of Object.entries(vals)) (oth[k] ||= []).push(e.v);
           const othChanged = JSON.stringify(oth) !== JSON.stringify(others);
           others = oth; ls.set('jb.syncOthers', others);
 
@@ -216,10 +215,11 @@ const Sync = (() => {
           if (JSON.stringify(doc) !== before || rev === 0) {
             const put = await api('PUT', id, { rev, data: await seal(doc, key) });
             if (put.status === 409) continue;                                  // jemand war schneller → nochmal zusammenführen
+            if (put.status === 429) { st.err = 'limit'; save(); emit(); return false; } // heute schon zu viele neue Codes
             if (put.status !== 200) throw new Error('server ' + put.status);
             rev = put.rev;
           }
-          st.rev = rev; st.last = now(); st.err = ''; st.joined = true; st.z = doc.z; save();
+          st.rev = rev; st.last = now(); st.err = ''; st.joined = true; delete st.fresh; st.z = doc.z; save();
           if (changed.length || othChanged) dispatchEvent(new CustomEvent('jukebox-sync', { detail: { changed } }));
           emit();
           return true;
@@ -237,10 +237,10 @@ const Sync = (() => {
   /* ---------- Öffentliche Funktionen ---------- */
   function status() { return st ? { connected: true, code: st.code, last: st.last || 0, err: st.err || '' } : { connected: false }; }
   async function create() {
-    st = { code: newCode(), rev: 0, dev: newCode().slice(0, 4) + Date.now().toString(36), snap: {}, ts: {}, z: {}, last: 0, joined: false };
+    st = { code: newCode(), rev: 0, dev: newCode().slice(0, 4) + Date.now().toString(36), snap: {}, ts: {}, z: {}, last: 0, joined: false, fresh: true };
     save(); emit();
     const ok = await syncNow();
-    if (!ok) { st = null; save(); emit(); throw new Error('offline'); }
+    if (!ok) { const why = st?.err === 'limit' ? 'limit' : 'offline'; st = null; save(); emit(); throw new Error(why); }
     return st.code;
   }
   /** Mit bestehendem Code verbinden: Daten dieses Geräts werden mit denen des Codes zusammengeführt */

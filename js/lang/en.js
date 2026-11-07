@@ -3,6 +3,7 @@
   name: 'English',
   flag: '🇬🇧',
   dict: {
+    "Heute wurden über diesen Internetanschluss schon 3 Codes erstellt. Morgen geht es wieder – oder verbinde dich mit einem vorhandenen Code.": "Three codes have already been created from this internet connection today. Try again tomorrow – or connect with an existing code.",
     "noch nicht abgeglichen": "not synced yet",
     "gerade eben abgeglichen": "synced just now",
     "vor {n} Min. abgeglichen": "synced {n} min ago",

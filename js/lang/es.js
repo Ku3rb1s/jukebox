@@ -3,6 +3,7 @@
   name: 'Español',
   flag: '🇪🇸',
   dict: {
+    "Heute wurden über diesen Internetanschluss schon 3 Codes erstellt. Morgen geht es wieder – oder verbinde dich mit einem vorhandenen Code.": "Hoy ya se han creado 3 códigos desde esta conexión a internet. Vuelve a intentarlo mañana o conéctate con un código existente.",
     "noch nicht abgeglichen": "aún sin sincronizar",
     "gerade eben abgeglichen": "sincronizado ahora mismo",
     "vor {n} Min. abgeglichen": "sincronizado hace {n} min",

@@ -3,6 +3,7 @@
   name: 'Norsk',
   flag: '🇳🇴',
   dict: {
+    "Heute wurden über diesen Internetanschluss schon 3 Codes erstellt. Morgen geht es wieder – oder verbinde dich mit einem vorhandenen Code.": "Det er allerede laget 3 koder fra denne internettilkoblingen i dag. Prøv igjen i morgen – eller koble til med en eksisterende kode.",
     "noch nicht abgeglichen": "ikke synkronisert ennå",
     "gerade eben abgeglichen": "synkronisert akkurat nå",
     "vor {n} Min. abgeglichen": "synkronisert for {n} min siden",
