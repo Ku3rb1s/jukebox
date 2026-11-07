@@ -14,3 +14,21 @@ CREATE TABLE IF NOT EXISTS limits (
   n INTEGER NOT NULL,
   day TEXT NOT NULL
 );
+
+-- Bestenliste der Tages-Challenges (freiwillig, nur mit Code). Anders als der Abgleich ist das öffentlich:
+-- Name, Emoji und Punkte sind für alle sichtbar. id = dieselbe Prüfsumme wie in sync (wird nie herausgegeben).
+CREATE TABLE IF NOT EXISTS lb_player (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  emoji TEXT NOT NULL,
+  updated INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS lb_score (
+  id TEXT NOT NULL,
+  game TEXT NOT NULL,
+  day TEXT NOT NULL,
+  score INTEGER NOT NULL,
+  at INTEGER NOT NULL,
+  PRIMARY KEY (id, game, day)
+);
+CREATE INDEX IF NOT EXISTS lb_score_day ON lb_score(game, day, score);

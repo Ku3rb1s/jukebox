@@ -90,7 +90,9 @@ function render() {
       <span class="app-go"><svg class="ic"><use href="#i-play"/></svg><span>${tx('Spielen')}</span></span>
     </a>`).join('');
   renderToday();
+  board()?.refresh();
 }
+const board = () => typeof Board !== 'undefined' ? Board : null;   // js/leaderboard.js (wird nach dieser Datei geladen)
 /** Oben: welche Tages-Challenges heute noch offen sind (Knöpfe führen direkt ins Spiel) */
 function renderToday() {
   const games = DATA.apps.map(a => ({ a, d: dailyOf(a.id) })).filter(x => x.d);
@@ -114,8 +116,8 @@ function renderProfile() {
   $('#profName').placeholder = tx('Dein Name');
   $('#hello').textContent = p.name ? tx('Hallo {n}! Wähle ein Spiel', { n: p.emoji + ' ' + p.name }) : tx('Wähle ein Spiel');
 }
-$('#profEmoji').onclick = () => { Profile.nextEmoji(); renderProfile(); };
-$('#profName').oninput = () => { Profile.set({ name: $('#profName').value }); renderProfile(); };
+$('#profEmoji').onclick = () => { Profile.nextEmoji(); renderProfile(); board()?.profileChanged(); };
+$('#profName').oninput = () => { Profile.set({ name: $('#profName').value }); renderProfile(); board()?.profileChanged(); };
 $('#profName').onkeydown = e => { if (e.key === 'Enter') $('#profName').blur(); };
 
 $('#btnSettings').onclick = () => openSheet();
@@ -153,7 +155,7 @@ function arm(btn, label, fn) {
 function renderSync() {
   const s = Sync.status(), box = $('#syncBox');
   $('#syncCta').innerHTML = `<span class="sc-ic">${ICON('cloud')}</span><span class="grow"><b>${s.connected ? tx('Auf allen Geräten verbunden') : tx('Auf allen Geräten spielen')}</b>
-    <span class="sub">${s.connected ? esc(s.code) + ' · ' + esc(syncLine(s)) : tx('Rekorde, Serie und Profil mit einem Code mitnehmen')}</span></span>${ICON('chev')}`;
+    <span class="sub">${s.connected ? esc(s.code) + ' · ' + esc(syncLine(s)) : tx('Rekorde, Serie und Profil mitnehmen – und in der Bestenliste mitspielen')}</span></span>${ICON('chev')}`;
   $('#syncCta').classList.toggle('on', s.connected);
   if (!s.connected) {
     box.innerHTML = `
@@ -218,7 +220,7 @@ function loadQr() {
 }
 const openSheet = () => { $('#langSel').innerHTML = langOptions(); applyTheme(); renderProfile(); renderSync(); sheet.showModal(); };
 $('#syncCta').onclick = () => { openSheet(); setTimeout(() => $('#syncAnchor').scrollIntoView({ block: 'start', behavior: 'smooth' }), 80); };
-Sync.onStatus(() => { if (!$('#syncInput') || document.activeElement !== $('#syncInput')) renderSync(); });
+Sync.onStatus(() => { if (!$('#syncInput') || document.activeElement !== $('#syncInput')) renderSync(); board()?.refresh(); });
 // Zurück aus einem Spiel (auch aus dem Zwischenspeicher des Browsers) oder anderer Tab: Stand neu zeigen
 addEventListener('pageshow', e => { if (e.persisted) render(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });

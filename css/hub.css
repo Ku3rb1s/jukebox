@@ -49,6 +49,41 @@ header{max-width:860px}
   .hub-sheet{height:auto}
 }
 
+/* Bestenliste (nur mit Code) */
+.lb{margin-top:18px;padding:18px}
+.lb::before{background:linear-gradient(160deg,color-mix(in srgb,var(--c) 16%,transparent),var(--g-bg) 50%)}
+.lb-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.lb-head h2{font-family:Outfit,system-ui,sans-serif;font-weight:900;font-size:1.4rem;margin:0;letter-spacing:-.01em}
+.lb-sub{color:var(--muted);font-size:.9rem}
+.lb-tabs{display:flex;gap:8px;margin-top:14px}
+.lb-tab{flex:1 1 0;min-width:0;justify-content:center;white-space:nowrap;overflow:hidden;display:inline-flex;align-items:center;gap:.5em;padding:.4em .9em .4em .45em;border-radius:99px;border:0;font:inherit;font-weight:800;color:var(--text);cursor:pointer;
+  background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px var(--line)}
+.lb-tab img{width:26px;height:26px;border-radius:8px}
+.lb-tab.on{background:color-mix(in srgb,var(--c) 30%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 70%,transparent)}
+.lb-range{background:rgba(255,255,255,.06);max-width:340px;margin-top:12px}
+.lb-range button{flex-direction:row;font-size:.92rem;padding:.45em .4em}
+.lb-list{margin-top:12px;display:flex;flex-direction:column;gap:4px}
+.lb-row{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.04)}
+.lb-row.me{background:color-mix(in srgb,var(--c) 26%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 65%,transparent)}
+.lb-rank{width:2em;flex:none;text-align:center;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.lb-name{flex:1;min-width:0;display:flex;align-items:baseline;gap:.45em;font-weight:700}
+.lb-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.lb-name small{color:var(--muted);font-weight:500;font-size:.78rem;flex:none}
+.lb-emo{flex:none}
+.lb-emo.big{font-size:1.6rem}
+.lb-score{flex:none;font-variant-numeric:tabular-nums}
+.lb-gap{text-align:center;color:var(--muted);line-height:1}
+.lb-empty{color:var(--muted);text-align:center;margin:14px 0}
+.lb-play{display:block;margin-top:12px;text-align:center;padding:.65em;border-radius:12px;font-weight:800;color:#fff;text-decoration:none;background:var(--c)}
+.lb-join{margin-top:14px;padding:14px;border-radius:14px;background:rgba(255,255,255,.05)}
+.lb-join p{margin:0 0 10px;color:var(--muted);font-size:.92rem;line-height:1.45}
+.lb-form{display:flex;align-items:center;gap:10px}
+.lb-input{flex:1;min-width:0;font:inherit;font-size:17px;font-weight:600;color:var(--text);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:12px;padding:.5em .75em}
+.lb-msg{color:var(--warn,#fbbf24);font-size:.88rem;margin:10px 0 0}
+.lb-foot{margin-top:12px;color:var(--muted);font-size:.82rem;text-align:center}
+.lb-leave{background:none;border:0;padding:0;font:inherit;color:var(--muted);text-decoration:underline;cursor:pointer}
+.lb-leave[data-armed]{color:var(--danger);font-weight:800}
+
 /* Spielerprofil */
 .cell.prof{gap:12px;padding-top:10px;padding-bottom:10px}
 .prof-emo{width:46px;height:46px;flex:none;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.08);font-size:1.5rem;line-height:1;cursor:pointer;padding:0;display:grid;place-items:center}
