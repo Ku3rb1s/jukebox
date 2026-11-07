@@ -54,13 +54,13 @@
       "icon": "https://ku3rb1s.github.io/gold-record/icon-192.png?v=1",
       "color": "#d4a017",
       "desc": {
-        "de": "Musik-Quiz in 15 Stufen: Songs erkennen, Interpreten und Jahre raten – von der Kassette über Gold und Platin bis zum Diamanten. Mit 50:50, Nochmal hören und Publikum als Joker.",
-        "en": "Music quiz in 15 levels: recognise songs, guess artists and years – from cassette via Gold and Platinum all the way to Diamond. With 50:50, Listen again and Audience as lifelines.",
-        "fr": "Quiz musical en 15 paliers : reconnais les chansons, devine artistes et années – de la cassette à l’Or, au Platine et jusqu’au Diamant. Avec 50:50, Réécouter et Public comme jokers.",
-        "es": "Quiz musical en 15 niveles: reconoce canciones, adivina artistas y años, del casete al Oro, el Platino y hasta el Diamante. Con 50:50, Escuchar otra vez y Público como comodines.",
-        "nb": "Musikkquiz i 15 trinn: kjenn igjen sanger, gjett artister og år – fra kassett via Gull og Platina helt til Diamant. Med 50:50, Hør igjen og Publikum som livliner."
+        "de": "Musik-Quiz in 15 Stufen: Songs erkennen, Interpreten und Jahre raten – von der Kassette über Gold und Platin bis zum Diamanten. 5 Joker, drei Schwierigkeitsstufen und eine Tägliche Challenge.",
+        "en": "Music quiz in 15 levels: recognise songs, guess artists and years – from cassette via Gold and Platinum all the way to Diamond. 5 lifelines, three difficulty levels and a Daily Challenge.",
+        "fr": "Quiz musical en 15 paliers : reconnais les chansons, devine artistes et années – de la cassette à l’Or, au Platine et jusqu’au Diamant. 5 jokers, trois niveaux de difficulté et un défi du jour.",
+        "es": "Quiz musical en 15 niveles: reconoce canciones, adivina artistas y años, del casete al Oro, el Platino y hasta el Diamante. 5 comodines, tres niveles de dificultad y un reto diario.",
+        "nb": "Musikkquiz i 15 trinn: kjenn igjen sanger, gjett artister og år – fra kassett via Gull og Platina helt til Diamant. 5 livliner, tre vanskelighetsgrader og dagens utfordring."
       },
-      "tags": ["solo", "nologin"]
+      "tags": ["solo", "daily", "nologin"]
     }
   ]
 }
