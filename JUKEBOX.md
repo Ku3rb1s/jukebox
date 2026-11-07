@@ -103,11 +103,11 @@ Regeln:
 
 - Needle Drop: GitHub-Automatik `update-billions.yml`, monatlich (Milliarden-Liste).
 - Gold Record und Older or Newer: GitHub-Automatik `.github/workflows/update-songs.yml` im jeweiligen Repo, jeden Montag
-  um 0:10 Uhr. Sie ruft `scripts/update-songs.js` aus der Jukebox auf: neue Songs, Originaljahre, Genres und Cover; DATA_V wird erhöht.
+  um 0:05 Uhr. Sie ruft `scripts/update-songs.js` aus der Jukebox auf: neue Songs, Originaljahre, Genres und Cover; DATA_V wird erhöht.
   Hochgeladen wird nur bei Änderungen. Per Hand: GitHub → Actions → „Songlisten aktualisieren“ → Run workflow.
 - Lokal genauso: `node scripts/update-songs.js` (nur bauen + Bericht), `--commit` (hochladen), `--only gr,oon,covers,hom`.
   Ein Spiel mit offenen fremden Änderungen in `data/` wird übersprungen.
-- Hit or Miss: eigene Automatik montags 7:10 (nach den beiden anderen, aus deren Daten es baut): build-data → build-versions → build-data.
+- Hit or Miss: eigene Automatik zur selben Zeit (nimmt darum die Gold-Record- und Older-or-Newer-Daten der Vorwoche; so bleibt die Tägliche Challenge den ganzen Tag gleich): build-data → build-versions → build-data.
 
 ## Neues Spiel
 
