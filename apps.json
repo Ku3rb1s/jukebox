@@ -54,11 +54,11 @@
       "icon": "https://ku3rb1s.github.io/gold-record/icon-192.png?v=2",
       "color": "#2f5bff",
       "desc": {
-        "de": "Musik-Quiz in 15 Stufen: Songs erkennen, Interpreten und Jahre raten – von der Kassette über Gold und Platin bis zum Diamanten. 4 Joker, drei Schwierigkeitsstufen und eine Tägliche Challenge.",
-        "en": "Music quiz in 15 levels: recognise songs, guess artists and years – from cassette via Gold and Platinum all the way to Diamond. 4 lifelines, three difficulty levels and a Daily Challenge.",
-        "fr": "Quiz musical en 15 paliers : reconnais les chansons, devine artistes et années – de la cassette à l’Or, au Platine et jusqu’au Diamant. 4 jokers, trois niveaux de difficulté et un défi du jour.",
-        "es": "Quiz musical en 15 niveles: reconoce canciones, adivina artistas y años, del casete al Oro, el Platino y hasta el Diamante. 4 comodines, tres niveles de dificultad y un reto diario.",
-        "nb": "Musikkquiz i 15 trinn: kjenn igjen sanger, gjett artister og år – fra kassett via Gull og Platina helt til Diamant. 4 livliner, tre vanskelighetsgrader og dagens utfordring."
+        "de": "Musik-Quiz in 15 Stufen mit über 6.000 Songs: Songs erkennen, Interpreten und Jahre raten – von der Kassette über Gold und Platin bis zum Diamanten. 4 Joker, drei Schwierigkeitsstufen und eine Tägliche Challenge.",
+        "en": "Music quiz in 15 levels with over 6,000 songs: recognise songs, guess artists and years – from cassette via Gold and Platinum all the way to Diamond. 4 lifelines, three difficulty levels and a Daily Challenge.",
+        "fr": "Quiz musical en 15 paliers avec plus de 6 000 chansons : reconnais les chansons, devine artistes et années – de la cassette à l’Or, au Platine et jusqu’au Diamant. 4 jokers, trois niveaux de difficulté et un défi du jour.",
+        "es": "Quiz musical en 15 niveles con más de 6.000 canciones: reconoce canciones, adivina artistas y años, del casete al Oro, el Platino y hasta el Diamante. 4 comodines, tres niveles de dificultad y un reto diario.",
+        "nb": "Musikkquiz i 15 trinn med over 6 000 sanger: kjenn igjen sanger, gjett artister og år – fra kassett via Gull og Platina helt til Diamant. 4 livliner, tre vanskelighetsgrader og dagens utfordring."
       },
       "tags": ["solo", "daily", "nologin"]
     }
