@@ -21,6 +21,7 @@ const Sync = (() => {
   const API = 'https://jukebox-sync.ku3rb1s.workers.dev/sync/';
   const RULES = [
     [/^jb\.profile$/, 'latest'],
+    [/^jb\.lbOn$/, 'latest'],                       // in der Bestenliste mitmachen (ja/nein) – gilt für alle Geräte mit dem Code
     [/^(mq|hub)\.(theme|lang)$/, 'latest'],
     [/^(mq|oon)\.best2\./, 'max'],
     [/^gr\.best\./, 'max'],
@@ -222,6 +223,7 @@ const Sync = (() => {
           st.rev = rev; st.last = now(); st.err = ''; st.joined = true; delete st.fresh; st.z = doc.z; save();
           if (changed.length || othChanged) dispatchEvent(new CustomEvent('jukebox-sync', { detail: { changed } }));
           emit();
+          boardSend();                                                         // neue Ergebnisse auch an die Bestenliste
           return true;
         }
         throw new Error('busy');
@@ -274,6 +276,67 @@ const Sync = (() => {
   }
   const onStatus = f => { listeners.add(f); return () => listeners.delete(f); };
 
+  /* ---------- Bestenliste: Ergebnisse melden (nur wer mitmacht, siehe Jukebox js/leaderboard.js) ----------
+     Läuft nach jedem Abgleich in jedem Spiel – so landet ein neues Tagesergebnis, ein Rekord oder die Serie in der
+     Bestenliste, ohne dass man erst die Jukebox öffnen muss. Gesendet wird nur, was sich geändert hat (Merkliste hub.lb). */
+  const LB = (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && ls.get('hub.lbApi', null)) || API.replace(/sync\/$/, 'lb/');
+  const dayOf = tz => new Date().toLocaleDateString('sv-SE', tz ? { timeZone: tz } : {});
+  const prevDay = d => new Date(Date.parse(d) - 864e5).toISOString().slice(0, 10);
+  const streakOf = (has, d) => { if (!has(d)) d = prevDay(d); let n = 0; while (has(d)) { n++; d = prevDay(d); } return n; };
+  const BOARD = {
+    // Tages-Challenge: Ergebnisse von heute und gestern (am Tag selbst gespielt, nicht nachgespielt)
+    daily: () => {
+      const out = [], L = ls.get('mq.daily', {}) || {}, t = dayOf('Europe/Berlin');
+      for (const d of [t, prevDay(t)]) if (L[d] && !L[d].late && Number.isInteger(L[d].score)) out.push({ game: 'needle-drop', day: d, score: L[d].score });
+      const g = dayOf();
+      for (const d of [g, prevDay(g)]) { const r = ls.get('gr.daily.' + d, null); if (r?.done && !r.late && Number.isInteger(r.final)) out.push({ game: 'gold-record', day: d, score: r.final }); }
+      return out;
+    },
+    // Highscores: nur Songauswahl „Alle“ (vergleichbar), je Stufe und Modus
+    high: () => {
+      const out = [];
+      for (const d of ['easy', 'normal', 'hard', 'pro']) for (const m of ['show', 'blind']) out.push({ game: 'older-or-newer', cat: `${d}.${m}`, score: ls.get(`oon.best2.all.${d}.${m}`, 0) });
+      for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'gold-record', cat: d, score: ls.get(`gr.best.all.${d}`, 0) });
+      return out.filter(x => Number.isInteger(x.score) && x.score > 0);
+    },
+    // Laufende Serie der Tages-Challenge
+    streak: () => {
+      const L = ls.get('mq.daily', {}) || {}, dl = ls.get('gr.dailyLog', {}) || {};
+      return [{ game: 'needle-drop', score: streakOf(d => L[d] && !L[d].late, dayOf('Europe/Berlin')) }, { game: 'gold-record', score: streakOf(d => d in dl, dayOf()) }];
+    },
+  };
+  let boardBusy = null;
+  /** Neue Ergebnisse an die Bestenliste. Gibt die id zurück (oder null, wenn nicht mitgemacht wird). */
+  function boardSend() {
+    if (!st) return Promise.resolve(null);
+    return boardBusy ||= (async () => {
+      try {
+        const { id } = await keys(st.code);
+        let m = ls.get('hub.lb', null);
+        if (!m || m.id !== id) m = { id, on: false, sent: {}, hs: {}, st: {} };
+        m.sent ||= {}; m.hs ||= {}; m.st ||= {};
+        const flag = ls.get('jb.lbOn', null);                                  // abgeglichen; fehlt er (ältere Geräte), zählt hub.lb
+        if (!(flag === null ? m.on : flag === true)) return null;
+        const post = (p, body) => fetch(LB + p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...body }), cache: 'no-store' })
+          .then(r => { if (!r.ok) throw new Error(r.status); });
+        const jobs = [];
+        const scores = BOARD.daily().filter(x => m.sent[x.game + '|' + x.day] !== x.score);
+        if (scores.length) jobs.push(post('score', { scores }).then(() => {
+          for (const s of scores) m.sent[s.game + '|' + s.day] = s.score;
+          m.sent = Object.fromEntries(Object.entries(m.sent).sort((a, b) => b[0].slice(-10).localeCompare(a[0].slice(-10))).slice(0, 12));
+        }));
+        const highs = BOARD.high().filter(x => x.score > (m.hs[x.game + '|' + x.cat] || 0));
+        if (highs.length) jobs.push(post('high', { scores: highs }).then(() => { for (const h of highs) m.hs[h.game + '|' + h.cat] = h.score; }));
+        const today = dayOf('Europe/Berlin');
+        const streaks = BOARD.streak().filter(x => !m.st[x.game] || m.st[x.game][0] !== x.score || m.st[x.game][1] !== today);
+        if (streaks.length) jobs.push(post('streak', { scores: streaks }).then(() => { for (const s of streaks) m.st[s.game] = [s.score, today]; }));
+        await Promise.allSettled(jobs);
+        m.on = true; ls.set('hub.lb', m);
+        return id;
+      } catch { return null; } finally { boardBusy = null; }
+    })();
+  }
+
   /* ---------- Automatisch ---------- */
   if (st) setTimeout(syncNow, 1200);                                         // beim Öffnen
   setInterval(() => { if (dirty()) soon(); }, 8000);                         // neue Rekorde usw. bald hochladen
@@ -284,5 +347,5 @@ const Sync = (() => {
   });
   addEventListener('storage', e => { if (e.key === 'jb.sync') { st = ls.get('jb.sync', null); emit(); } }); // anderer Tab
 
-  return { status, create, join, leave, wipe, reset, view, onStatus, syncNow, normCode };
+  return { status, create, join, leave, wipe, reset, view, onStatus, syncNow, normCode, boardSend };
 })();

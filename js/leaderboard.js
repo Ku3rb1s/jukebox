@@ -39,7 +39,6 @@ const Board = (() => {
       fmt: n => n + '/15',
     },
   };
-  const combos = g => HIGH[g].opts.reduce((acc, [k, vals]) => acc.flatMap(c => Object.keys(vals).map(v => ({ ...c, [k]: v }))), [{}]);
 
   const VIEWS = {
     daily: { name: 'Tages-Challenge', icon: '📅', games: ['needle-drop', 'gold-record'] },
@@ -91,34 +90,12 @@ const Board = (() => {
   // Lokal gemerkt (pro Code): mitgemacht? was schon gesendet wurde (sent: Tage, hs: Highscores, st: Serien)
   const blank = id => ({ id, on: false, sent: {}, hs: {}, st: {} });
   const mem = id => { const m = store.get('hub.lb'); return m && m.id === id ? { sent: {}, hs: {}, st: {}, ...m } : blank(id); };
-  const remember = m => store.set('hub.lb', m);
+  // Mitmachen ja/nein: lokal (hub.lb) und abgeglichen für alle Geräte (jb.lbOn) – danach meldet jedes Spiel selbst
+  const remember = m => { store.set('hub.lb', m); store.set('jb.lbOn', !!m.on); };
 
-  /** Alles Neue an den Server: Tagesergebnisse, höhere Rekorde, Serien (täglich, damit sie als „laufend“ gilt) */
-  async function sendAll(id) {
-    const m = mem(id), jobs = [];
-    const scores = [];
-    for (const [g, f] of Object.entries(DAILY_RESULTS)) for (const r of f()) if (m.sent[g + '|' + r.day] !== r.score) scores.push({ game: g, ...r });
-    if (scores.length) jobs.push(post('score', { id, scores }).then(() => {
-      for (const s of scores) m.sent[s.game + '|' + s.day] = s.score;
-      m.sent = Object.fromEntries(Object.entries(m.sent).sort((a, b) => b[0].slice(-10).localeCompare(a[0].slice(-10))).slice(0, 12));
-    }));
-    const highs = [];
-    for (const g in HIGH) for (const c of combos(g)) {
-      const v = store.get(HIGH[g].key(c)), cat = HIGH[g].cat(c);
-      if (Number.isInteger(v) && v > 0 && v > (m.hs[g + '|' + cat] || 0)) highs.push({ game: g, cat, score: v });
-    }
-    if (highs.length) jobs.push(post('high', { id, scores: highs }).then(() => { for (const h of highs) m.hs[h.game + '|' + h.cat] = h.score; }));
-    const streaks = [], today = dayOf('Europe/Berlin');
-    for (const g of VIEWS.streak.games) {
-      const d = dailyOf(g); if (!d) continue;
-      const last = m.st[g];
-      if (!last || last[0] !== d.streak || last[1] !== today) streaks.push({ game: g, score: d.streak });
-    }
-    if (streaks.length) jobs.push(post('streak', { id, scores: streaks }).then(() => { for (const s of streaks) m.st[s.game] = [s.score, today]; }));
-    await Promise.allSettled(jobs);
-    remember(m);
-    sentAt = Date.now();
-  }
+  /** Alles Neue an den Server (Tagesergebnisse, höhere Rekorde, Serien) – dieselbe Funktion, die auch die Spiele
+      nach jedem Abgleich aufrufen (js/sync.js, Sync.boardSend) */
+  async function sendAll() { await Sync.boardSend(); sentAt = Date.now(); }
 
   async function load(force) {
     const key = JSON.stringify(query());
@@ -127,11 +104,11 @@ const Board = (() => {
     busy = true;
     try {
       let m = id ? mem(id) : null;
-      if (m?.on) await sendAll(id);
+      if (id) await sendAll();                           // meldet nur, wenn mitgemacht wird
       data = await post('list', id ? { id, ...query() } : query());
       if (id && data.joined !== m.on) {                 // auf einem anderen Gerät mitgemacht/ausgetreten
         m = data.joined ? { ...m, on: true } : blank(id); remember(m);
-        if (data.joined) { await sendAll(id); data = await post('list', { id, ...query() }); }
+        if (data.joined) { await sendAll(); data = await post('list', { id, ...query() }); }
       }
       loadedAt = Date.now(); loadedFor = key; if (!fresh) msg = '';
     } catch { if (loadedFor !== key) data = null; msg = tx('Die Bestenliste ist gerade nicht erreichbar.'); }
@@ -281,7 +258,7 @@ const Board = (() => {
     if (sheet.open) { if (document.activeElement?.id !== 'lbName') { draw(); load(); } return; }
     if (Date.now() - sentAt < 30000) return;
     const id = await myId();
-    if (id && mem(id).on) sendAll(id).catch(() => {});
+    if (id) sendAll().catch(() => {});
   }
   return { open, refresh, profileChanged };
 })();
