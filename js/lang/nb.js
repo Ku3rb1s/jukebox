@@ -3,6 +3,10 @@
   name: 'Norsk',
   flag: '🇳🇴',
   dict: {
+    "Dein Name": "Navnet ditt",
+    "Avatar wechseln": "Bytt avatar",
+    "Hallo {n}! Wähle ein Spiel": "Hei {n}! Velg et spill",
+    "Dein Profil gilt für alle Spiele. Es bleibt auf diesem Gerät.": "Profilen din gjelder i alle spill. Den blir på denne enheten.",
     "Einstellungen": "Innstillinger",
     "Wähle ein Spiel": "Velg et spill",
     "Musik raten, Bingo spielen – mit Freunden oder allein.": "Gjett musikk, spill bingo – med venner eller alene.",

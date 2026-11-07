@@ -17,7 +17,7 @@
 <link rel="preload" href="fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/fonts.css?v=1">
 <link rel="stylesheet" href="css/base.css?v=1">
-<link rel="stylesheet" href="css/hub.css?v=1">
+<link rel="stylesheet" href="css/hub.css?v=2">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -37,7 +37,7 @@
 
 <main>
   <section class="stage glass hub-hero">
-    <div class="cat-kicker">Wähle ein Spiel</div>
+    <div class="cat-kicker" id="hello">Wähle ein Spiel</div>
     <h1 class="hub-h1">Musik raten, Bingo spielen – mit Freunden oder allein.</h1>
     <p class="hub-sub">Alle Spiele laufen direkt im Browser, ohne App und ohne Anmeldung zum Mitspielen.</p>
   </section>
@@ -55,7 +55,14 @@
     <button class="nav-done" data-close>Fertig</button>
   </div>
   <div class="sheet-body">
-    <div class="group icons" style="margin-top:14px">
+    <div class="group icons prof-group" style="margin-top:14px">
+      <div class="cell prof">
+        <button class="prof-emo" id="profEmoji" type="button" aria-label="Avatar wechseln" title="Avatar wechseln">🎧</button>
+        <input id="profName" class="bare" placeholder="Dein Name" maxlength="24" autocomplete="nickname" enterkeyhint="done" data-no-tx>
+      </div>
+    </div>
+    <div class="group-f">Dein Profil gilt für alle Spiele. Es bleibt auf diesem Gerät.</div>
+    <div class="group icons" style="margin-top:12px">
       <label class="cell">
         <span class="cell-ic" style="background:#14b8a6"><svg class="ic"><use href="#i-globe"/></svg></span>
         <span class="grow">Sprache<span class="sub">Gilt auch für Musik-Bingo und Needle Drop</span></span>
@@ -71,7 +78,8 @@
 <script src="js/lang/fr.js?v=1"></script>
 <script src="js/lang/es.js?v=1"></script>
 <script src="js/lang/nb.js?v=1"></script>
+<script src="js/profile.js?v=1"></script>
 <script src="js/i18n.js?v=1"></script>
-<script src="js/hub.js?v=2"></script>
+<script src="js/hub.js?v=3"></script>
 </body>
 </html>

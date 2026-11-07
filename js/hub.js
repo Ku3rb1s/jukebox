@@ -58,11 +58,24 @@ function render() {
 
 /* ---------- Einstellungen ---------- */
 const sheet = $('#sheet');
-$('#btnSettings').onclick = () => { $('#langSel').innerHTML = langOptions(); applyTheme(); sheet.showModal(); };
+/* ---------- Spielerprofil (gilt in allen Spielen) ---------- */
+function renderProfile() {
+  const p = Profile.get();
+  $('#profEmoji').textContent = p.emoji;
+  if (document.activeElement !== $('#profName')) $('#profName').value = p.name;
+  $('#profName').placeholder = tx('Dein Name');
+  $('#hello').textContent = p.name ? tx('Hallo {n}! Wähle ein Spiel', { n: p.emoji + ' ' + p.name }) : tx('Wähle ein Spiel');
+}
+$('#profEmoji').onclick = () => { Profile.nextEmoji(); renderProfile(); };
+$('#profName').oninput = () => { Profile.set({ name: $('#profName').value }); renderProfile(); };
+$('#profName').onkeydown = e => { if (e.key === 'Enter') $('#profName').blur(); };
+
+$('#btnSettings').onclick = () => { $('#langSel').innerHTML = langOptions(); applyTheme(); renderProfile(); sheet.showModal(); };
 sheet.addEventListener('click', e => { if (e.target === sheet || e.target.closest('[data-close]')) sheet.close(); });
 $('#langSel').onchange = e => setLang(e.target.value);
 $('#themeRow').onclick = e => { const b = e.target.closest('[data-theme-pick]'); if (b) setTheme(b.dataset.themePick); };
-self.liveLang = () => { render(); applyTheme(); };
+self.liveLang = () => { render(); applyTheme(); renderProfile(); };
 
 applyTheme();
+renderProfile();
 load();

@@ -3,6 +3,10 @@
   name: 'Español',
   flag: '🇪🇸',
   dict: {
+    "Dein Name": "Tu nombre",
+    "Avatar wechseln": "Cambiar avatar",
+    "Hallo {n}! Wähle ein Spiel": "¡Hola, {n}! Elige un juego",
+    "Dein Profil gilt für alle Spiele. Es bleibt auf diesem Gerät.": "Tu perfil vale para todos los juegos. Se queda en este dispositivo.",
     "Einstellungen": "Ajustes",
     "Wähle ein Spiel": "Elige un juego",
     "Musik raten, Bingo spielen – mit Freunden oder allein.": "Adivina música, juega al bingo – con amigos o a solas.",

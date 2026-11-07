@@ -35,3 +35,9 @@ header{max-width:860px}
   .app-go{width:100%}
   .hub-sheet{height:auto}
 }
+
+/* Spielerprofil */
+.cell.prof{gap:12px;padding-top:10px;padding-bottom:10px}
+.prof-emo{width:46px;height:46px;flex:none;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.08);font-size:1.5rem;line-height:1;cursor:pointer;padding:0;display:grid;place-items:center}
+.prof-emo:active{transform:scale(.92)}
+.cell.prof input.bare{font-size:1.05rem;font-weight:600}

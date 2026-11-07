@@ -3,6 +3,10 @@
   name: 'Français',
   flag: '🇫🇷',
   dict: {
+    "Dein Name": "Ton nom",
+    "Avatar wechseln": "Changer d’avatar",
+    "Hallo {n}! Wähle ein Spiel": "Salut {n} ! Choisis un jeu",
+    "Dein Profil gilt für alle Spiele. Es bleibt auf diesem Gerät.": "Ton profil vaut pour tous les jeux. Il reste sur cet appareil.",
     "Einstellungen": "Réglages",
     "Wähle ein Spiel": "Choisis un jeu",
     "Musik raten, Bingo spielen – mit Freunden oder allein.": "Deviner la musique, jouer au bingo – entre amis ou en solo.",

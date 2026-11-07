@@ -3,6 +3,10 @@
   name: 'English',
   flag: '🇬🇧',
   dict: {
+    "Dein Name": "Your name",
+    "Avatar wechseln": "Change avatar",
+    "Hallo {n}! Wähle ein Spiel": "Hi {n}! Pick a game",
+    "Dein Profil gilt für alle Spiele. Es bleibt auf diesem Gerät.": "Your profile works in every game. It stays on this device.",
     "Einstellungen": "Settings",
     "Wähle ein Spiel": "Pick a game",
     "Musik raten, Bingo spielen – mit Freunden oder allein.": "Guess music, play bingo – with friends or on your own.",
