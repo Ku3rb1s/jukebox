@@ -29,6 +29,13 @@
     "mit Spotify": "avec Spotify",
     "ohne Anmeldung": "sans inscription",
     "Spielen": "Jouer",
-    "Die Spieleliste konnte nicht geladen werden.": "Impossible de charger la liste des jeux."
+    "Die Spieleliste konnte nicht geladen werden.": "Impossible de charger la liste des jeux.",
+    "Als App installieren": "Installer comme app",
+    "Startet schneller, im Vollbild und mit eigenem Symbol": "Démarre plus vite, en plein écran, avec sa propre icône",
+    "Tippe auf „Teilen“": "Touche « Partager »",
+    "Wähle „Zum Home-Bildschirm“ – eventuell etwas nach unten scrollen.": "Choisis « Sur l’écran d’accueil » – fais défiler un peu vers le bas si besoin.",
+    "Tippe auf „Hinzufügen“.": "Touche « Ajouter ».",
+    "Die App speichert getrennt vom Browser: Einstellungen und Anmeldungen gibst du dort einmal neu ein.": "L’app enregistre ses données séparément du navigateur : saisis-y une nouvelle fois tes réglages et connexions.",
+    "Verstanden": "Compris",
   },
 };

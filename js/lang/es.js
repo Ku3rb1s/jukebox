@@ -29,6 +29,13 @@
     "mit Spotify": "con Spotify",
     "ohne Anmeldung": "sin registro",
     "Spielen": "Jugar",
-    "Die Spieleliste konnte nicht geladen werden.": "No se pudo cargar la lista de juegos."
+    "Die Spieleliste konnte nicht geladen werden.": "No se pudo cargar la lista de juegos.",
+    "Als App installieren": "Instalar como app",
+    "Startet schneller, im Vollbild und mit eigenem Symbol": "Arranca más rápido, a pantalla completa y con su propio icono",
+    "Tippe auf „Teilen“": "Toca «Compartir»",
+    "Wähle „Zum Home-Bildschirm“ – eventuell etwas nach unten scrollen.": "Elige «Añadir a pantalla de inicio»; quizá tengas que desplazarte un poco hacia abajo.",
+    "Tippe auf „Hinzufügen“.": "Toca «Añadir».",
+    "Die App speichert getrennt vom Browser: Einstellungen und Anmeldungen gibst du dort einmal neu ein.": "La app guarda sus datos aparte del navegador: allí tendrás que volver a introducir tus ajustes e inicios de sesión una vez.",
+    "Verstanden": "Entendido",
   },
 };

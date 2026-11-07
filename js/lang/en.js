@@ -29,6 +29,13 @@
     "mit Spotify": "with Spotify",
     "ohne Anmeldung": "no sign-up",
     "Spielen": "Play",
-    "Die Spieleliste konnte nicht geladen werden.": "Couldn't load the list of games."
+    "Die Spieleliste konnte nicht geladen werden.": "Couldn't load the list of games.",
+    "Als App installieren": "Install as app",
+    "Startet schneller, im Vollbild und mit eigenem Symbol": "Starts faster, full screen, with its own icon",
+    "Tippe auf „Teilen“": "Tap “Share”",
+    "Wähle „Zum Home-Bildschirm“ – eventuell etwas nach unten scrollen.": "Choose “Add to Home Screen” – you may need to scroll down a bit.",
+    "Tippe auf „Hinzufügen“.": "Tap “Add”.",
+    "Die App speichert getrennt vom Browser: Einstellungen und Anmeldungen gibst du dort einmal neu ein.": "The app stores its data separately from the browser: enter your settings and sign-ins there once more.",
+    "Verstanden": "Got it",
   },
 };
