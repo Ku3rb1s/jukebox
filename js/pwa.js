@@ -182,7 +182,10 @@
     });
     logo.addEventListener('pointermove', e => { if (Math.hypot(e.clientX - x0, e.clientY - y0) > 10) clearTimeout(timer); });
     for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) logo.addEventListener(ev, () => clearTimeout(timer));
-    logo.addEventListener('click', e => { if (opened) { e.preventDefault(); e.stopImmediatePropagation(); opened = false; } }, true);
+    // Tipp nach langem Drücken verschlucken; ist das Menü offen, schließt ein Tipp aufs Logo nur das Menü
+    logo.addEventListener('click', e => {
+      if (opened || menu) { e.preventDefault(); e.stopImmediatePropagation(); if (!opened) close(); opened = false; }
+    }, true);
     // Rechtsklick (Computer), langes Drücken unter Android, Kontextmenü-Taste
     logo.addEventListener('contextmenu', e => { e.preventDefault(); clearTimeout(timer); if (!menu) { opened = true; open(); } });
     logo.addEventListener('keydown', e => { if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) { e.preventDefault(); open(); } });

@@ -82,14 +82,15 @@ async function caa(id) {
 /** MusicBrainz, Schritt 1: Single/Album, die so heißt wie der Song („Hound Dog / Don't Be Cruel“), aus der Zeit des Songs */
 async function rgCover(song, vs) {
   const T = MB.baseTitle(song.t).toLowerCase().replace(/[’']/g, "'").trim();
-  const q = `releasegroup:"${MB.baseTitle(song.t).replace(/"/g, '')}" AND (${vs.map(a => `artist:"${a.replace(/"/g, '')}"`).join(' OR ')}) AND (primarytype:single OR primarytype:album OR primarytype:ep)`;
+  // Ohne Typ-Bedingung in der Suche (damit kam MusicBrainz manchmal leer zurück, z. B. „The Boys of Summer“) – Typ siehe unten
+  const q = `releasegroup:"${MB.baseTitle(song.t).replace(/"/g, '')}" AND (${vs.map(a => `artist:"${a.replace(/"/g, '')}"`).join(' OR ')})`;
   let j;
   try { j = await MB.mbJson('https://musicbrainz.org/ws/2/release-group?fmt=json&limit=25&query=' + encodeURIComponent(q)); } catch { return undefined; }
   const okTitle = x => { const t = String(x.title || '').toLowerCase().replace(/[’']/g, "'"); return t === T || (t.startsWith(T) && /^[\s/(:,–-]/.test(t.slice(T.length))); };
   const okArtist = x => { const credit = MB.normStr((x['artist-credit'] || []).map(a => a.name || a.artist?.name).join(''));
     return vs.some(a => credit.includes(MB.normStr(a)) || (credit.length > 2 && MB.normStr(a).includes(credit))); };
   const y = +song.y || 0;
-  const list = (j['release-groups'] || []).filter(x => !(x['secondary-types'] || []).length && okTitle(x) && okArtist(x) && !BAD_VERSION.test(x.title || '') && /^\d{4}/.test(x['first-release-date'] || ''))
+  const list = (j['release-groups'] || []).filter(x => /^(single|album|ep)$/i.test(x['primary-type'] || '') && !(x['secondary-types'] || []).length && okTitle(x) && okArtist(x) && !BAD_VERSION.test(x.title || '') && /^\d{4}/.test(x['first-release-date'] || ''))
     .filter(x => { const ry = +x['first-release-date'].slice(0, 4); return !y || (ry >= y - 1 && ry <= y + 2); })
     .sort((a, b) => a['first-release-date'].localeCompare(b['first-release-date']));
   for (const x of list.slice(0, 4)) if (await caa(x.id)) return { id: x.id, d: x['first-release-date'], t: x.title };
