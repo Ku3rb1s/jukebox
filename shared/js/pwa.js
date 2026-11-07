@@ -8,6 +8,29 @@
   document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 })();
 
+// Fenster offen (dialog mit showModal) → Seite dahinter festhalten. Auf dem iPhone reicht overflow:hidden nicht: Safari scrollt
+// sonst die Seite mit, wenn man über dem Fenster, am Rand oder auf dem abgedunkelten Hintergrund wischt.
+// Darum wird body fest positioniert und beim Schließen wieder an dieselbe Stelle gescrollt. Gilt für alle Fenster, auch neue.
+(() => {
+  let y = null, pad = '';
+  const anyOpen = () => { try { return !!document.querySelector('dialog:modal'); } catch { return !!document.querySelector('dialog[open]'); } };
+  const update = () => {
+    const b = document.body, open = anyOpen();
+    if (!b) return;
+    if (open && y === null) {
+      y = scrollY; pad = b.style.paddingRight;
+      const bar = innerWidth - document.documentElement.clientWidth;          // Bildlaufleiste am Computer: Platz halten, sonst springt die Seite
+      if (bar > 0) b.style.paddingRight = (parseFloat(getComputedStyle(b).paddingRight) || 0) + bar + 'px';
+      Object.assign(b.style, { position: 'fixed', top: -y + 'px', left: '0', right: '0', width: '100%' });
+    } else if (!open && y !== null) {
+      Object.assign(b.style, { position: '', top: '', left: '', right: '', width: '', paddingRight: pad });
+      const to = y; y = null;
+      scrollTo({ top: to, behavior: 'instant' });
+    }
+  };
+  new MutationObserver(update).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['open'] });
+})();
+
 // iPhone/iPad als App vom Home-Bildschirm: Die Statusleiste (Uhr, Akku) liegt über der Seite, der Abstand kommt aus
 // env(safe-area-inset-top). iOS meldet ihn manchmal als 0 – vor allem nach einem Wechsel zu einem anderen Spiel
 // innerhalb der App. Dann rutscht die Kopfzeile unter die Statusleiste. Nur in diesem Fall einen Ersatzwert setzen.
