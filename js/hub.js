@@ -156,19 +156,30 @@ function arm(btn, label, fn) {
 function renderSync() {
   const s = Sync.status(), box = $('#syncBox');
   const unsaved = s.connected && !codeSaved(s.code);
-  $('#syncCta').innerHTML = `<span class="sc-ic">${ICON('cloud')}</span><span class="grow"><b>${s.connected ? tx('Auf allen Geräten verbunden') : tx('Auf allen Geräten spielen')}</b>
-    <span class="sub">${unsaved ? '⚠️ ' + tx('Code noch nicht gesichert – jetzt sichern') : s.connected ? esc(s.code) + ' · ' + esc(syncLine(s)) : tx('Rekorde, Serie und Profil mitnehmen – und in der Bestenliste mitspielen')}</span></span>${ICON('chev')}`;
+  // Knopf unten auf der Startseite und Zeile in den Einstellungen: beide öffnen das Fenster „Dein Code“
+  const title = s.connected ? tx('Dein Code: {c}', { c: s.code }) : tx('Auf anderen Geräten weiterspielen');
+  const sub = unsaved ? '⚠️ ' + tx('Code noch nicht gesichert – jetzt sichern')
+    : s.connected ? '✓ ' + tx('Rekorde und Profil werden abgeglichen') + ' · ' + syncLine(s).replace(/^[✓⚠️ ]+/u, '')
+    : tx('Rekorde, Serien und Profil mit einem Code mitnehmen – ohne E-Mail und Passwort');
+  $('#syncCta').innerHTML = `<span class="sc-ic">${ICON('cloud')}</span><span class="grow"><b data-no-tx>${esc(title)}</b><span class="sub">${esc(sub)}</span></span>${ICON('chev')}`;
   $('#syncCta').classList.toggle('on', s.connected);
   $('#syncCta').classList.toggle('warn', unsaved);
+  $('#syncRowTitle').textContent = s.connected ? tx('Dein Code') : tx('Auf anderen Geräten weiterspielen');
+  $('#syncRowSub').textContent = unsaved ? '⚠️ ' + tx('Noch nicht gesichert') : s.connected ? s.code : tx('Mit einem Code – ohne E-Mail und Passwort');
+  $('#syncRowIc').style.background = unsaved ? 'linear-gradient(135deg,#f59e0b,#ef4444)' : s.connected ? 'linear-gradient(135deg,#10b981,#0ea5e9)' : 'linear-gradient(135deg,#ff4f86,#fbbf24)';
+  $('#syncIntro').innerHTML = s.connected
+    ? tx('Mit diesem Code hast du auf allen verbundenen Geräten dieselben Rekorde, Serien und dasselbe Profil. Er ist auch dein Zugang zur Bestenliste.')
+    : `<b>${tx('Spiel auf Handy, Tablet und Computer mit denselben Rekorden weiter.')}</b>
+      <ol><li>${tx('Hier einen Code erstellen.')}</li><li>${tx('Auf dem anderen Gerät die Jukebox öffnen und den Code eingeben – oder den QR-Code scannen.')}</li></ol>
+      ${tx('Kein Konto, keine E-Mail, kein Passwort.')}`;
   if (!s.connected) {
     box.innerHTML = `
       <button class="cell tap" id="syncNew"><span class="cell-ic" style="background:linear-gradient(135deg,#ff4f86,#fbbf24)">${ICON('plus')}</span>
-        <span class="grow">${tx('Neuen Code erstellen')}<span class="sub">${tx('Auf deinem ersten Gerät')}</span></span>${ICON('chev')}</button>
+        <span class="grow">${tx('Neuen Code erstellen')}<span class="sub">${tx('Wenn du noch keinen hast')}</span></span>${ICON('chev')}</button>
       <div class="cell sync-join"><span class="cell-ic" style="background:#0ea5e9">${ICON('key')}</span>
         <input id="syncInput" class="bare" placeholder="${tx('Code eingeben')}" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" enterkeyhint="go" value="${esc(syncPending)}">
         <button class="sync-go" id="syncJoin">${tx('Verbinden')}</button></div>`;
-    $('#syncFoot').innerHTML = (syncMsg ? `<b class="sync-msg">${esc(syncMsg)}</b><br>` : '') +
-      tx('Mit deinem persönlichen Code hast du Rekorde, Statistik, Tages-Challenge und Profil auf jedem Gerät – ohne Konto und ohne E-Mail.');
+    $('#syncFoot').innerHTML = syncMsg ? `<b class="sync-msg">${esc(syncMsg)}</b>` : '';
     $('#syncNew').onclick = async () => {
       $('#syncNew').disabled = true; syncMsg = '';
       try { await Sync.create(); syncMsg = tx('Dein Code ist fertig. Sichere ihn jetzt, z. B. als Bild – ohne ihn kommst du auf einem neuen Gerät nicht mehr an deine Daten.'); }
@@ -198,7 +209,7 @@ function renderSync() {
     <button class="cell tap" id="syncLeave"><span class="cell-ic" style="background:#6b7280">${ICON('unlink')}</span><span class="grow"><span class="lbl">${tx('Dieses Gerät trennen')}</span><span class="sub">${tx('Deine Daten bleiben hier und beim Code')}</span></span></button>
     <button class="cell tap danger" id="syncWipe"><span class="cell-ic" style="background:#ef4444">${ICON('trash')}</span><span class="grow"><span class="lbl">${tx('Code löschen')}</span><span class="sub">${tx('Löscht die gespeicherten Daten beim Server – auf den Geräten bleibt alles')}</span></span></button>`;
   $('#syncFoot').innerHTML = (syncMsg ? `<b class="sync-msg">${esc(syncMsg)}</b><br>` : '') +
-    tx('Auf einem anderen Gerät den QR-Code mit der Kamera scannen oder den Code in der Jukebox eingeben. Bewahre den Code gut auf: Deine Daten sind damit verschlüsselt – ohne ihn kann sie niemand lesen, auch wir nicht.');
+    tx('Weiteres Gerät verbinden: Dort die Jukebox öffnen und den QR-Code mit der Kamera scannen oder den Code eingeben. Deine Daten sind mit dem Code verschlüsselt – ohne ihn kann sie niemand lesen, auch wir nicht.');
   syncMsg = '';
   $('#syncCopy').onclick = async () => {
     try { await navigator.clipboard.writeText(s.code); markSaved(s.code); $('#syncCopy .lbl').textContent = '✓ ' + tx('Kopiert'); } catch { $('#syncCopy .lbl').textContent = s.code; }
@@ -283,7 +294,12 @@ function loadQr() {
   });
 }
 const openSheet = () => { $('#langSel').innerHTML = langOptions(); applyTheme(); renderProfile(); renderSync(); sheet.showModal(); };
-$('#syncCta').onclick = () => { openSheet(); setTimeout(() => $('#syncAnchor').scrollIntoView({ block: 'start', behavior: 'smooth' }), 80); };
+// Fenster „Dein Code“: vom Knopf unten auf der Startseite, aus den Einstellungen, aus der Bestenliste und über Links (#sync, #code=…)
+const syncSheet = $('#syncSheet');
+const openSync = () => { renderSync(); if (!syncSheet.open) syncSheet.showModal(); };
+syncSheet.addEventListener('click', e => { if (e.target === syncSheet || e.target.closest('[data-close]')) syncSheet.close(); });
+$('#syncCta').onclick = openSync;
+$('#syncRow').onclick = openSync;
 Sync.onStatus(() => { if (!$('#syncInput') || document.activeElement !== $('#syncInput')) renderSync(); board()?.refresh(); });
 // Zurück aus einem Spiel (auch aus dem Zwischenspeicher des Browsers) oder anderer Tab: Stand neu zeigen
 addEventListener('pageshow', e => { if (e.persisted) render(); });
@@ -302,7 +318,7 @@ addEventListener('jukebox-sync', () => { render(); renderProfile(); theme = stor
     else if (s.code !== Sync.normCode(m[1])) { syncMsg = tx('Dieses Gerät ist schon mit einem anderen Code verbunden. Erst trennen, dann den neuen Code eingeben.'); setTimeout(() => $('#syncCta').click(), 300); }
   }
 }
-setInterval(() => { if ($('#syncState') && sheet.open) $('#syncState').textContent = syncLine(Sync.status()); }, 30000);
+setInterval(() => { if ($('#syncState') && syncSheet.open) $('#syncState').textContent = syncLine(Sync.status()); }, 30000);
 
 applyTheme();
 renderProfile();

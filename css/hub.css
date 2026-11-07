@@ -165,5 +165,10 @@ header{max-width:860px}
 .sync-code .code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.35rem;font-weight:800;letter-spacing:.08em;-webkit-user-select:all;user-select:all}
 .sync-qr{width:104px;height:104px;flex:none;background:#fff;border-radius:12px;padding:4px;box-sizing:border-box}
 .sync-qr svg{width:100%;height:100%;display:block}
+.sync-intro{margin:14px 4px 12px;color:var(--muted);font-size:.92rem;line-height:1.5}
+.sync-intro b{color:var(--text);display:block;margin-bottom:6px;font-size:1rem}
+.sync-intro ol{margin:0 0 8px;padding-left:1.3em}
+.sync-intro li{margin:3px 0}
+.hub-sync b{overflow-wrap:anywhere}
 .sync-msg{color:var(--warn,#fbbf24)}
 @media (max-width:400px){.sync-qr{width:84px;height:84px}.sync-code .code{font-size:1.15rem}}

@@ -51,7 +51,7 @@ eigene Kürzel und ruft `Sync.leave()` auf.
 
 ## Abgleich zwischen Geräten (`js/sync.js` + Worker `jukebox-sync`)
 
-- Code in der Jukebox erstellen oder eingeben (Einstellungen → „Auf allen Geräten“, Link `jukebox/#sync`, QR `jukebox/#code=…`).
+- Code in der Jukebox erstellen oder eingeben: Fenster „Dein Code“ (Knopf unten auf der Startseite oder Einstellungen → „Dein Code“, Link `jukebox/#sync`, QR `jukebox/#code=…`).
 - Alles wird im Browser mit dem Code verschlüsselt (AES-GCM). Der Server sieht nur eine Prüfsumme und unlesbare Daten.
 - Server: Cloudflare Worker `jukebox-sync` mit D1-Datenbank, Quelltext in `Spiele-Hub/worker/`
   (`npx wrangler deploy` im Ordner `worker`). Unbenutzte Codes nach 6 Monaten weg, nie benutzte nach 14 Tagen,
