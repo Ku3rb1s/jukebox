@@ -24,14 +24,7 @@ body.locked{overflow:hidden}
 /* Feste Fläche hinter der iPhone-Statusleiste, damit dort nichts verschwommen durchscheint */
 body::before{content:"";position:fixed;top:0;left:0;right:0;height:var(--sat);background:var(--bg);z-index:40;pointer-events:none}
 input,textarea{-webkit-user-select:text;user-select:text}
-.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-/* Akku: Die Farbflächen wandern nur in 5 Schritten pro Sekunde (steps) statt 60 – bei der starken Unschärfe ist jeder Schritt
-   kleiner als ein Pixel, also unsichtbar. Sonst müssten alle Milchglas-Flächen darüber 60× pro Sekunde neu berechnet werden. */
-.bg i{position:absolute;border-radius:50%;opacity:.55;animation:float 22s steps(110) infinite alternate;will-change:transform}
-.bg i:nth-child(1){width:55vmax;height:55vmax;left:-15vmax;top:-20vmax;background:var(--blob1)}
-.bg i:nth-child(2){width:45vmax;height:45vmax;right:-15vmax;top:5vmax;background:var(--blob2);animation-delay:-8s}
-.bg i:nth-child(3){width:40vmax;height:40vmax;left:20vmax;bottom:-25vmax;background:var(--cat);opacity:.18;transition:background 1s;animation-delay:-14s}
-@keyframes float{to{transform:translate(6vmax,4vmax) scale(1.1)}}
+.bg{display:none}  /* früher farbige Kreise im Hintergrund – entfernt; bleibt nur für alte Seiten im Zwischenspeicher */
 @media (prefers-reduced-motion:reduce){*{animation-duration:0s!important;animation-iteration-count:1!important}}
 
 /* ---------- Grundelemente ---------- */
@@ -410,7 +403,6 @@ button.big{font-family:Outfit,-apple-system,system-ui,sans-serif;letter-spacing:
 html.ios .volume,html.ios .hint{display:none}
 [data-theme="oled"]{--bg:#000;--sheet:#000;--surf:16,16,18;--deep:0,0,0;--blob1:#000;--blob2:#000}
 [data-theme="oled"] body{background:#000}
-[data-theme="oled"] .bg{display:none}
 [data-theme="oled"] *,[data-theme="oled"] *::before,[data-theme="oled"] *::after,[data-theme="oled"] ::backdrop{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 [data-theme="oled"] .sheet{background:#09090a}
 [data-theme="oled"] .sheet-head{background:#09090a}
