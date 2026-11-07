@@ -32,3 +32,24 @@ CREATE TABLE IF NOT EXISTS lb_score (
   PRIMARY KEY (id, game, day)
 );
 CREATE INDEX IF NOT EXISTS lb_score_day ON lb_score(game, day, score);
+
+-- Highscores (Allzeit-Rekorde) je Spiel und Kategorie (z. B. Older or Newer „normal.show“). Gespeichert wird nur der höchste Wert.
+CREATE TABLE IF NOT EXISTS lb_high (
+  id TEXT NOT NULL,
+  game TEXT NOT NULL,
+  cat TEXT NOT NULL,
+  score INTEGER NOT NULL,
+  at INTEGER NOT NULL,
+  PRIMARY KEY (id, game, cat)
+);
+CREATE INDEX IF NOT EXISTS lb_high_cat ON lb_high(game, cat, score);
+
+-- Aktuelle Serie der Tages-Challenge je Spiel. day = wann zuletzt gemeldet (ältere Einträge werden nicht gezeigt).
+CREATE TABLE IF NOT EXISTS lb_streak (
+  id TEXT NOT NULL,
+  game TEXT NOT NULL,
+  streak INTEGER NOT NULL,
+  day TEXT NOT NULL,
+  at INTEGER NOT NULL,
+  PRIMARY KEY (id, game)
+);

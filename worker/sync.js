@@ -14,7 +14,9 @@
 //   POST /lb/join   ← { id, name, emoji }   mitmachen bzw. Name ändern (nur mit gültigem Code, Name wird geprüft)
 //   POST /lb/leave  ← { id }                austreten: Name und alle Punkte werden gelöscht
 //   POST /lb/score  ← { id, scores: [{ game, day, score }] }   Tagesergebnisse; pro Spiel und Tag zählt das erste
-//   POST /lb/list   ← { id?, game, range }  range 'day' (heute) oder 'week' (seit Montag) → { joined, n, top, me }
+//   POST /lb/high   ← { id, scores: [{ game, cat, score }] }      Highscores (Allzeit); nur höhere Werte werden übernommen
+//   POST /lb/streak ← { id, scores: [{ game, score }] }            aktuelle Serie der Tages-Challenge
+//   POST /lb/list   ← { id?, game, kind?, cat?, range? }  kind 'high' (cat) oder 'streak', sonst Tages-Challenge: range 'day' (heute) oder 'week' (seit Montag) → { joined, n, top, me }
 //
 // Aufräumen (täglicher Zeitplan):
 //   - Codes, die 6 Monate nicht benutzt wurden
@@ -38,6 +40,15 @@ const LB_GAMES = {                           // gültige Punkte je Spiel (Plausi
   'needle-drop': v => v >= 0 && v <= 3000 && v % 100 === 0,   // 5 Songs × höchstens 600
   'gold-record': v => v >= 0 && v <= 15,                      // erreichte Stufe
 };
+// Highscores (Allzeit-Rekorde): nur vergleichbare Einstellungen, je Spiel eine Kategorie (cat) pro Stufe und Modus
+const LB_HIGH = {
+  'older-or-newer': { cat: /^(easy|normal|hard|pro)\.(show|blind)$/, ok: v => v >= 1 && v <= 3000 },   // längste Serie (Songauswahl „Alle“)
+  'gold-record': { cat: /^(easy|normal|hard)$/, ok: v => v >= 1 && v <= 15 },                         // höchste Stufe (Songauswahl „Alle“)
+};
+// Serien der Tages-Challenge: aktuelle Serie in Tagen. Sie kann auch sinken (verpasster Tag), darum immer übernommen.
+// Gezeigt wird sie nur, wenn sie zuletzt gestern oder heute gemeldet wurde – sonst ist sie wahrscheinlich gerissen.
+const LB_STREAK = { 'needle-drop': true, 'gold-record': true };
+const STREAK_MAX = 3650;
 const LB_TOP = 25;
 const LB_KEEP = 60 * 864e5;                  // Tagesergebnisse 60 Tage aufheben (die Woche braucht nur 7)
 const TZ = 'Europe/Berlin';                  // Tageswechsel wie in den Spielen
@@ -74,8 +85,19 @@ async function leaderboard(action, body, env, json) {
   }
   if (action === 'leave') {
     if (!id) return json({ error: 'bad id' }, 400);
-    await env.DB.batch([env.DB.prepare('DELETE FROM lb_score WHERE id = ?').bind(id), env.DB.prepare('DELETE FROM lb_player WHERE id = ?').bind(id)]);
+    await env.DB.batch([env.DB.prepare('DELETE FROM lb_score WHERE id = ?').bind(id), env.DB.prepare('DELETE FROM lb_high WHERE id = ?').bind(id), env.DB.prepare('DELETE FROM lb_streak WHERE id = ?').bind(id),
+      env.DB.prepare('DELETE FROM lb_player WHERE id = ?').bind(id)]);
     return json({ ok: true });
+  }
+  if (action === 'high') {
+    if (!await player()) return json({ error: 'not joined' }, 403);
+    const list = (Array.isArray(body.scores) ? body.scores : []).slice(0, 16)
+      .filter(x => x && LB_HIGH[x.game] && typeof x.cat === 'string' && LB_HIGH[x.game].cat.test(x.cat) && Number.isInteger(x.score) && LB_HIGH[x.game].ok(x.score));
+    // Nur höher wird übernommen; der Zeitpunkt zählt bei Gleichstand (wer den Wert zuerst hatte, steht vorne)
+    if (list.length) await env.DB.batch(list.map(x => env.DB.prepare(
+      'INSERT INTO lb_high (id, game, cat, score, at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id, game, cat) DO UPDATE SET score = excluded.score, at = excluded.at WHERE excluded.score > lb_high.score')
+      .bind(id, x.game, x.cat, x.score, Date.now())));
+    return json({ ok: true, saved: list.length });
   }
   if (action === 'score') {
     if (!await player()) return json({ error: 'not joined' }, 403);
@@ -85,6 +107,34 @@ async function leaderboard(action, body, env, json) {
     if (list.length) await env.DB.batch(list.map(x =>
       env.DB.prepare('INSERT INTO lb_score (id, game, day, score, at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id, game, day) DO NOTHING').bind(id, x.game, x.day, x.score, Date.now())));
     return json({ ok: true, saved: list.length });
+  }
+  if (action === 'streak') {
+    if (!await player()) return json({ error: 'not joined' }, 403);
+    const list = (Array.isArray(body.scores) ? body.scores : []).slice(0, 4)
+      .filter(x => x && LB_STREAK[x.game] && Number.isInteger(x.score) && x.score >= 0 && x.score <= STREAK_MAX);
+    // at = seit wann die Serie diesen Wert hat (bei Gleichstand steht vorne, wer ihn zuerst erreicht hat)
+    if (list.length) await env.DB.batch(list.map(x => env.DB.prepare(
+      'INSERT INTO lb_streak (id, game, streak, day, at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT(id, game) DO UPDATE SET day = ?4,'
+      + ' at = CASE WHEN lb_streak.streak = ?3 THEN lb_streak.at ELSE ?5 END, streak = ?3').bind(id, x.game, x.score, berlinDay(), Date.now())));
+    return json({ ok: true, saved: list.length });
+  }
+  if (action === 'list' && body.kind === 'streak') {
+    if (!LB_STREAK[body.game]) return json({ error: 'game' }, 400);
+    const { results } = await env.DB.prepare('WITH r AS (SELECT s.id, p.name, p.emoji, s.streak AS score, s.at FROM lb_streak s JOIN lb_player p ON p.id = s.id'
+      + ' WHERE s.game = ?1 AND s.day >= ?2 AND s.streak > 0)'
+      + ' SELECT id, name, emoji, score, at, (SELECT COUNT(*) FROM r r2 WHERE r2.score > r.score) + 1 AS rank FROM r ORDER BY score DESC, at ASC').bind(body.game, berlinDay(-1)).all();
+    const pub = x => ({ rank: x.rank, name: x.name, emoji: x.emoji, score: x.score, me: !!id && x.id === id });
+    const mine = id ? results.findIndex(x => x.id === id) : -1;
+    return json({ joined: await player(), n: results.length, top: results.slice(0, LB_TOP).map(pub), me: mine >= LB_TOP ? pub(results[mine]) : null });
+  }
+  if (action === 'list' && body.kind === 'high') {
+    const H = LB_HIGH[body.game];
+    if (!H || typeof body.cat !== 'string' || !H.cat.test(body.cat)) return json({ error: 'game' }, 400);
+    const { results } = await env.DB.prepare('WITH r AS (SELECT h.id, p.name, p.emoji, h.score, h.at FROM lb_high h JOIN lb_player p ON p.id = h.id WHERE h.game = ?1 AND h.cat = ?2)'
+      + ' SELECT id, name, emoji, score, at, (SELECT COUNT(*) FROM r r2 WHERE r2.score > r.score) + 1 AS rank FROM r ORDER BY score DESC, at ASC').bind(body.game, body.cat).all();
+    const pub = x => ({ rank: x.rank, name: x.name, emoji: x.emoji, score: x.score, me: !!id && x.id === id });
+    const mine = id ? results.findIndex(x => x.id === id) : -1;
+    return json({ joined: await player(), n: results.length, top: results.slice(0, LB_TOP).map(pub), me: mine >= LB_TOP ? pub(results[mine]) : null });
   }
   if (action === 'list') {
     const game = LB_GAMES[body.game] ? body.game : null;
@@ -121,7 +171,7 @@ export default {
     const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 
     const path = new URL(request.url).pathname;
-    const lb = path.match(/^\/lb\/(join|leave|score|list)$/);
+    const lb = path.match(/^\/lb\/(join|leave|score|high|streak|list)$/);
     if (lb) {
       if (request.method !== 'POST') return json({ error: 'method' }, 405);
       const text = await request.text();
@@ -139,7 +189,8 @@ export default {
     }
     if (request.method === 'DELETE') {
       await env.DB.batch([env.DB.prepare('DELETE FROM sync WHERE id = ?').bind(id),
-        env.DB.prepare('DELETE FROM lb_score WHERE id = ?').bind(id), env.DB.prepare('DELETE FROM lb_player WHERE id = ?').bind(id)]);
+        env.DB.prepare('DELETE FROM lb_score WHERE id = ?').bind(id), env.DB.prepare('DELETE FROM lb_high WHERE id = ?').bind(id), env.DB.prepare('DELETE FROM lb_streak WHERE id = ?').bind(id),
+        env.DB.prepare('DELETE FROM lb_player WHERE id = ?').bind(id)]);
       return json({ ok: true });
     }
     if (request.method === 'PUT') {
@@ -183,6 +234,8 @@ export default {
       env.DB.prepare('DELETE FROM lb_score WHERE at < ?').bind(now - LB_KEEP),
       env.DB.prepare('DELETE FROM lb_player WHERE id NOT IN (SELECT id FROM sync)'),
       env.DB.prepare('DELETE FROM lb_score WHERE id NOT IN (SELECT id FROM lb_player)'),
+      env.DB.prepare('DELETE FROM lb_high WHERE id NOT IN (SELECT id FROM lb_player)'),
+      env.DB.prepare('DELETE FROM lb_streak WHERE id NOT IN (SELECT id FROM lb_player)'),
     ]);
   },
 };

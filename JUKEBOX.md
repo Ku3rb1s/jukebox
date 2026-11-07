@@ -63,15 +63,23 @@ eigene Kürzel und ruft `Sync.leave()` auf.
 - Rekorde/Statistik löschen soll auf allen Geräten gelten: nach dem lokalen Löschen `Sync.reset('präfix')` aufrufen.
 - Spiele hören auf `addEventListener('jukebox-sync', …)` und zeichnen dann Startseite/Einstellungen neu.
 
-## Bestenliste der Tages-Challenges (`js/leaderboard.js` in der Jukebox + Worker, Bereich `/lb/`)
+## Bestenliste (`js/leaderboard.js` in der Jukebox + Worker, Bereich `/lb/`)
 
-- Nur sichtbar mit Code. Mitmachen ist freiwillig. Erst dann gehen Name, Emoji und Tagesergebnisse **lesbar** an den Server
+Drei Wertungen:
+- **Tages-Challenge** (Needle Drop, Gold Record): heute bzw. Summe der Woche. Aus `mq.daily` und `gr.daily.<Tag>`,
+  nachgespielte Tage zählen nicht, pro Spiel und Tag zählt das erste Ergebnis (Tabelle `lb_score`).
+- **Highscores** (Older or Newer, Gold Record): Allzeit-Rekord, nur Songauswahl „Alle“, je Stufe (und bei Older or Newer je Modus),
+  damit die Werte vergleichbar sind. Aus `oon.best2.all.<stufe>.<modus>` und `gr.best.all.<stufe>`. Nur höhere Werte werden übernommen (`lb_high`).
+- **Serien** (Needle Drop, Gold Record): laufende Serie der Tages-Challenge. Gezeigt nur, wenn zuletzt gestern oder heute gemeldet (`lb_streak`).
+
+Regeln:
+- Nur sichtbar mit Code. Mitmachen ist freiwillig. Erst dann gehen Name, Emoji und Werte **lesbar** an den Server
   und sind öffentlich. Der Code ist das Konto, gesendet wird nur seine Prüfsumme (wie beim Abgleich).
-- Die Ergebnisse trägt die Jukebox ein, wenn sie geöffnet wird. Sie liest dafür die Tagesergebnisse aus dem Speicher der Spiele
-  (Needle Drop `mq.daily`, Gold Record `gr.daily.<Tag>`; nachgespielte Tage zählen nicht). Pro Spiel und Tag zählt das erste Ergebnis.
-- Server prüft: Code muss existieren, Punkte müssen möglich sein (`LB_GAMES` in `worker/sync.js`), Namen ohne grobe Beleidigungen/Links.
-- Austreten oder „Code löschen“ entfernt Name und Punkte. Tagesergebnisse werden nach 60 Tagen gelöscht.
-- **Neues Spiel mit Tages-Challenge?** In `GAMES` in `js/leaderboard.js` und in `LB_GAMES` im Worker eintragen, dann Worker neu veröffentlichen.
+- Die Werte trägt die Jukebox ein, wenn sie geöffnet wird (aus dem Speicher der Spiele, die Spiele selbst senden nichts).
+- Server prüft: Code muss existieren, Werte müssen möglich sein (`LB_GAMES`, `LB_HIGH`, `LB_STREAK` in `worker/sync.js`), Namen ohne grobe Beleidigungen/Links.
+- Austreten oder „Code löschen“ entfernt Name und alle Werte. Tagesergebnisse werden nach 60 Tagen gelöscht.
+- **Neues Spiel oder neue Wertung?** In `js/leaderboard.js` (`DAILY_RESULTS`, `HIGH`, `VIEWS`) und im Worker (`LB_GAMES`, `LB_HIGH`, `LB_STREAK`)
+  eintragen, neue Tabellen in `worker/schema.sql`, dann `npx wrangler d1 execute jukebox-sync --remote --file schema.sql` und `npx wrangler deploy`.
 
 ## Neues Spiel
 
