@@ -111,3 +111,96 @@
     d.showModal();
   }
 })();
+
+// Spiele-Menü: Logo (bzw. Spielname) oben lange gedrückt halten – oder Rechtsklick / Kontextmenü-Taste – öffnet ein kleines
+// Menü: zurück zur Jukebox oder direkt in ein anderes Spiel. Ein normaler Tipp aufs Logo bleibt wie bisher (Startseite).
+// Einmalig erscheint ein Hinweis darauf. Gilt in allen Spielen; in der Jukebox selbst nicht (dort ist man ja schon).
+(() => {
+  const HOME = 'https://ku3rb1s.github.io/';
+  const GAMES = [
+    ['Needle Drop', 'needle-drop/', 'icon-192.png?v=5'],
+    ['Older or Newer', 'older-or-newer/', 'icon-192.png?v=4'],
+    ['Gold Record', 'gold-record/', 'icon-192.png?v=2'],
+    ['Musik-Bingo', 'musik-bingo-lobby/', 'icon-192.png'],
+  ];
+  const start = () => {
+    if (document.getElementById('hubTitle')) return;                            // Jukebox selbst
+    const logo = document.getElementById('logoBtn') || document.querySelector('header .logo');
+    if (!logo) return;
+    const here = GAMES.find(([name, path]) => location.pathname.includes('/' + path) || document.title.trim() === name)?.[0];
+    const css = document.createElement('style');
+    css.textContent = `
+      #logoBtn,header .logo,#logoBtn img,header .logo img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+      .jb-menu{position:fixed;z-index:9999;min-width:220px;padding:6px;border-radius:16px;background:rgba(24,24,30,.97);color:#fff;
+        border:1px solid rgba(255,255,255,.12);box-shadow:0 18px 50px -12px rgba(0,0,0,.7);font:600 .95rem/1.2 Outfit,system-ui,sans-serif;
+        animation:jbIn .16s ease-out;transform-origin:top left}
+      @keyframes jbIn{from{opacity:0;transform:scale(.94) translateY(-4px)}}
+      .jb-menu a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;color:inherit;text-decoration:none}
+      .jb-menu a:active,.jb-menu a:focus-visible{background:rgba(255,255,255,.1);outline:none}
+      @media (hover:hover){.jb-menu a:hover{background:rgba(255,255,255,.08)}}
+      .jb-menu img{width:26px;height:26px;border-radius:8px;flex:none}
+      .jb-menu .jb-home{font-weight:800}
+      .jb-menu .jb-home svg{width:26px;height:26px;flex:none}
+      .jb-menu hr{border:0;border-top:1px solid rgba(255,255,255,.1);margin:5px 4px}
+      .jb-menu .jb-here{opacity:.5;pointer-events:none}
+      .jb-menu .jb-here::after{content:"✓";margin-left:auto}
+      .jb-hint{position:fixed;z-index:9998;max-width:min(300px,calc(100vw - 24px));padding:10px 12px;border-radius:14px;background:rgba(24,24,30,.97);
+        color:#fff;border:1px solid rgba(255,255,255,.14);box-shadow:0 14px 40px -12px rgba(0,0,0,.7);font:500 .88rem/1.35 Outfit,system-ui,sans-serif;
+        animation:jbIn .2s ease-out;transform-origin:top left}
+      .jb-hint b{font-weight:800}`;
+    document.head.appendChild(css);
+    logo.querySelectorAll('img').forEach(i => i.draggable = false);
+
+    let menu = null, hint = null;
+    const close = () => { menu?.remove(); menu = null; removeEventListener('scroll', close, true); };
+    const place = el => {                                                          // unter dem Logo, innerhalb des Bildschirms
+      const r = logo.getBoundingClientRect();
+      el.style.top = Math.round(r.bottom + 8) + 'px';
+      el.style.left = Math.round(Math.max(12, Math.min(r.left, innerWidth - el.offsetWidth - 12))) + 'px';
+    };
+    function open() {
+      if (menu) return close();
+      hint?.remove(); hint = null;
+      menu = document.createElement('nav');
+      menu.className = 'jb-menu';
+      menu.setAttribute('aria-label', tx('Spiele'));
+      menu.innerHTML = `<a class="jb-home" href="${HOME}jukebox/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg>${tx('Zur Jukebox')}</a><hr>`
+        + GAMES.map(([name, path, icon]) => `<a href="${HOME}${path}"${name === here ? ' class="jb-here" aria-current="page"' : ''}><img src="${HOME}${path}${icon}" alt="">${name}</a>`).join('');
+      document.body.appendChild(menu);
+      place(menu);
+      menu.querySelector('a').focus({ preventScroll: true });
+      setTimeout(() => addEventListener('scroll', close, true), 0);
+      try { navigator.vibrate?.(12); } catch {}
+    }
+    // Lange drücken (Handy): nach 450 ms öffnen, den folgenden Tipp (Startseite) dann verschlucken
+    let timer = 0, x0 = 0, y0 = 0, opened = false;
+    logo.addEventListener('pointerdown', e => {
+      if (e.button) return;
+      x0 = e.clientX; y0 = e.clientY; opened = false;
+      clearTimeout(timer); timer = setTimeout(() => { opened = true; open(); }, 450);
+    });
+    logo.addEventListener('pointermove', e => { if (Math.hypot(e.clientX - x0, e.clientY - y0) > 10) clearTimeout(timer); });
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) logo.addEventListener(ev, () => clearTimeout(timer));
+    logo.addEventListener('click', e => { if (opened) { e.preventDefault(); e.stopImmediatePropagation(); opened = false; } }, true);
+    // Rechtsklick (Computer), langes Drücken unter Android, Kontextmenü-Taste
+    logo.addEventListener('contextmenu', e => { e.preventDefault(); clearTimeout(timer); if (!menu) { opened = true; open(); } });
+    logo.addEventListener('keydown', e => { if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) { e.preventDefault(); open(); } });
+    document.addEventListener('pointerdown', e => { if (menu && !menu.contains(e.target) && !logo.contains(e.target)) close(); }, true);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && menu) { close(); logo.focus(); } });
+    addEventListener('resize', close);
+
+    // Einmaliger Hinweis (gilt für alle Spiele zusammen)
+    let seen = false; try { seen = !!localStorage.getItem('jb.logoHint'); } catch {}
+    if (!seen) setTimeout(() => {
+      if (menu || document.querySelector('dialog[open]')) return;
+      try { localStorage.setItem('jb.logoHint', '1'); } catch {}
+      hint = document.createElement('div');
+      hint.className = 'jb-hint'; hint.setAttribute('role', 'status');
+      hint.innerHTML = tx('<b>Tipp:</b> Logo gedrückt halten – zur Jukebox und zu den anderen Spielen.');
+      document.body.appendChild(hint); place(hint);
+      const off = () => { hint?.remove(); hint = null; };
+      setTimeout(off, 6000); document.addEventListener('pointerdown', off, { once: true, capture: true });
+    }, 2500);
+  };
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', start) : start();
+})();
