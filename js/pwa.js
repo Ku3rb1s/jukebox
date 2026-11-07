@@ -1,5 +1,32 @@
 // App-Modus: Zwischenspeicher (sw.js) anmelden und „Als App installieren“ anbieten (Knopf #btnInstall in den Einstellungen).
 // Gleiche Datei in Musik-Bingo, Needle Drop und Jukebox.
+// iPhone/iPad als App vom Home-Bildschirm: Die Statusleiste (Uhr, Akku) liegt über der Seite, der Abstand kommt aus
+// env(safe-area-inset-top). iOS meldet ihn manchmal als 0 – vor allem nach einem Wechsel zu einem anderen Spiel
+// innerhalb der App. Dann rutscht die Kopfzeile unter die Statusleiste. Nur in diesem Fall einen Ersatzwert setzen.
+(() => {
+  const ios = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!ios || !(navigator.standalone === true || matchMedia('(display-mode: standalone)').matches)) return;
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top)';
+  const fix = () => {
+    const root = document.documentElement;
+    root.style.removeProperty('--sat');
+    document.body.appendChild(probe);
+    const env = parseFloat(getComputedStyle(probe).paddingTop) || 0;
+    probe.remove();
+    if (env > 0) return;                                            // iOS meldet den Abstand richtig
+    const phone = /iP(hone|od)/.test(navigator.userAgent);
+    if (phone && innerWidth > innerHeight) return;                  // iPhone quer: keine Statusleiste
+    const h = Math.max(screen.height, screen.width);
+    // Höhe der Statusleiste: Dynamic Island 59, Notch 47, ältere iPhones 20, iPad 24
+    root.style.setProperty('--sat', (!phone ? 24 : h >= 852 ? 59 : h >= 812 ? 47 : 20) + 'px');
+  };
+  fix();
+  addEventListener('load', fix);
+  addEventListener('pageshow', fix);
+  addEventListener('resize', () => setTimeout(fix, 60));
+})();
+
 (() => {
   // Lokal (Testserver) kein Zwischenspeicher – sonst sieht man beim Entwickeln alte Dateien. Zum Testen: localStorage pwa.test = 1
   const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
