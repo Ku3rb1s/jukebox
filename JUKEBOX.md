@@ -112,6 +112,10 @@ Regeln:
 
 - Texte im Code auf Deutsch mit `tx()`, Übersetzungen in `js/lang/{en,fr,es,nb}.js` (alle vier Sprachen pflegen).
 - Bei jedem Update: `APP_VERSION` erhöhen, `CHANGELOG.md` ergänzen, `?v=` geänderter Dateien in `index.html` erhöhen.
+- **Gold Record:** Die Songdaten (`data/*.json`) haben eine eigene Version `DATA_V` in `js/game.js` – nur erhöhen, wenn sich
+  Songdaten geändert haben (dann bleiben sie bei normalen Updates im Zwischenspeicher der Handys).
+- Ein Ergebnis ist nur in der Bestenliste, wenn es in `BOARD` in `shared/js/sync.js` steht (Tages-Challenge, Highscores, Serien) –
+  neue Wertung dort und im Worker eintragen.
 - Vor dem Hochladen `git pull --rebase` – oft arbeiten mehrere Sitzungen gleichzeitig an den Spielen.
   Nur die eigenen Dateien einchecken, fremde offene Änderungen nicht mit einchecken.
 - Rückfragen im Spiel nicht mit `confirm()`/`alert()`, sondern mit einem Dialog im Stil des Spiels.
