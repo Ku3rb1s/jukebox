@@ -121,6 +121,7 @@ $('#profName').oninput = () => { Profile.set({ name: $('#profName').value }); re
 $('#profName').onkeydown = e => { if (e.key === 'Enter') $('#profName').blur(); };
 
 $('#btnSettings').onclick = () => openSheet();
+$('#btnBoard').onclick = () => board()?.open();
 sheet.addEventListener('click', e => { if (e.target === sheet || e.target.closest('[data-close]')) sheet.close(); });
 $('#langSel').onchange = e => setLang(e.target.value);
 $('#themeRow').onclick = e => { const b = e.target.closest('[data-theme-pick]'); if (b) setTheme(b.dataset.themePick); };
@@ -292,6 +293,7 @@ addEventListener('jukebox-sync', () => { render(); renderProfile(); theme = stor
 // Link aus dem QR-Code: …/jukebox/#code=K7QM-2XD9-HF4P → Code eintragen (und aus der Adresszeile entfernen)
 {
   const m = location.hash.match(/code=([A-Za-z0-9-]{12,16})/);
+  if (location.hash === '#bestenliste') { history.replaceState(null, '', location.pathname + location.search); setTimeout(() => board()?.open(), 300); }
   if (location.hash === '#sync') { history.replaceState(null, '', location.pathname + location.search); setTimeout(() => $('#syncCta').click(), 300); }
   if (m) {
     history.replaceState(null, '', location.pathname + location.search);

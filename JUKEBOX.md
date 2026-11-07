@@ -73,8 +73,10 @@ Drei Wertungen:
 - **Serien** (Needle Drop, Gold Record): laufende Serie der Tages-Challenge. Gezeigt nur, wenn zuletzt gestern oder heute gemeldet (`lb_streak`).
 
 Regeln:
-- Nur sichtbar mit Code. Mitmachen ist freiwillig. Erst dann gehen Name, Emoji und Werte **lesbar** an den Server
-  und sind öffentlich. Der Code ist das Konto, gesendet wird nur seine Prüfsumme (wie beim Abgleich).
+- Eigenes Fenster, geöffnet über den goldenen Knopf oben in der Jukebox (Link: `jukebox/#bestenliste`). Anschauen kann jeder.
+- Mitmachen ist freiwillig und geht in einem Schritt: Name eintragen (Pflicht), „Mitmachen“ – fehlt ein Code, wird er dabei
+  erstellt; danach wird „Code sichern“ angeboten, bis er gesichert ist. Erst beim Mitmachen gehen Name, Emoji und Werte **lesbar**
+  an den Server und sind öffentlich. Der Code ist das Konto, gesendet wird nur seine Prüfsumme (wie beim Abgleich).
 - Die Werte trägt die Jukebox ein, wenn sie geöffnet wird (aus dem Speicher der Spiele, die Spiele selbst senden nichts).
 - Server prüft: Code muss existieren, Werte müssen möglich sein (`LB_GAMES`, `LB_HIGH`, `LB_STREAK` in `worker/sync.js`), Namen ohne grobe Beleidigungen/Links.
 - Austreten oder „Code löschen“ entfernt Name und alle Werte. Tagesergebnisse werden nach 60 Tagen gelöscht.
