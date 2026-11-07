@@ -104,6 +104,12 @@ header{max-width:860px}
 .hub-sync .sc-ic .ic{width:22px;height:22px}
 .hub-sync>.ic{width:18px;height:18px;color:var(--muted)}
 .hub-sync.on .sc-ic{background:linear-gradient(135deg,#10b981,#0ea5e9)}
+.hub-sync.warn{box-shadow:inset 0 0 0 1.5px rgba(251,191,36,.6)}
+.hub-sync.warn .sc-ic{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+.hub-sync.warn .sub{color:#fbbf24}
+.sync-warn{background:rgba(251,191,36,.12)}
+.sync-warn b{color:#fbbf24}
+.sync-warn .sub{display:block;margin-top:3px}
 .sync-box .cell.danger .lbl{color:var(--danger)}
 .sync-box .cell[data-armed] .lbl{font-weight:800}
 .sync-join{gap:12px}
