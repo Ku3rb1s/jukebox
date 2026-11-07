@@ -78,7 +78,10 @@ if (want('covers')) {
   if (which.length) run(HUB, 'scripts/check-covers.js', { COVER_GAMES: which.map(([, d]) => d).join(',') });
 }
 // 5. Hit or Miss
-if (want('hom') && exists(G.hom) && (ok.hom = clean('hom'))) run(G.hom, 'scripts/build-data.js');
+if (want('hom') && exists(G.hom) && (ok.hom = clean('hom'))) {
+  // build-data → andere Fassungen der (neuen) Songs bei Deezer suchen → nochmal build-data mit diesen Fassungen
+  run(G.hom, 'scripts/build-data.js') && exists(path.join(G.hom, 'scripts/build-versions.js')) && run(G.hom, 'scripts/build-versions.js') && run(G.hom, 'scripts/build-data.js');
+}
 
 // 6. DATA_V erhöhen, wo sich Songdaten geändert haben – aber nur, wenn js/game.js sonst unverändert ist
 const changed = k => ok[k] && git(G[k], 'status', '--porcelain', '--', ...DATA[k].map(f => 'data/' + f)).length > 0;

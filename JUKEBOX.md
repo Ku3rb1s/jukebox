@@ -107,7 +107,7 @@ Regeln:
   Hochgeladen wird nur bei Änderungen. Per Hand: GitHub → Actions → „Songlisten aktualisieren“ → Run workflow.
 - Lokal genauso: `node scripts/update-songs.js` (nur bauen + Bericht), `--commit` (hochladen), `--only gr,oon,covers,hom`.
   Ein Spiel mit offenen fremden Änderungen in `data/` wird übersprungen.
-- Hit or Miss (`hom`) baut sein Datenpaket aus Gold Record und Older or Newer; das läuft vorerst nur lokal mit dem Skript.
+- Hit or Miss: eigene Automatik montags 7:10 (nach den beiden anderen, aus deren Daten es baut): build-data → build-versions → build-data.
 
 ## Neues Spiel
 
