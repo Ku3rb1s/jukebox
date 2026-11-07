@@ -5,6 +5,7 @@
 - [Musik-Bingo](https://ku3rb1s.github.io/musik-bingo-lobby/) – Repo `musik-bingo-lobby`
 - [Needle Drop](https://ku3rb1s.github.io/needle-drop/) – Repo `needle-drop`
 - [Older or Newer](https://ku3rb1s.github.io/older-or-newer/) – Repo `older-or-newer`
+- [Gold Record](https://ku3rb1s.github.io/gold-record/) – Repo `gold-record`
 
 Lokal starten: `node server.js` → http://127.0.0.1:8891/
 
