@@ -39,16 +39,25 @@ function streakOf(has, d) { if (!has(d)) d = prevDay(d); let n = 0; while (has(d
 const stat = (cls, txt) => `<span class="stat ${cls}">${esc(txt)}</span>`;
 const daily = (done, streak) => (done ? stat('ok', '✓ ' + tx('Tägliche Challenge erledigt')) : stat('todo', '📅 ' + tx('Tägliche Challenge offen')))
   + (streak ? stat('', '🔥 ' + tx('Serie {n}', { n: streak })) : '');
-const STATUS = {
+// Tägliche Challenge je Spiel: heute erledigt? und Serie
+const DAILY = {
   // Needle Drop: Tageswechsel nach deutscher Zeit, nachgespielte Tage (late) zählen nicht zur Serie
   'needle-drop': () => {
     const L = store.get('mq.daily') || {}, t = dayOf('Europe/Berlin');
-    return daily(!!L[t], streakOf(d => L[d] && !L[d].late, t));
+    return { done: !!L[t], streak: streakOf(d => L[d] && !L[d].late, t) };
   },
   // Gold Record: Tageswechsel nach Gerätezeit, Serie aus dailyLog
   'gold-record': () => {
-    const dl = store.get('gr.dailyLog') || {}, t = dayOf(), st = Sync.view('gr.stats', store.get('gr.stats'));
-    return daily(!!store.get('gr.daily.' + t), streakOf(d => d in dl, t)) + (st?.best ? stat('', '🏆 ' + tx('Beste Runde: {n}/15', { n: st.best })) : '');
+    const dl = store.get('gr.dailyLog') || {}, t = dayOf();
+    return { done: !!store.get('gr.daily.' + t), streak: streakOf(d => d in dl, t) };
+  },
+};
+function dailyOf(id) { try { return DAILY[id]?.() || null; } catch { return null; } }
+const STATUS = {
+  'needle-drop': () => { const d = dailyOf('needle-drop'); return d ? daily(d.done, d.streak) : ''; },
+  'gold-record': () => {
+    const d = dailyOf('gold-record'), st = Sync.view('gr.stats', store.get('gr.stats'));
+    return (d ? daily(d.done, d.streak) : '') + (st?.best ? stat('', '🏆 ' + tx('Beste Runde: {n}/15', { n: st.best })) : '');
   },
   'older-or-newer': () => {
     const st = Sync.view('oon.stats', store.get('oon.stats'));
@@ -80,6 +89,19 @@ function render() {
       </div>
       <span class="app-go"><svg class="ic"><use href="#i-play"/></svg><span>${tx('Spielen')}</span></span>
     </a>`).join('');
+  renderToday();
+}
+/** Oben: welche Tages-Challenges heute noch offen sind (Knöpfe führen direkt ins Spiel) */
+function renderToday() {
+  const games = DATA.apps.map(a => ({ a, d: dailyOf(a.id) })).filter(x => x.d);
+  const open = games.filter(x => !x.d.done), box = $('#today');
+  if (!games.length) return box.classList.add('hidden');
+  box.classList.remove('hidden');
+  box.classList.toggle('all', !open.length);
+  box.innerHTML = open.length
+    ? `<span class="today-h">📅 ${tx('Heute noch offen:')}</span>` + open.map(({ a, d }) =>
+      `<a class="today-go" href="${esc(a.url)}" style="--c:${esc(a.color || '#888')}"><img src="${esc(a.icon)}" alt="">${esc(a.name)}${d.streak ? ` <small>🔥 ${d.streak}</small>` : ''}</a>`).join('')
+    : `<span class="today-h">✓ ${tx('Alle Tages-Challenges erledigt – morgen gibt es neue.')}</span>`;
 }
 
 /* ---------- Einstellungen ---------- */

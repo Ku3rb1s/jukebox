@@ -80,5 +80,7 @@
     "Serie {n}": "Série {n}",
     "Beste Runde: {n}/15": "Meilleure partie : {n}/15",
     "Rekord: {n} in Folge": "Record : {n} d’affilée",
+    "Heute noch offen:": "Encore à faire aujourd’hui :",
+    "Alle Tages-Challenges erledigt – morgen gibt es neue.": "Tous les défis du jour sont faits – nouveaux défis demain.",
   },
 };

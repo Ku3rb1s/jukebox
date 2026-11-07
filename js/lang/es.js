@@ -80,5 +80,7 @@
     "Serie {n}": "Racha {n}",
     "Beste Runde: {n}/15": "Mejor partida: {n}/15",
     "Rekord: {n} in Folge": "Récord: {n} seguidas",
+    "Heute noch offen:": "Pendiente hoy:",
+    "Alle Tages-Challenges erledigt – morgen gibt es neue.": "Todos los retos diarios completados – mañana hay nuevos.",
   },
 };

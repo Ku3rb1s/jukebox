@@ -80,5 +80,7 @@
     "Serie {n}": "Streak {n}",
     "Beste Runde: {n}/15": "Best run: {n}/15",
     "Rekord: {n} in Folge": "Record: {n} in a row",
+    "Heute noch offen:": "Still open today:",
+    "Alle Tages-Challenges erledigt – morgen gibt es neue.": "All daily challenges done – new ones tomorrow.",
   },
 };

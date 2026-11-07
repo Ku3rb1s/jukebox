@@ -80,5 +80,7 @@
     "Serie {n}": "Rekke {n}",
     "Beste Runde: {n}/15": "Beste runde: {n}/15",
     "Rekord: {n} in Folge": "Rekord: {n} på rad",
+    "Heute noch offen:": "Gjenstår i dag:",
+    "Alle Tages-Challenges erledigt – morgen gibt es neue.": "Alle dagens utfordringer er fullført – nye i morgen.",
   },
 };
