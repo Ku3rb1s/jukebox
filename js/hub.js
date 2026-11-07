@@ -56,8 +56,10 @@ function dailyOf(id) { try { return DAILY[id]?.() || null; } catch { return null
 const STATUS = {
   'needle-drop': () => { const d = dailyOf('needle-drop'); return d ? daily(d.done, d.streak) : ''; },
   'gold-record': () => {
-    const d = dailyOf('gold-record'), st = Sync.view('gr.stats', store.get('gr.stats'));
-    return (d ? daily(d.done, d.streak) : '') + (st?.best ? stat('', '🏆 ' + tx('Beste Runde: {n}/15', { n: st.best })) : '');
+    // Wie oft Diamant (15/15) – Startwert aus früheren Runden + alle Geräte (wie in Gold Record und der Bestenliste)
+    const d = dailyOf('gold-record'), start = store.get('gr.diaStart') || {}, all = Sync.view('gr.diamonds', store.get('gr.diamonds')) || {};
+    const dia = ['easy', 'normal', 'hard'].reduce((n, k) => n + (+start[k] || 0) + (+all[k] || 0), 0);
+    return (d ? daily(d.done, d.streak) : '') + (dia ? stat('', '💎 ' + tx('Diamant: {n}×', { n: dia })) : '');
   },
   'older-or-newer': () => {
     const st = Sync.view('oon.stats', store.get('oon.stats'));
@@ -156,14 +158,20 @@ function arm(btn, label, fn) {
 function renderSync() {
   const s = Sync.status(), box = $('#syncBox');
   const unsaved = s.connected && !codeSaved(s.code);
-  // Knopf unten auf der Startseite und Zeile in den Einstellungen: beide öffnen das Fenster „Dein Code“
-  const title = s.connected ? tx('Dein Code: {c}', { c: s.code }) : tx('Auf anderen Geräten weiterspielen');
-  const sub = unsaved ? '⚠️ ' + tx('Code noch nicht gesichert – jetzt sichern')
-    : s.connected ? '✓ ' + tx('Rekorde und Profil werden abgeglichen') + ' · ' + syncLine(s).replace(/^[✓⚠️ ]+/u, '')
+  // Startseite: Ohne Code eine Einladung (große Karte). Mit Code nur eine unauffällige Zeile – der Code selbst steht nicht
+  // mehr offen da. Die Karte kommt nur zurück, wenn etwas zu tun ist (Code nicht gesichert, Abgleich klappt nicht).
+  // Beide öffnen das Fenster „Dein Code“, ebenso die Zeile in den Einstellungen.
+  const problem = s.connected && !!s.err, big = !s.connected || unsaved || problem;
+  const title = s.connected ? tx('Dein Code') : tx('Auf anderen Geräten weiterspielen');
+  const sub = unsaved ? '⚠️ ' + tx('Code noch nicht gesichert – jetzt sichern') : problem ? syncLine(s)
     : tx('Rekorde, Serien und Profil mit einem Code mitnehmen – ohne E-Mail und Passwort');
-  $('#syncCta').innerHTML = `<span class="sc-ic">${ICON('cloud')}</span><span class="grow"><b data-no-tx>${esc(title)}</b><span class="sub">${esc(sub)}</span></span>${ICON('chev')}`;
+  $('#syncCta').innerHTML = `<span class="sc-ic">${ICON('cloud')}</span><span class="grow"><b>${esc(title)}</b><span class="sub">${esc(sub)}</span></span>${ICON('chev')}`;
+  $('#syncCta').classList.toggle('hidden', !big);
   $('#syncCta').classList.toggle('on', s.connected);
-  $('#syncCta').classList.toggle('warn', unsaved);
+  $('#syncCta').classList.toggle('warn', unsaved || problem);
+  $('#syncMini').classList.toggle('hidden', big);
+  $('#syncMini').innerHTML = `${ICON('cloud')} ${tx('Auf deinen Geräten abgeglichen')} · <button type="button" class="hub-link">${tx('Dein Code')}</button>`;
+  $('#syncMini').querySelector('button').onclick = () => openSync();
   $('#syncRowTitle').textContent = s.connected ? tx('Dein Code') : tx('Auf anderen Geräten weiterspielen');
   $('#syncRowSub').textContent = unsaved ? '⚠️ ' + tx('Noch nicht gesichert') : s.connected ? s.code : tx('Mit einem Code – ohne E-Mail und Passwort');
   $('#syncRowIc').style.background = unsaved ? 'linear-gradient(135deg,#f59e0b,#ef4444)' : s.connected ? 'linear-gradient(135deg,#10b981,#0ea5e9)' : 'linear-gradient(135deg,#ff4f86,#fbbf24)';
