@@ -25,7 +25,7 @@ const want = step => !only.length || only.includes(step);
 const today = new Date().toISOString().slice(0, 10);
 const G = { gr: path.join(DOCS, 'Gold-Record'), oon: path.join(DOCS, 'Older-or-Newer'), hom: path.join(DOCS, 'Hit-or-Miss'), nd: path.join(DOCS, 'Musik-Quiz') };
 const DATA = { gr: ['songs.json', 'extra.json', 'more.json', 'years.json', 'genres.json', 'feat.json', 'billions.json', 'covers.json'],
-  oon: ['songs.json', 'songs-auto.txt', 'mb-years.json', 'covers.json'], hom: ['tracks.json'] };
+  oon: ['songs.json', 'songs-auto.txt', 'mb-years.json', 'dz-years.json', 'covers.json'], hom: ['tracks.json'] };
 
 const log = (...a) => console.log(...a);
 const git = (dir, ...a) => execFileSync('git', a, { cwd: dir, encoding: 'utf8' }).trim();
