@@ -17,12 +17,15 @@ In `apps.json` einen Eintrag ergänzen – mehr ist nicht nötig:
   "id": "mein-spiel",
   "name": "Mein Spiel",
   "url": "https://ku3rb1s.github.io/mein-spiel/",
-  "icon": "https://ku3rb1s.github.io/mein-spiel/icon-192.png",
+  "icon": "https://ku3rb1s.github.io/mein-spiel/icon-192.png?v=1",
   "color": "#22c55e",
   "desc": { "de": "Kurzbeschreibung", "en": "Short description" },
   "tags": ["group", "solo", "lobby", "daily", "spotify", "nologin"]
 }
 ```
+
+**Logo geändert?** Bei `icon` die Zahl hinter `?v=` erhöhen (am besten dieselbe wie im Spiel selbst) – sonst zeigen Browser
+noch eine Weile das alte Bild aus dem Zwischenspeicher.
 
 Fehlt eine Sprache bei `desc`, wird Deutsch gezeigt. Tags: `group`, `solo`, `lobby`, `daily`, `spotify`, `nologin`
 (neue Tags in `js/hub.js` bei `TAGS` und in den Sprachdateien ergänzen).
