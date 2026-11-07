@@ -193,6 +193,15 @@ dialog::backdrop{backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 
 .group-h{display:flex;justify-content:space-between;align-items:center;font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:24px 16px 8px}
 .group-h button{background:none;color:var(--accent);padding:0;text-transform:none;letter-spacing:0;font-size:.9rem;font-weight:600}
+/* Avatar wählen (Profile.pick in js/profile.js) */
+.emo-pick{height:min(640px,calc(100dvh - 48px))}
+.emo-pick .group-h:first-child{margin-top:12px}
+.emo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px;padding:0 4px}
+.emo-grid button{aspect-ratio:1;min-width:0;padding:0;border-radius:14px;font-size:1.75rem;line-height:1;display:grid;place-items:center;
+  background:rgba(255,255,255,.06);border:1px solid transparent;box-shadow:none;transition:transform .12s,background .15s}
+.emo-grid button:active{transform:scale(.9)}
+@media (hover:hover){.emo-grid button:hover{background:rgba(255,255,255,.12)}}
+.emo-grid button.on{background:rgba(255,255,255,.16);border-color:var(--accent)}
 .group-f{font-size:.8rem;color:var(--muted);margin:8px 16px 0;line-height:1.45}
 .group{border-radius:14px;overflow:hidden;margin-top:8px}
 .cell{display:flex;align-items:center;gap:12px;min-height:52px;padding:10px 14px;position:relative;width:100%;

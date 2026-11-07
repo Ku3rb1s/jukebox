@@ -158,5 +158,9 @@
     "Wenn du noch keinen hast": "If you don’t have one yet",
     "Ich habe schon einen Code": "I already have a code",
     "Weiteres Gerät verbinden: Dort die Jukebox öffnen und den QR-Code mit der Kamera scannen oder den Code eingeben. Deine Daten sind mit dem Code verschlüsselt – ohne ihn kann sie niemand lesen, auch wir nicht.": "Connect another device: open the Jukebox there and scan the QR code with the camera or enter the code. Your data is encrypted with the code – without it nobody can read it, not even us.",
+    "Avatar wählen": "Choose avatar",
+    "Tiere": "Animals",
+    "Musik": "Music",
+    "Sonstiges": "Other",
   },
 };

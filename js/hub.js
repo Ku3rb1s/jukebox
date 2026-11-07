@@ -116,7 +116,7 @@ function renderProfile() {
   $('#profName').placeholder = tx('Dein Name');
   $('#hello').textContent = p.name ? tx('Hallo {n}! Wähle ein Spiel', { n: p.emoji + ' ' + p.name }) : tx('Wähle ein Spiel');
 }
-$('#profEmoji').onclick = () => { Profile.nextEmoji(); renderProfile(); board()?.profileChanged(); };
+$('#profEmoji').onclick = () => Profile.pick(() => { renderProfile(); board()?.profileChanged(); });   // Auswahl-Fenster (js/profile.js)
 $('#profName').oninput = () => { Profile.set({ name: $('#profName').value }); renderProfile(); board()?.profileChanged(); };
 $('#profName').onkeydown = e => { if (e.key === 'Enter') $('#profName').blur(); };
 

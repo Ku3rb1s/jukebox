@@ -158,5 +158,9 @@
     "Wenn du noch keinen hast": "Hvis du ikke har en ennå",
     "Ich habe schon einen Code": "Jeg har allerede en kode",
     "Weiteres Gerät verbinden: Dort die Jukebox öffnen und den QR-Code mit der Kamera scannen oder den Code eingeben. Deine Daten sind mit dem Code verschlüsselt – ohne ihn kann sie niemand lesen, auch wir nicht.": "Koble til en enhet til: Åpne Jukebox der og skann QR-koden med kameraet eller skriv inn koden. Dataene dine er kryptert med koden – uten den kan ingen lese dem, heller ikke vi.",
+    "Avatar wählen": "Velg avatar",
+    "Tiere": "Dyr",
+    "Musik": "Musikk",
+    "Sonstiges": "Annet",
   },
 };

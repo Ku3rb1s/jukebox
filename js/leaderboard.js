@@ -265,7 +265,7 @@ const Board = (() => {
       $('#lbJoin').onclick = join; $('#lbName').oninput = ready; ready();
       $('#lbName').onkeydown = e => { if (e.key === 'Enter' && !$('#lbJoin').disabled) join(); };
     }
-    if ($('#lbEmoji')) $('#lbEmoji').onclick = () => { Profile.nextEmoji(); renderProfile(); const v = $('#lbName').value; draw(); $('#lbName').value = v; };
+    if ($('#lbEmoji')) $('#lbEmoji').onclick = () => { const v = $('#lbName').value; Profile.pick(() => { renderProfile(); draw(); if ($('#lbName')) { $('#lbName').value = v; $('#lbName').dispatchEvent(new Event('input')); } }); };
     if ($('#lbLeave')) arm($('#lbLeave'), tx('Nochmal tippen zum Austreten'), leave);
     if ($('#lbSave')) $('#lbSave').onclick = () => { sheet.close(); fresh = false; msg = ''; $('#syncCta').click(); };
   }
