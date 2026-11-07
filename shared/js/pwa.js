@@ -121,6 +121,7 @@
     ['Needle Drop', 'needle-drop/', 'icon-192.png?v=5'],
     ['Older or Newer', 'older-or-newer/', 'icon-192.png?v=4'],
     ['Gold Record', 'gold-record/', 'icon-192.png?v=2'],
+    ['Hit or Miss', 'hit-or-miss/', 'icon-192.png?v=1'],
     ['Musik-Bingo', 'musik-bingo-lobby/', 'icon-192.png'],
   ];
   const start = () => {

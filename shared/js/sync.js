@@ -24,14 +24,14 @@ const Sync = (() => {
     [/^jb\.lbOn$/, 'latest'],                       // in der Bestenliste mitmachen (ja/nein) – gilt für alle Geräte mit dem Code
     [/^(mq|hub)\.(theme|lang)$/, 'latest'],
     [/^(mq|oon)\.best2\./, 'max'],
-    [/^gr\.best\./, 'max'],
+    [/^(gr|hom)\.best\./, 'max'],
     [/^mq\.dailyBest$/, 'max'],
     [/^mq\.daily$/, 'days'],
-    [/^gr\.daily\.\d{4}-\d{2}-\d{2}$/, 'day'],
-    [/^gr\.dailyLog$/, 'mapmax'],
-    [/^(gr|mq)\.ach$/, 'union'],
+    [/^(gr|hom)\.daily\.\d{4}-\d{2}-\d{2}$/, 'day'],
+    [/^(gr|hom)\.dailyLog$/, 'mapmax'],
+    [/^(gr|mq|hom)\.ach$/, 'union'],
     [/^gr\.top$/, 'top'],
-    [/^(mq|oon|gr)\.stats$/, 'device'],
+    [/^(mq|oon|gr|hom)\.stats$/, 'device'],
   ];
   // Statistik mehrerer Geräte zusammenzählen (je Spiel eigener Aufbau)
   const COMBINE = {
@@ -47,6 +47,12 @@ const Sync = (() => {
         wins: (a.wins || 0) + (b.wins || 0), jokers: (a.jokers || 0) + (b.jokers || 0), types: pairs(a.types, b.types), dec: pairs(a.dec, b.dec) };
     },
     'oon.stats': (a, b) => ({ games: a.games + b.games, right: a.right + b.right, best: Math.max(a.best, b.best), years: Math.max(a.years || 0, b.years || 0) }),
+    'hom.stats': (a, b) => {
+      const types = { ...a.types };
+      for (const [k, [r, n]] of Object.entries(b.types || {})) { const t = types[k] || [0, 0]; types[k] = [t[0] + r, t[1] + n]; }
+      return { games: a.games + b.games, right: a.right + b.right, wrong: a.wrong + b.wrong, best: Math.max(a.best || 0, b.best || 0),
+        streak: Math.max(a.streak || 0, b.streak || 0), sd: Math.max(a.sd || 0, b.sd || 0), types };
+    },
   };
   const ALPHA = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // ohne 0/O und 1/I – nicht verwechselbar
 
@@ -290,6 +296,7 @@ const Sync = (() => {
       for (const d of [t, prevDay(t)]) if (L[d] && !L[d].late && Number.isInteger(L[d].score)) out.push({ game: 'needle-drop', day: d, score: L[d].score });
       const g = dayOf();
       for (const d of [g, prevDay(g)]) { const r = ls.get('gr.daily.' + d, null); if (r?.done && !r.late && Number.isInteger(r.final)) out.push({ game: 'gold-record', day: d, score: r.final }); }
+      for (const d of [t, prevDay(t)]) { const r = ls.get('hom.daily.' + d, null); if (r?.done && !r.late && Number.isInteger(r.score)) out.push({ game: 'hit-or-miss', day: d, score: r.score }); }
       return out;
     },
     // Highscores: nur Songauswahl „Alle“ (vergleichbar), je Stufe und Modus
@@ -297,12 +304,15 @@ const Sync = (() => {
       const out = [];
       for (const d of ['easy', 'normal', 'hard', 'pro']) for (const m of ['show', 'blind']) out.push({ game: 'older-or-newer', cat: `${d}.${m}`, score: ls.get(`oon.best2.all.${d}.${m}`, 0) });
       for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'gold-record', cat: d, score: ls.get(`gr.best.all.${d}`, 0) });
+      for (const m of ['60s', 'sd']) for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'hit-or-miss', cat: `${m}.${d}`, score: ls.get(`hom.best.${m}.${d}`, 0) });   // Punkte (60 s) bzw. richtig in Folge
       return out.filter(x => Number.isInteger(x.score) && x.score > 0);
     },
     // Laufende Serie der Tages-Challenge
     streak: () => {
       const L = ls.get('mq.daily', {}) || {}, dl = ls.get('gr.dailyLog', {}) || {};
-      return [{ game: 'needle-drop', score: streakOf(d => L[d] && !L[d].late, dayOf('Europe/Berlin')) }, { game: 'gold-record', score: streakOf(d => d in dl, dayOf()) }];
+      const hl = ls.get('hom.dailyLog', {}) || {};
+      return [{ game: 'needle-drop', score: streakOf(d => L[d] && !L[d].late, dayOf('Europe/Berlin')) }, { game: 'gold-record', score: streakOf(d => d in dl, dayOf()) },
+        ...(Object.keys(hl).length ? [{ game: 'hit-or-miss', score: streakOf(d => d in hl, dayOf('Europe/Berlin')) }] : [])];
     },
   };
   let boardBusy = null;

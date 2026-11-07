@@ -26,8 +26,8 @@
 // Begrenzung neuer Codes: gezählt wird pro Internetanschluss, aber ohne die IP-Adresse zu speichern – nur eine
 // Prüfsumme aus IP + geheimem Schlüssel (SALT) + Datum. Sie wechselt täglich und wird am nächsten Tag gelöscht.
 
-const ALLOWED = ['https://ku3rb1s.github.io', 'http://127.0.0.1:8890', 'http://127.0.0.1:8891', 'http://127.0.0.1:8892', 'http://127.0.0.1:8893',
-  'http://localhost:8890', 'http://localhost:8891', 'http://localhost:8892', 'http://localhost:8893'];
+const ALLOWED = ['https://ku3rb1s.github.io', 'http://127.0.0.1:8890', 'http://127.0.0.1:8891', 'http://127.0.0.1:8892', 'http://127.0.0.1:8893', 'http://127.0.0.1:8894',
+  'http://localhost:8890', 'http://localhost:8891', 'http://localhost:8892', 'http://localhost:8893', 'http://localhost:8894'];
 const MAX = 300_000;                         // höchstens ~300 KB pro Code (normal sind 10–50 KB)
 const KEEP = 180 * 864e5;                    // 6 Monate ohne Benutzung → löschen
 const KEEP_UNUSED = 14 * 864e5;              // nie wieder abgeglichen → nach 14 Tagen löschen
@@ -39,15 +39,17 @@ const day = () => new Date().toISOString().slice(0, 10);
 const LB_GAMES = {                           // gültige Punkte je Spiel (Plausibilität – mehr geht im Spiel nicht)
   'needle-drop': v => v >= 0 && v <= 3000 && v % 100 === 0,   // 5 Songs × höchstens 600
   'gold-record': v => v >= 0 && v <= 15,                      // erreichte Stufe
+  'hit-or-miss': v => v >= 0 && v <= 8000 && v % 10 === 0,   // Punkte in 60 s: höchstens ~200 Karten × 40
 };
 // Highscores (Allzeit-Rekorde): nur vergleichbare Einstellungen, je Spiel eine Kategorie (cat) pro Stufe und Modus
 const LB_HIGH = {
   'older-or-newer': { cat: /^(easy|normal|hard|pro)\.(show|blind)$/, ok: v => v >= 1 && v <= 3000 },   // längste Serie (Songauswahl „Alle“)
   'gold-record': { cat: /^(easy|normal|hard)$/, ok: v => v >= 1 && v <= 15 },                         // höchste Stufe (Songauswahl „Alle“)
+  'hit-or-miss': { cat: /^(60s|sd)\.(easy|normal|hard)$/, ok: v => v >= 1 && v <= 8000 },                                 // Punkte (60 s) bzw. richtig in Folge (Sudden Death)
 };
 // Serien der Tages-Challenge: aktuelle Serie in Tagen. Sie kann auch sinken (verpasster Tag), darum immer übernommen.
 // Gezeigt wird sie nur, wenn sie zuletzt gestern oder heute gemeldet wurde – sonst ist sie wahrscheinlich gerissen.
-const LB_STREAK = { 'needle-drop': true, 'gold-record': true };
+const LB_STREAK = { 'needle-drop': true, 'gold-record': true, 'hit-or-miss': true };
 const STREAK_MAX = 3650;
 const LB_TOP = 25;
 const LB_KEEP = 60 * 864e5;                  // Tagesergebnisse 60 Tage aufheben (die Woche braucht nur 7)
@@ -91,7 +93,7 @@ async function leaderboard(action, body, env, json) {
   }
   if (action === 'high') {
     if (!await player()) return json({ error: 'not joined' }, 403);
-    const list = (Array.isArray(body.scores) ? body.scores : []).slice(0, 16)
+    const list = (Array.isArray(body.scores) ? body.scores : []).slice(0, 40)   // alle Highscore-Kategorien aller Spiele (derzeit 17)
       .filter(x => x && LB_HIGH[x.game] && typeof x.cat === 'string' && LB_HIGH[x.game].cat.test(x.cat) && Number.isInteger(x.score) && LB_HIGH[x.game].ok(x.score));
     // Nur höher wird übernommen; der Zeitpunkt zählt bei Gleichstand (wer den Wert zuerst hatte, steht vorne)
     if (list.length) await env.DB.batch(list.map(x => env.DB.prepare(

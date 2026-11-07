@@ -61,6 +61,21 @@
         "nb": "Musikkquiz i 15 trinn med over 6 000 sanger: kjenn igjen sanger, gjett artister og år – fra kassett via Gull og Platina helt til Diamant. 4 livliner, tre vanskelighetsgrader og dagens utfordring."
       },
       "tags": ["solo", "daily", "nologin"]
+    },
+    {
+      "id": "hit-or-miss",
+      "name": "Hit or Miss",
+      "url": "https://ku3rb1s.github.io/hit-or-miss/",
+      "icon": "https://ku3rb1s.github.io/hit-or-miss/icon-192.png?v=1",
+      "color": "#d946ef",
+      "desc": {
+        "de": "Stimmt’s oder stimmt’s nicht? Ein Song läuft, dazu eine Behauptung – wisch nach rechts für Hit, nach links für Miss. 60 Sekunden, Sudden Death und eine Tages-Challenge.",
+        "en": "True or false? A song plays with a claim about it – swipe right for Hit, left for Miss. 60 seconds, Sudden Death and a daily challenge.",
+        "fr": "Vrai ou faux ? Un morceau passe avec une affirmation – glisse à droite pour Hit, à gauche pour Miss. 60 secondes, mort subite et un défi du jour.",
+        "es": "¿Verdadero o falso? Suena una canción con una afirmación: desliza a la derecha para Hit y a la izquierda para Miss. 60 segundos, muerte súbita y un reto diario.",
+        "nb": "Sant eller usant? En sang spilles med en påstand – sveip til høyre for Hit, til venstre for Miss. 60 sekunder, sudden death og dagens utfordring."
+      },
+      "tags": ["solo", "daily", "nologin"]
     }
   ]
 }

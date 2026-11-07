@@ -13,6 +13,7 @@ Alle liegen unter `C:\Users\nik-r\Documents\Claude\`, jedes ist ein eigenes GitH
 | Needle Drop | `Musik-Quiz` | ku3rb1s.github.io/needle-drop/ | 8890 | `mq.` |
 | Older or Newer | `Older-or-Newer` | ku3rb1s.github.io/older-or-newer/ | 8892 | `oon.` |
 | Gold Record | `Gold-Record` | ku3rb1s.github.io/gold-record/ | 8893 | `gr.` |
+| Hit or Miss | `Hit-or-Miss` | ku3rb1s.github.io/hit-or-miss/ | 8894 | `hom.` |
 | Musik-Bingo | `Musik-Bingo-Lobby/mb` | ku3rb1s.github.io/musik-bingo-lobby/ | 8888 | `mb_` |
 
 Lokal starten: im Spiel-Ordner `node server.js`. Die Liste mit Repo-Namen steht auch in `Spiele-Hub/shared/games.json`.
@@ -71,11 +72,11 @@ eigene Kürzel und ruft `Sync.leave()` auf.
 ## Bestenliste (`js/leaderboard.js` in der Jukebox + Worker, Bereich `/lb/`)
 
 Drei Wertungen:
-- **Tages-Challenge** (Needle Drop, Gold Record): heute bzw. Summe der Woche. Aus `mq.daily` und `gr.daily.<Tag>`,
+- **Tages-Challenge** (Needle Drop, Gold Record, Hit or Miss): heute bzw. Summe der Woche. Aus `mq.daily`, `gr.daily.<Tag>` und `hom.daily.<Tag>`,
   nachgespielte Tage zählen nicht, pro Spiel und Tag zählt das erste Ergebnis (Tabelle `lb_score`).
-- **Highscores** (Older or Newer, Gold Record): Allzeit-Rekord, nur Songauswahl „Alle“, je Stufe (und bei Older or Newer je Modus),
-  damit die Werte vergleichbar sind. Aus `oon.best2.all.<stufe>.<modus>` und `gr.best.all.<stufe>`. Nur höhere Werte werden übernommen (`lb_high`).
-- **Serien** (Needle Drop, Gold Record): laufende Serie der Tages-Challenge. Gezeigt nur, wenn zuletzt gestern oder heute gemeldet (`lb_streak`).
+- **Highscores** (Older or Newer, Gold Record, Hit or Miss): Allzeit-Rekord, nur Songauswahl „Alle“, je Stufe (und bei Older or Newer / Hit or Miss je Modus),
+  damit die Werte vergleichbar sind. Aus `oon.best2.all.<stufe>.<modus>`, `gr.best.all.<stufe>` und `hom.best.<60s|sd>.<stufe>`. Nur höhere Werte werden übernommen (`lb_high`).
+- **Serien** (Needle Drop, Gold Record, Hit or Miss): laufende Serie der Tages-Challenge. Gezeigt nur, wenn zuletzt gestern oder heute gemeldet (`lb_streak`).
 
 Regeln:
 - Eigenes Fenster, geöffnet über den goldenen Knopf oben in der Jukebox (Link: `jukebox/#bestenliste`). Anschauen kann jeder.

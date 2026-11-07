@@ -1,8 +1,8 @@
 /* Jukebox – Bestenliste (Server: worker/sync.js, Bereich /lb/). Eigenes Fenster, geöffnet über den Knopf oben (oder #bestenliste).
    Drei Wertungen:
-   - Tages-Challenge: Needle Drop und Gold Record, heute bzw. diese Woche
-   - Highscores: Allzeit-Rekorde aus Older or Newer und Gold Record (nur Songauswahl „Alle“, je Stufe/Modus – sonst nicht vergleichbar)
-   - Serien: laufende Serie der Tages-Challenge (Needle Drop, Gold Record)
+   - Tages-Challenge: Needle Drop, Gold Record und Hit or Miss, heute bzw. diese Woche
+   - Highscores: Allzeit-Rekorde aus Older or Newer, Gold Record und Hit or Miss (nur Songauswahl „Alle“, je Stufe/Modus – sonst nicht vergleichbar)
+   - Serien: laufende Serie der Tages-Challenge (Needle Drop, Gold Record, Hit or Miss)
    - Anschauen kann jeder. Mitmachen ist freiwillig und braucht einen Code („Auf allen Geräten“) – fehlt er, wird er beim
      Mitmachen automatisch erstellt. Der Code ist das Konto, ohne E-Mail und Passwort.
    - Erst beim Mitmachen gehen Name, Emoji und Ergebnisse an den Server – und sind öffentlich.
@@ -24,8 +24,13 @@ const Board = (() => {
       return [t, prevDay(t)].map(d => [d, store.get('gr.daily.' + d)]).filter(([, r]) => r?.done && !r.late && Number.isInteger(r.final))
         .map(([d, r]) => ({ day: d, score: r.final }));
     },
+    'hit-or-miss': () => {
+      const t = dayOf('Europe/Berlin');
+      return [t, prevDay(t)].map(d => [d, store.get('hom.daily.' + d)]).filter(([, r]) => r?.done && !r.late && Number.isInteger(r.score))
+        .map(([d, r]) => ({ day: d, score: r.score }));
+    },
   };
-  const todayOf = g => g === 'needle-drop' ? dayOf('Europe/Berlin') : dayOf();
+  const todayOf = g => g === 'needle-drop' || g === 'hit-or-miss' ? dayOf('Europe/Berlin') : dayOf();
   // Highscores: Kategorien je Spiel und woher der Rekord kommt
   const HIGH = {
     'older-or-newer': {
@@ -38,12 +43,18 @@ const Board = (() => {
       key: c => `gr.best.all.${c.diff}`, cat: c => c.diff,
       fmt: n => n + '/15',
     },
+    'hit-or-miss': {
+      opts: [['diff', { easy: 'Leicht', normal: 'Normal', hard: 'Schwer' }], ['hmode', { '60s': '60 Sekunden', sd: 'Sudden Death' }]],
+      key: c => `hom.best.${c.hmode}.${c.diff}`, cat: c => `${c.hmode}.${c.diff}`,
+      // 60 Sekunden: Punkte · Sudden Death: richtige Antworten in Folge
+      fmt: n => highCombo('hit-or-miss').hmode === 'sd' ? tx('{n} in Folge', { n: n.toLocaleString(LANG) }) : n.toLocaleString(LANG) + ' ' + tx('Pkt.'),
+    },
   };
 
   const VIEWS = {
-    daily: { name: 'Tages-Challenge', icon: '📅', games: ['needle-drop', 'gold-record'] },
-    high: { name: 'Highscores', icon: '🏆', games: ['older-or-newer', 'gold-record'] },
-    streak: { name: 'Serien', icon: '🔥', games: ['needle-drop', 'gold-record'] },
+    daily: { name: 'Tages-Challenge', icon: '📅', games: ['needle-drop', 'gold-record', 'hit-or-miss'] },
+    high: { name: 'Highscores', icon: '🏆', games: ['older-or-newer', 'gold-record', 'hit-or-miss'] },
+    streak: { name: 'Serien', icon: '🔥', games: ['needle-drop', 'gold-record', 'hit-or-miss'] },
   };
   const MEDAL = ['🥇', '🥈', '🥉'];
 
@@ -168,7 +179,7 @@ const Board = (() => {
     const needSave = joined && st.connected && !codeSaved(st.code);   // Erinnerung bleibt, bis der Code gesichert ist
     const fmt = n => view === 'high' ? HIGH[g].fmt(n)
       : view === 'streak' ? (n === 1 ? tx('1 Tag') : tx('{n} Tage', { n }))
-      : g === 'needle-drop' ? n.toLocaleString(LANG) + ' ' + tx('Pkt.') : week ? tx('{n} Stufen', { n }) : n + '/15';
+      : g === 'needle-drop' || g === 'hit-or-miss' ? n.toLocaleString(LANG) + ' ' + tx('Pkt.') : week ? tx('{n} Stufen', { n }) : n + '/15';
     const seg = (items, cur, attr, cls = '') => `<div class="seg lb-seg ${cls}">${Object.entries(items).map(([k, v]) => `<button class="${k === cur ? 'on' : ''}" ${attr}="${k}">${v}</button>`).join('')}</div>`;
 
     // Kopf: Wertung, Spiel, Optionen
@@ -236,6 +247,7 @@ const Board = (() => {
     box.querySelectorAll('[data-lb-range]').forEach(b => b.onclick = pick(() => { sel.range = b.dataset.lbRange; }));
     box.querySelectorAll('[data-lb-diff]').forEach(b => b.onclick = pick(() => { sel.diff[g] = b.dataset.lbDiff; }));
     box.querySelectorAll('[data-lb-mode]').forEach(b => b.onclick = pick(() => { sel.mode = b.dataset.lbMode; }));
+    box.querySelectorAll('[data-lb-hmode]').forEach(b => b.onclick = pick(() => { sel.hmode = b.dataset.lbHmode; }));
     if ($('#lbJoin')) {
       // Ohne Namen geht es nicht: Knopf erst aktiv, wenn mindestens 2 Zeichen eingetragen sind
       const ready = () => { $('#lbJoin').disabled = joining || $('#lbName').value.trim().length < 2; };
