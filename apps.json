@@ -31,6 +31,21 @@
         "nb": "Kjenner du igjen sangen på 0,1 sekund? 22 kategorier, dagens utfordring og resultater å dele."
       },
       "tags": ["solo", "daily", "nologin"]
+    },
+    {
+      "id": "older-or-newer",
+      "name": "Older or Newer",
+      "url": "https://ku3rb1s.github.io/older-or-newer/",
+      "icon": "https://ku3rb1s.github.io/older-or-newer/icon-192.png",
+      "color": "#22d3ee",
+      "desc": {
+        "de": "Älter oder neuer? Ein Song läuft – kam er vor oder nach dem letzten raus? Wie Higher or Lower, mit rund 400 Hits von 1956 bis heute.",
+        "en": "Older or newer? A song plays – did it come out before or after the last one? Like Higher or Lower, with about 400 hits from 1956 to today.",
+        "fr": "Plus ancien ou plus récent ? Un morceau passe – est-il sorti avant ou après le précédent ? Comme Higher or Lower, avec environ 400 tubes de 1956 à aujourd’hui.",
+        "es": "¿Más antigua o más nueva? Suena una canción: ¿salió antes o después de la anterior? Como Higher or Lower, con unos 400 éxitos desde 1956 hasta hoy.",
+        "nb": "Eldre eller nyere? En sang spilles – kom den ut før eller etter den forrige? Som Higher or Lower, med rundt 400 hits fra 1956 til i dag."
+      },
+      "tags": ["solo", "nologin"]
     }
   ]
 }
