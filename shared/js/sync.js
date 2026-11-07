@@ -28,7 +28,7 @@ const Sync = (() => {
     [/^mq\.daily$/, 'days'],
     [/^gr\.daily\.\d{4}-\d{2}-\d{2}$/, 'day'],
     [/^gr\.dailyLog$/, 'mapmax'],
-    [/^gr\.ach$/, 'union'],
+    [/^(gr|mq)\.ach$/, 'union'],
     [/^gr\.top$/, 'top'],
     [/^(mq|oon|gr)\.stats$/, 'device'],
   ];

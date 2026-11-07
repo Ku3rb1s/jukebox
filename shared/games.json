@@ -1,7 +1,7 @@
 {
   "_hinweis": "Alle Spiele der Jukebox und welche gemeinsamen Dateien sie aus shared/ bekommen. Ordner relativ zu Documents/Claude. Neues Spiel: Eintrag ergänzen, dann node scripts/share.js --write",
   "sets": {
-    "basis": ["css/base.css", "css/fonts.css", "fonts/OFL.txt", "fonts/outfit-latin.woff2", "fonts/outfit-latin-ext.woff2", "js/i18n.js", "js/profile.js", "js/sync.js", "js/pwa.js", "sw.js"],
+    "basis": ["css/base.css", "css/fonts.css", "fonts/OFL.txt", "fonts/outfit-latin.woff2", "fonts/outfit-latin-ext.woff2", "js/i18n.js", "js/profile.js", "js/sync.js", "js/pwa.js", "sw.js", "scripts/check-lang.js"],
     "app": ["js/pwa.js", "sw.js"]
   },
   "games": [

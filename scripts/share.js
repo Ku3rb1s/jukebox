@@ -6,6 +6,7 @@
  *
  *   node scripts/share.js                 prüfen: welche Kopie weicht vom Original ab?
  *   node scripts/share.js --write         Originale in alle Spiele kopieren und dort ?v= in index.html erhöhen
+ *   node scripts/share.js --lang          Übersetzungen aller Spiele prüfen (--lang -v: mit Details)
  *   node scripts/share.js --pull <Ordner> <Datei>
  *                                         eine in einem Spiel geänderte Datei zum neuen Original machen
  *                                         (z. B. --pull Musik-Quiz js/sync.js), danach --write für alle anderen
@@ -43,6 +44,22 @@ function bump(dir, file) {
   h = h.replace(re, (m, pre, v) => { hit = true; const parts = v.split('.'); parts[parts.length - 1] = String(+parts[parts.length - 1] + 1); return pre + parts.join('.'); });
   if (hit) fs.writeFileSync(idx, h);
   return hit;
+}
+
+/* --lang: Übersetzungen aller Spiele prüfen (scripts/check-lang.js im jeweiligen Spiel) */
+if (args[0] === '--lang') {
+  const { spawnSync } = require('child_process');
+  let bad = 0;
+  for (const game of cfg.games) {
+    const dir = path.join(ROOT, game.dir), script = path.join(dir, 'scripts', 'check-lang.js');
+    if (!fs.existsSync(script)) { console.log(`– ${game.name}: kein scripts/check-lang.js`); continue; }
+    const r = spawnSync(process.execPath, [script], { cwd: dir, encoding: 'utf8' });
+    const last = (r.stdout || '').trim().split('\n').pop();
+    console.log(`${r.status ? '✗' : '✓'} ${game.name}: ${last}`);
+    if (r.status) { bad++; if (args.includes('-v')) console.log(r.stdout); }
+  }
+  console.log(bad ? '\nDetails: im Spiel-Ordner node scripts/check-lang.js (oder hier --lang -v)' : '\nAlle Übersetzungen vollständig.');
+  process.exit(bad ? 1 : 0);
 }
 
 /* --pull: eine geänderte Kopie zum Original machen */

@@ -27,8 +27,13 @@ Diese Dateien sind in allen Spielen gleich. Das Original liegt in **`Spiele-Hub/
 - `js/profile.js` – gemeinsames Spielerprofil (Name + Emoji, Schlüssel `jb.profile`)
 - `js/sync.js` – „Auf allen Geräten spielen“: Abgleich per persönlichem Code (siehe unten)
 - `js/pwa.js`, `sw.js` – App-Modus, Zwischenspeicher, iPhone-Korrekturen (Statusleiste, kein Zoomen)
+- `scripts/check-lang.js` – Übersetzungsprüfung. Spielspezifisches (Eigennamen, Tabellen mit Texten, Ausnahmen)
+  steht in `scripts/lang.config.js` des Spiels – die gehört dem Spiel und wird nicht verteilt.
 
-Musik-Bingo hat ein eigenes Design und eigene Sprachdateien und bekommt nur `js/pwa.js` und `sw.js`.
+Musik-Bingo hat ein eigenes Design und eigene Sprachdateien (auch ein eigenes Prüfskript) und bekommt nur `js/pwa.js` und `sw.js`.
+
+**Übersetzungen aller Spiele prüfen:** `node scripts/share.js --lang` (im Ordner `Spiele-Hub`, mit `-v` für Details).
+Erfolge im Format `['id', 'Symbol', 'Name', 'Beschreibung']` und Farbthemen findet das Prüfskript von selbst.
 
 **Ablauf bei einer Änderung:**
 1. Datei in `Spiele-Hub/shared/` ändern.
