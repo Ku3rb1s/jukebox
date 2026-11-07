@@ -122,6 +122,6 @@ if (COMMIT) {
       git(G[k], 'commit', '-q', '-m', `Songlisten aktualisiert (${today}): ${r.added.length} neu, ${r.removed.length} weg\n\nErstellt mit Spiele-Hub/scripts/update-songs.js`);
       git(G[k], 'push', '-q');
       log(`✓ ${r.name}: eingecheckt und hochgeladen`);
-    } catch (e) { log(`⚠️  ${r.name}: Hochladen ging nicht – ${e.message.split('\n')[0]}`); }
+    } catch (e) { log(`⚠️  ${r.name}: Hochladen ging nicht – ${e.message.split('\n')[0]}`); process.exitCode = 1; }
   }
 } else if (Object.values(result).some(r => r.changed)) log('\nNichts hochgeladen. Prüfen, dann mit --commit erneut starten (geht schnell, alles ist zwischengespeichert).');

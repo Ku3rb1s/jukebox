@@ -102,6 +102,8 @@ Regeln:
 ## Neue Songs (automatisch)
 
 - Needle Drop: GitHub-Automatik `update-billions.yml`, monatlich (Milliarden-Liste).
+- ⚠️ Die GitHub-Automatiken (`update-songs.yml`) sind ABGESCHALTET: GitHub-Rechner stehen in den USA, Deezer liefert dort andere
+  Track-IDs und sperrt andere Songs (Probelauf: 263 weg, 159 neu bei Older or Newer). Songdaten deshalb nur von einem Rechner in Deutschland bauen.
 - Gold Record und Older or Newer: GitHub-Automatik `.github/workflows/update-songs.yml` im jeweiligen Repo, jeden Montag
   um 0:05 Uhr. Sie ruft `scripts/update-songs.js` aus der Jukebox auf: neue Songs, Originaljahre, Genres und Cover; DATA_V wird erhöht.
   Hochgeladen wird nur bei Änderungen. Per Hand: GitHub → Actions → „Songlisten aktualisieren“ → Run workflow.
