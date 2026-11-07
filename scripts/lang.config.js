@@ -3,4 +3,6 @@
 module.exports = {
   ignore: ['Jukebox'],
   tables: ['TAGS'],                                              // Schlagwörter auf den Spiel-Kacheln
+  // Bestenliste (js/leaderboard.js): Wertungen und Stufen laufen über tx(Variable)
+  add: ['Tages-Challenge', 'Highscores', 'Serien', 'Leicht', 'Normal', 'Schwer', 'Profi', 'Mit Titel', 'Nur hören'],
 };

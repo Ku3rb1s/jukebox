@@ -62,6 +62,11 @@ for (const { file, pattern } of cfg.sources || []) {
   if (fs.existsSync(p)) for (const m of fs.readFileSync(p, 'utf8').matchAll(pattern)) add(unq(m[1]));
 }
 (cfg.add || []).forEach(add);
+// Gemeinsames Profil (js/profile.js): Avatar-Fenster – Titel t('…') und Gruppennamen ['Tiere', [ … ]]
+{
+  const p = path.join(root, 'js', 'profile.js');
+  if (fs.existsSync(p)) { const s = fs.readFileSync(p, 'utf8'); for (const m of s.matchAll(/\bt\('([^']+)'\)/g)) add(m[1]); for (const m of s.matchAll(/\['([^']+)', \[/g)) add(m[1]); }
+}
 
 // keine Übersetzung nötig: Adressen, Code-Kürzel, Eigennamen
 for (const k of [...keys]) if (/^(https?:|#)/.test(k) || (cfg.skip && cfg.skip.test(k))) keys.delete(k);

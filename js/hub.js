@@ -80,7 +80,7 @@ function render() {
   $('#hubTitle').textContent = DATA.title;
   $('#apps').innerHTML = DATA.apps.map(a => `
     <a class="app glass" href="${esc(a.url)}" style="--c:${esc(a.color || '#888')}">
-      <img class="app-ic" src="${esc(a.icon)}" alt="" loading="lazy">
+      <img class="app-ic" src="${esc(a.icon)}" alt="" fetchpriority="high">
       <div class="app-body">
         <h2>${esc(a.name)}</h2>
         <p>${esc(pick(a.desc))}</p>
@@ -288,7 +288,8 @@ let qrLib = null;
 function loadQr() {
   return qrLib ||= new Promise((res, rej) => {
     const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+    // qrcode-generator 1.4.4 (MIT, Kazuhiko Arase) liegt in der Jukebox selbst – kein fremder Server, klappt auch offline
+    s.src = 'js/qrcode.min.js?v=1';
     s.onload = () => res(window.qrcode); s.onerror = () => { qrLib = null; rej(new Error('qr')); };
     document.head.appendChild(s);
   });

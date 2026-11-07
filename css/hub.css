@@ -23,7 +23,7 @@ header{max-width:860px}
 .app::before{background:linear-gradient(140deg,color-mix(in srgb,var(--c) 20%,transparent),var(--g-bg) 55%)}
 @media (hover:hover){.app:hover{transform:translateY(-3px);box-shadow:var(--g-hi),0 24px 60px -24px var(--c)}}
 .app:active{transform:scale(.99)}
-.app-ic{width:76px;height:76px;border-radius:20px;box-shadow:0 12px 30px -12px var(--c)}
+.app-ic{width:76px;height:76px;border-radius:20px;box-shadow:0 12px 30px -12px var(--c);background:color-mix(in srgb,var(--c) 45%,#111);object-fit:cover}  /* Farbfläche, bis das Logo da ist */
 .app-body h2{font-family:Outfit,system-ui,sans-serif;font-weight:900;font-size:1.55rem;margin:0 0 6px;letter-spacing:-.01em}
 .app-body p{margin:0;color:var(--muted);line-height:1.5;font-size:.95rem}
 .app-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
@@ -40,12 +40,20 @@ header{max-width:860px}
 
 @media (max-width:640px){
   .apps{grid-template-columns:1fr}
-  .hub-hero{padding:22px 16px}
-  .app{flex-direction:row;flex-wrap:wrap;align-items:flex-start;padding:16px;gap:14px}
-  .app-ic{width:60px;height:60px;border-radius:16px}
+  /* Kompakter, damit am Handy mehrere Spiele auf den ersten Blick passen */
+  .hub-hero{padding:16px 16px 14px}
+  .hub-h1{font-size:1.32rem;margin:6px auto 4px}
+  .hub-sub{font-size:.86rem;line-height:1.4}
+  .today{margin-top:10px}
+  .apps{gap:12px;margin-top:12px}
+  .app{flex-direction:row;flex-wrap:wrap;align-items:center;padding:14px;gap:12px}
+  .app-ic{width:54px;height:54px;border-radius:15px}
   .app-body{flex:1;min-width:0}
-  .app-body h2{font-size:1.3rem}
-  .app-go{width:100%}
+  .app-body h2{font-size:1.2rem;margin-bottom:3px}
+  .app-body p{font-size:.86rem;line-height:1.4;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+  .app-tags{display:none}
+  .app-stat{margin-top:8px}
+  .app-go{width:100%;padding:.55em 1em}
   .hub-sheet{height:auto}
 }
 
