@@ -1,4 +1,4 @@
-// Spieleabend – Sprachen (gleiches System wie Musik-Bingo und Needle Drop)
+// Jukebox – Sprachen (gleiches System wie Musik-Bingo und Needle Drop)
 // Texte stehen auf Deutsch; tx('Text') liefert die Übersetzung, feste Texte in index.html übersetzt translatePage().
 // Alle Spiele liegen unter ku3rb1s.github.io und teilen sich den Browser-Speicher – die Sprache wird darum
 // für alle gesetzt: hub.lang (hier), mq.lang (Needle Drop), mb_lang (Musik-Bingo).

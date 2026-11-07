@@ -1,4 +1,4 @@
-/* Spieleabend – Übersicht aller Spiele. Die Spiele stehen in apps.json (neues Spiel = neuer Eintrag). */
+/* Jukebox – Übersicht aller Spiele. Die Spiele stehen in apps.json (neues Spiel = neuer Eintrag). */
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

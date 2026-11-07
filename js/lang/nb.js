@@ -1,4 +1,4 @@
-// Spieleabend – Sprachdatei Norsk. Links Deutsch (nicht ändern), rechts die Übersetzung.
+// Jukebox – Sprachdatei Norsk. Links Deutsch (nicht ändern), rechts die Übersetzung.
 (self.LANG_PACKS ??= {}).nb = {
   name: 'Norsk',
   flag: '🇳🇴',

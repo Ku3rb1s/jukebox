@@ -12,4 +12,4 @@ http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': (types[path.extname(f)] || 'application/octet-stream') + '; charset=utf-8', 'Cache-Control': 'no-store' });
     res.end(data);
   });
-}).listen(port, '127.0.0.1', () => console.log(`Spieleabend läuft auf http://127.0.0.1:${port}/`));
+}).listen(port, '127.0.0.1', () => console.log(`Jukebox läuft auf http://127.0.0.1:${port}/`));

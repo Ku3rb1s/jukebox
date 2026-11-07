@@ -1,6 +1,6 @@
 {
   "_hinweis": "Neues Spiel hinzufügen: einen Eintrag in \"apps\" ergänzen – fertig. Texte je Sprache (de, en, fr, es, nb); fehlt eine Sprache, wird Deutsch gezeigt.",
-  "title": "Spieleabend",
+  "title": "Jukebox",
   "apps": [
     {
       "id": "musik-bingo",

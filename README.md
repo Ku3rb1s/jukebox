@@ -1,6 +1,6 @@
-# Spieleabend
+# Jukebox
 
-Übersichtsseite für alle Spiele: **https://ku3rb1s.github.io/**
+Übersichtsseite für alle Spiele: **https://ku3rb1s.github.io/jukebox/**
 
 - [Musik-Bingo](https://ku3rb1s.github.io/musik-bingo-lobby/) – Repo `musik-bingo-lobby`
 - [Needle Drop](https://ku3rb1s.github.io/needle-drop/) – Repo `needle-drop`

@@ -1,4 +1,4 @@
-// Spieleabend – Sprachdatei Français. Links Deutsch (nicht ändern), rechts die Übersetzung.
+// Jukebox – Sprachdatei Français. Links Deutsch (nicht ändern), rechts die Übersetzung.
 (self.LANG_PACKS ??= {}).fr = {
   name: 'Français',
   flag: '🇫🇷',

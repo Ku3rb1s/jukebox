@@ -1,4 +1,4 @@
-// Spieleabend – Sprachdatei Español. Links Deutsch (nicht ändern), rechts die Übersetzung.
+// Jukebox – Sprachdatei Español. Links Deutsch (nicht ändern), rechts die Übersetzung.
 (self.LANG_PACKS ??= {}).es = {
   name: 'Español',
   flag: '🇪🇸',
