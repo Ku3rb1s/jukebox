@@ -13,7 +13,7 @@
   --sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:var(--bg)}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:var(--bg);touch-action:manipulation}
 html,body{margin:0}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;color:var(--text);letter-spacing:-.01em;

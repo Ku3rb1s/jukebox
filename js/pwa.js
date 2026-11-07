@@ -1,5 +1,13 @@
 // App-Modus: Zwischenspeicher (sw.js) anmelden und „Als App installieren“ anbieten (Knopf #btnInstall in den Einstellungen).
 // Gleiche Datei in Musik-Bingo, Needle Drop und Jukebox.
+// Wie eine App: kein Hineinzoomen durch Spreizen mit zwei Fingern (gesturestart = iPhone/iPad).
+// Doppeltippen-Zoom verhindert touch-action:manipulation im CSS, ohne schnelle Doppel-Klicks auf Knöpfe zu verschlucken.
+(() => {
+  const stop = e => e.preventDefault();
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, stop, { passive: false });
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+})();
+
 // iPhone/iPad als App vom Home-Bildschirm: Die Statusleiste (Uhr, Akku) liegt über der Seite, der Abstand kommt aus
 // env(safe-area-inset-top). iOS meldet ihn manchmal als 0 – vor allem nach einem Wechsel zu einem anderen Spiel
 // innerhalb der App. Dann rutscht die Kopfzeile unter die Statusleiste. Nur in diesem Fall einen Ersatzwert setzen.
