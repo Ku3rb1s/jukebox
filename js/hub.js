@@ -32,6 +32,31 @@ function setTheme(t) {
   applyTheme();
 }
 
+/* ---------- Dein Stand je Spiel (aus dem Speicher der Spiele, gleiche Adresse ku3rb1s.github.io) ---------- */
+const dayOf = tz => new Date().toLocaleDateString('sv-SE', tz ? { timeZone: tz } : {});   // „2026-11-07“
+const prevDay = d => new Date(Date.parse(d) - 864e5).toISOString().slice(0, 10);
+function streakOf(has, d) { if (!has(d)) d = prevDay(d); let n = 0; while (has(d)) { n++; d = prevDay(d); } return n; }
+const stat = (cls, txt) => `<span class="stat ${cls}">${esc(txt)}</span>`;
+const daily = (done, streak) => (done ? stat('ok', '✓ ' + tx('Tägliche Challenge erledigt')) : stat('todo', '📅 ' + tx('Tägliche Challenge offen')))
+  + (streak ? stat('', '🔥 ' + tx('Serie {n}', { n: streak })) : '');
+const STATUS = {
+  // Needle Drop: Tageswechsel nach deutscher Zeit, nachgespielte Tage (late) zählen nicht zur Serie
+  'needle-drop': () => {
+    const L = store.get('mq.daily') || {}, t = dayOf('Europe/Berlin');
+    return daily(!!L[t], streakOf(d => L[d] && !L[d].late, t));
+  },
+  // Gold Record: Tageswechsel nach Gerätezeit, Serie aus dailyLog
+  'gold-record': () => {
+    const dl = store.get('gr.dailyLog') || {}, t = dayOf(), st = Sync.view('gr.stats', store.get('gr.stats'));
+    return daily(!!store.get('gr.daily.' + t), streakOf(d => d in dl, t)) + (st?.best ? stat('', '🏆 ' + tx('Beste Runde: {n}/15', { n: st.best })) : '');
+  },
+  'older-or-newer': () => {
+    const st = Sync.view('oon.stats', store.get('oon.stats'));
+    return st?.best ? stat('', '🏆 ' + tx('Rekord: {n} in Folge', { n: st.best })) : '';
+  },
+};
+function statusOf(id) { try { return STATUS[id]?.() || ''; } catch { return ''; } }
+
 /* ---------- Spiele ---------- */
 let DATA = null;
 async function load() {
@@ -51,6 +76,7 @@ function render() {
         <h2>${esc(a.name)}</h2>
         <p>${esc(pick(a.desc))}</p>
         <div class="app-tags">${(a.tags || []).map(t => `<span class="pill">${esc(tx(TAGS[t] || t))}</span>`).join('')}</div>
+        ${(st => st ? `<div class="app-stat">${st}</div>` : '')(statusOf(a.id))}
       </div>
       <span class="app-go"><svg class="ic"><use href="#i-play"/></svg><span>${tx('Spielen')}</span></span>
     </a>`).join('');
@@ -171,7 +197,11 @@ function loadQr() {
 const openSheet = () => { $('#langSel').innerHTML = langOptions(); applyTheme(); renderProfile(); renderSync(); sheet.showModal(); };
 $('#syncCta').onclick = () => { openSheet(); setTimeout(() => $('#syncAnchor').scrollIntoView({ block: 'start', behavior: 'smooth' }), 80); };
 Sync.onStatus(() => { if (!$('#syncInput') || document.activeElement !== $('#syncInput')) renderSync(); });
-addEventListener('jukebox-sync', () => { renderProfile(); theme = store.get('hub.theme') || store.get('mq.theme') || theme; applyTheme(); });
+// Zurück aus einem Spiel (auch aus dem Zwischenspeicher des Browsers) oder anderer Tab: Stand neu zeigen
+addEventListener('pageshow', e => { if (e.persisted) render(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
+addEventListener('storage', e => { if (e.key && /^(mq|gr|oon)\./.test(e.key)) render(); });
+addEventListener('jukebox-sync', () => { render(); renderProfile(); theme = store.get('hub.theme') || store.get('mq.theme') || theme; applyTheme(); });
 // Link aus dem QR-Code: …/jukebox/#code=K7QM-2XD9-HF4P → Code eintragen (und aus der Adresszeile entfernen)
 {
   const m = location.hash.match(/code=([A-Za-z0-9-]{12,16})/);
