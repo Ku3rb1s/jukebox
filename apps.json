@@ -37,13 +37,13 @@
       "name": "Older or Newer",
       "url": "https://ku3rb1s.github.io/older-or-newer/",
       "icon": "https://ku3rb1s.github.io/older-or-newer/icon-192.png",
-      "color": "#22d3ee",
+      "color": "#2dd4bf",
       "desc": {
-        "de": "Älter oder neuer? Ein Song läuft – kam er vor oder nach dem letzten raus? Wie Higher or Lower, mit rund 400 Hits von 1956 bis heute.",
-        "en": "Older or newer? A song plays – did it come out before or after the last one? Like Higher or Lower, with about 400 hits from 1956 to today.",
-        "fr": "Plus ancien ou plus récent ? Un morceau passe – est-il sorti avant ou après le précédent ? Comme Higher or Lower, avec environ 400 tubes de 1956 à aujourd’hui.",
-        "es": "¿Más antigua o más nueva? Suena una canción: ¿salió antes o después de la anterior? Como Higher or Lower, con unos 400 éxitos desde 1956 hasta hoy.",
-        "nb": "Eldre eller nyere? En sang spilles – kom den ut før eller etter den forrige? Som Higher or Lower, med rundt 400 hits fra 1956 til i dag."
+        "de": "Älter oder neuer? Ein Song läuft – kam er vor oder nach dem letzten raus? Wie Higher or Lower, mit über 900 Hits von 1954 bis heute – vier Schwierigkeitsstufen.",
+        "en": "Older or newer? A song plays – did it come out before or after the last one? Like Higher or Lower, with over 900 hits from 1954 to today – four difficulty levels.",
+        "fr": "Plus ancien ou plus récent ? Un morceau passe – est-il sorti avant ou après le précédent ? Comme Higher or Lower, avec plus de 900 tubes de 1954 à aujourd’hui – quatre niveaux de difficulté.",
+        "es": "¿Más antigua o más nueva? Suena una canción: ¿salió antes o después de la anterior? Como Higher or Lower, con más de 900 éxitos desde 1954 hasta hoy y cuatro niveles de dificultad.",
+        "nb": "Eldre eller nyere? En sang spilles – kom den ut før eller etter den forrige? Som Higher or Lower, med over 900 hits fra 1954 til i dag – fire vanskelighetsgrader."
       },
       "tags": ["solo", "nologin"]
     }
