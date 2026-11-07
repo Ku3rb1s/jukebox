@@ -97,6 +97,17 @@ Regeln:
 - Ergebnis: `data/covers.json` im Spiel (`{ id: "mb:<release-group>" | "<deezer-md5>" }`), die Spiele übernehmen es beim Laden.
   Lädt ein Original-Cover nicht (oder nicht binnen 4 s), springt das Bild auf das Deezer-Cover zurück.
 - Nach neuen Songs das Skript erneut laufen lassen (Zwischenstand in `scripts/.cache/`, Bericht `scripts/.cache/covers-report.txt`).
+  `COVER_GAMES=Gold-Record` (oder `Older-or-Newer`) prüft nur ein Spiel.
+
+## Neue Songs (automatisch)
+
+- Needle Drop: GitHub-Automatik `update-billions.yml`, monatlich (Milliarden-Liste).
+- Gold Record und Older or Newer: GitHub-Automatik `.github/workflows/update-songs.yml` im jeweiligen Repo, jeden Montag
+  um 0:10 Uhr. Sie ruft `scripts/update-songs.js` aus der Jukebox auf: neue Songs, Originaljahre, Genres und Cover; DATA_V wird erhöht.
+  Hochgeladen wird nur bei Änderungen. Per Hand: GitHub → Actions → „Songlisten aktualisieren“ → Run workflow.
+- Lokal genauso: `node scripts/update-songs.js` (nur bauen + Bericht), `--commit` (hochladen), `--only gr,oon,covers,hom`.
+  Ein Spiel mit offenen fremden Änderungen in `data/` wird übersprungen.
+- Hit or Miss (`hom`) baut sein Datenpaket aus Gold Record und Older or Newer; das läuft vorerst nur lokal mit dem Skript.
 
 ## Neues Spiel
 

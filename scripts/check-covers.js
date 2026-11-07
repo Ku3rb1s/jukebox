@@ -10,10 +10,11 @@
 // Zwischenstand: scripts/.cache/covers.json (abbrechen und neu starten ist kein Problem). Dauert beim ersten Mal ca. 30–60 Minuten.
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..', '..');
+// COVER_GAMES=Gold-Record (oder Older-or-Newer) prüft nur dieses Spiel – so nutzt es die Automatik je Spiel
 const GAMES = [
   { name: 'Gold Record', dir: 'Gold-Record', files: ['songs.json', 'extra.json', 'more.json'] },
   { name: 'Older or Newer', dir: 'Older-or-Newer', files: ['songs.json'] },
-];
+].filter(g => !process.env.COVER_GAMES || process.env.COVER_GAMES.split(',').includes(g.dir));
 const LIMIT = +process.env.LIMIT || 0;            // Test: nur die ersten N Songs je Spiel, nichts schreiben
 const cacheF = path.join(__dirname, '.cache', 'covers.json');
 fs.mkdirSync(path.dirname(cacheF), { recursive: true });
