@@ -173,7 +173,7 @@ function renderSync() {
   $('#syncMini').innerHTML = `${ICON('cloud')} ${tx('Auf deinen Geräten abgeglichen')} · <button type="button" class="hub-link">${tx('Dein Code')}</button>`;
   $('#syncMini').querySelector('button').onclick = () => openSync();
   $('#syncRowTitle').textContent = s.connected ? tx('Dein Code') : tx('Auf anderen Geräten weiterspielen');
-  $('#syncRowSub').textContent = unsaved ? '⚠️ ' + tx('Noch nicht gesichert') : s.connected ? s.code : tx('Mit einem Code – ohne E-Mail und Passwort');
+  $('#syncRowSub').textContent = unsaved ? '⚠️ ' + tx('Noch nicht gesichert') : s.connected ? '✓ ' + tx('Auf deinen Geräten abgeglichen') : tx('Mit einem Code – ohne E-Mail und Passwort');   // den Code selbst nur im Fenster „Dein Code“
   $('#syncRowIc').style.background = unsaved ? 'linear-gradient(135deg,#f59e0b,#ef4444)' : s.connected ? 'linear-gradient(135deg,#10b981,#0ea5e9)' : 'linear-gradient(135deg,#ff4f86,#fbbf24)';
   $('#syncIntro').innerHTML = s.connected
     ? tx('Mit diesem Code hast du auf allen verbundenen Geräten dieselben Rekorde, Serien und dasselbe Profil. Er ist auch dein Zugang zur Bestenliste.')
