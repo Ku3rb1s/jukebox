@@ -1,0 +1,30 @@
+// Spieleabend – Sprachdatei Español. Links Deutsch (nicht ändern), rechts die Übersetzung.
+(self.LANG_PACKS ??= {}).es = {
+  name: 'Español',
+  flag: '🇪🇸',
+  dict: {
+    "Einstellungen": "Ajustes",
+    "Wähle ein Spiel": "Elige un juego",
+    "Musik raten, Bingo spielen – mit Freunden oder allein.": "Adivina música, juega al bingo – con amigos o a solas.",
+    "Alle Spiele laufen direkt im Browser, ohne App und ohne Anmeldung zum Mitspielen.": "Todos los juegos funcionan en el navegador – sin app y sin registrarse para jugar.",
+    "Sprache und Design gelten für alle Spiele auf diesem Gerät.": "El idioma y el diseño se aplican a todos los juegos de este dispositivo.",
+    "Fertig": "Listo",
+    "Sprache": "Idioma",
+    "Gilt auch für Musik-Bingo und Needle Drop": "También se aplica a Musik-Bingo y Needle Drop",
+    "Design": "Diseño",
+    "Graphit": "Grafito",
+    "Ozean": "Océano",
+    "Wald": "Bosque",
+    "Abend": "Atardecer",
+    "Lila": "Morado",
+    "OLED": "OLED",
+    "Gruppe": "En grupo",
+    "Allein": "En solitario",
+    "Lobby per QR-Code": "Sala por código QR",
+    "Tägliche Challenge": "Reto diario",
+    "mit Spotify": "con Spotify",
+    "ohne Anmeldung": "sin registro",
+    "Spielen": "Jugar",
+    "Die Spieleliste konnte nicht geladen werden.": "No se pudo cargar la lista de juegos."
+  },
+};

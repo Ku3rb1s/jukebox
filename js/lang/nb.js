@@ -1,0 +1,30 @@
+// Spieleabend – Sprachdatei Norsk. Links Deutsch (nicht ändern), rechts die Übersetzung.
+(self.LANG_PACKS ??= {}).nb = {
+  name: 'Norsk',
+  flag: '🇳🇴',
+  dict: {
+    "Einstellungen": "Innstillinger",
+    "Wähle ein Spiel": "Velg et spill",
+    "Musik raten, Bingo spielen – mit Freunden oder allein.": "Gjett musikk, spill bingo – med venner eller alene.",
+    "Alle Spiele laufen direkt im Browser, ohne App und ohne Anmeldung zum Mitspielen.": "Alle spillene kjører rett i nettleseren – uten app og uten innlogging for å være med.",
+    "Sprache und Design gelten für alle Spiele auf diesem Gerät.": "Språk og utseende gjelder for alle spillene på denne enheten.",
+    "Fertig": "Ferdig",
+    "Sprache": "Språk",
+    "Gilt auch für Musik-Bingo und Needle Drop": "Gjelder også Musik-Bingo og Needle Drop",
+    "Design": "Utseende",
+    "Graphit": "Grafitt",
+    "Ozean": "Hav",
+    "Wald": "Skog",
+    "Abend": "Kveld",
+    "Lila": "Lilla",
+    "OLED": "OLED",
+    "Gruppe": "Gruppe",
+    "Allein": "Alene",
+    "Lobby per QR-Code": "Lobby via QR-kode",
+    "Tägliche Challenge": "Dagens utfordring",
+    "mit Spotify": "med Spotify",
+    "ohne Anmeldung": "uten innlogging",
+    "Spielen": "Spill",
+    "Die Spieleliste konnte nicht geladen werden.": "Kunne ikke laste listen over spill."
+  },
+};

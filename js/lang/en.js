@@ -1,0 +1,30 @@
+// Spieleabend – Sprachdatei English. Links Deutsch (nicht ändern), rechts die Übersetzung.
+(self.LANG_PACKS ??= {}).en = {
+  name: 'English',
+  flag: '🇬🇧',
+  dict: {
+    "Einstellungen": "Settings",
+    "Wähle ein Spiel": "Pick a game",
+    "Musik raten, Bingo spielen – mit Freunden oder allein.": "Guess music, play bingo – with friends or on your own.",
+    "Alle Spiele laufen direkt im Browser, ohne App und ohne Anmeldung zum Mitspielen.": "All games run right in the browser – no app, and no sign-up needed to play along.",
+    "Sprache und Design gelten für alle Spiele auf diesem Gerät.": "Language and design apply to all games on this device.",
+    "Fertig": "Done",
+    "Sprache": "Language",
+    "Gilt auch für Musik-Bingo und Needle Drop": "Also applies to Musik-Bingo and Needle Drop",
+    "Design": "Design",
+    "Graphit": "Graphite",
+    "Ozean": "Ocean",
+    "Wald": "Forest",
+    "Abend": "Evening",
+    "Lila": "Purple",
+    "OLED": "OLED",
+    "Gruppe": "Group",
+    "Allein": "Solo",
+    "Lobby per QR-Code": "Lobby via QR code",
+    "Tägliche Challenge": "Daily challenge",
+    "mit Spotify": "with Spotify",
+    "ohne Anmeldung": "no sign-up",
+    "Spielen": "Play",
+    "Die Spieleliste konnte nicht geladen werden.": "Couldn't load the list of games."
+  },
+};

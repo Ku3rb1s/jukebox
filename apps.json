@@ -1,0 +1,36 @@
+{
+  "_hinweis": "Neues Spiel hinzufügen: einen Eintrag in \"apps\" ergänzen – fertig. Texte je Sprache (de, en, fr, es, nb); fehlt eine Sprache, wird Deutsch gezeigt.",
+  "title": "Spieleabend",
+  "apps": [
+    {
+      "id": "musik-bingo",
+      "name": "Musik-Bingo",
+      "url": "https://ku3rb1s.github.io/musik-bingo-lobby/",
+      "icon": "https://ku3rb1s.github.io/musik-bingo-lobby/icon-192.png",
+      "color": "#ff5a7a",
+      "desc": {
+        "de": "Musik-Quiz mit Bingo-Karten fürs Handy: Lobby per QR-Code, Live-Sync, Tipps und mehrere Partien.",
+        "en": "Music quiz with bingo cards on your phone: lobby via QR code, live sync, hints and multiple games.",
+        "fr": "Quiz musical avec cartes de bingo sur le téléphone : lobby par QR code, synchro en direct, indices et plusieurs parties.",
+        "es": "Quiz musical con cartones de bingo en el móvil: sala por código QR, sincronización en directo, pistas y varias partidas.",
+        "nb": "Musikkquiz med bingobrett på mobilen: lobby via QR-kode, live-synk, hint og flere runder."
+      },
+      "tags": ["group", "lobby", "spotify"]
+    },
+    {
+      "id": "needle-drop",
+      "name": "Needle Drop",
+      "url": "https://ku3rb1s.github.io/needle-drop/",
+      "icon": "https://ku3rb1s.github.io/needle-drop/icon-192.png",
+      "color": "#f59e0b",
+      "desc": {
+        "de": "Erkennst du den Song in 0,1 Sekunden? 22 Kategorien, Tägliche Challenge und Ergebnis zum Teilen.",
+        "en": "Can you name the song in 0.1 seconds? 22 categories, a daily challenge and results to share.",
+        "fr": "Reconnais-tu le morceau en 0,1 seconde ? 22 catégories, un défi du jour et des résultats à partager.",
+        "es": "¿Reconoces la canción en 0,1 segundos? 22 categorías, reto diario y resultados para compartir.",
+        "nb": "Kjenner du igjen sangen på 0,1 sekund? 22 kategorier, dagens utfordring og resultater å dele."
+      },
+      "tags": ["solo", "daily", "nologin"]
+    }
+  ]
+}

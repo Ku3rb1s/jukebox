@@ -1,0 +1,30 @@
+// Spieleabend – Sprachdatei Français. Links Deutsch (nicht ändern), rechts die Übersetzung.
+(self.LANG_PACKS ??= {}).fr = {
+  name: 'Français',
+  flag: '🇫🇷',
+  dict: {
+    "Einstellungen": "Réglages",
+    "Wähle ein Spiel": "Choisis un jeu",
+    "Musik raten, Bingo spielen – mit Freunden oder allein.": "Deviner la musique, jouer au bingo – entre amis ou en solo.",
+    "Alle Spiele laufen direkt im Browser, ohne App und ohne Anmeldung zum Mitspielen.": "Tous les jeux tournent directement dans le navigateur – sans appli et sans inscription pour jouer.",
+    "Sprache und Design gelten für alle Spiele auf diesem Gerät.": "La langue et l’apparence s’appliquent à tous les jeux sur cet appareil.",
+    "Fertig": "OK",
+    "Sprache": "Langue",
+    "Gilt auch für Musik-Bingo und Needle Drop": "S’applique aussi à Musik-Bingo et Needle Drop",
+    "Design": "Apparence",
+    "Graphit": "Graphite",
+    "Ozean": "Océan",
+    "Wald": "Forêt",
+    "Abend": "Soir",
+    "Lila": "Violet",
+    "OLED": "OLED",
+    "Gruppe": "En groupe",
+    "Allein": "En solo",
+    "Lobby per QR-Code": "Lobby par QR code",
+    "Tägliche Challenge": "Défi du jour",
+    "mit Spotify": "avec Spotify",
+    "ohne Anmeldung": "sans inscription",
+    "Spielen": "Jouer",
+    "Die Spieleliste konnte nicht geladen werden.": "Impossible de charger la liste des jeux."
+  },
+};
