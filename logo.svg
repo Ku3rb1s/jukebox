@@ -1,25 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
-<!-- Jukebox: zwei Platten – links Musik-Bingo (Pink-Orange), rechts Needle Drop (Gold) – auf dunklem Grund -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<!-- Jukebox: Neon-Bogen-Jukebox. Drei Röhren Pink → Orange → Gold (Musik-Bingo → Needle Drop), Platte im Fenster, Goldsockel -->
 <defs>
-  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a2a52"/><stop offset="1" stop-color="#15121d"/></linearGradient>
-  <linearGradient id="la" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffa03c"/><stop offset="1" stop-color="#ff3878"/></linearGradient>
-  <linearGradient id="lb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
-  <radialGradient id="glow" cx=".5" cy=".55" r=".6"><stop offset="0" stop-color="#ff7a59" stop-opacity=".35"/><stop offset="1" stop-color="#ff7a59" stop-opacity="0"/></radialGradient>
-  <filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000" flood-opacity=".5"/></filter>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#36264e"/><stop offset="1" stop-color="#0f0c15"/></linearGradient>
+  <radialGradient id="halo" cx=".5" cy=".46" r=".56"><stop offset="0" stop-color="#ff6a5a" stop-opacity=".42"/><stop offset="1" stop-color="#ff6a5a" stop-opacity="0"/></radialGradient>
+  <linearGradient id="au" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fef3c7"/><stop offset=".45" stop-color="#fbbf24"/><stop offset="1" stop-color="#d97706"/></linearGradient>
+  <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#241b31"/><stop offset="1" stop-color="#16111e"/></linearGradient>
+  <filter id="glow" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="10"/></filter>
 </defs>
 <rect width="512" height="512" fill="url(#bg)"/>
-<rect width="512" height="512" fill="url(#glow)"/>
-<g id="disc">
+<rect width="512" height="512" fill="url(#halo)"/>
+<path d="M96 448V252a160 160 0 0 1 320 0v196z" fill="url(#body)"/>
+<g fill="none" stroke-width="22" stroke-linecap="round">
+  <g filter="url(#glow)" opacity=".75">
+    <path d="M122 440V252a134 134 0 0 1 268 0v188" stroke="#ff3878"/>
+    <path d="M154 440V252a102 102 0 0 1 204 0v188" stroke="#ff8a3c"/>
+    <path d="M186 440V252a70 70 0 0 1 140 0v188" stroke="#fbbf24"/>
+  </g>
+  <path d="M122 440V252a134 134 0 0 1 268 0v188" stroke="#ff4f86"/>
+  <path d="M154 440V252a102 102 0 0 1 204 0v188" stroke="#ff9a4d"/>
+  <path d="M186 440V252a70 70 0 0 1 140 0v188" stroke="#fcd34d"/>
+  <g stroke="#fff" stroke-opacity=".55" stroke-width="5"><path d="M122 400V252a134 134 0 0 1 60-111"/><path d="M154 400V252a102 102 0 0 1 46-85"/><path d="M186 400V252a70 70 0 0 1 32-58"/></g>
 </g>
-<!-- linke Platte (Bingo) -->
-<g filter="url(#sh)"><circle cx="190" cy="230" r="140" fill="#111114"/></g>
-<g fill="none" stroke="#fff" stroke-opacity=".08" stroke-width="2"><circle cx="190" cy="230" r="128"/><circle cx="190" cy="230" r="114"/><circle cx="190" cy="230" r="100"/><circle cx="190" cy="230" r="86"/></g>
-<path d="M190 230 L91 131 A140 140 0 0 1 133 103 Z" fill="#fff" fill-opacity=".1"/>
-<circle cx="190" cy="230" r="62" fill="url(#la)"/><circle cx="190" cy="230" r="8" fill="#111114"/>
-<!-- rechte Platte (Needle Drop), überlappt vorne -->
-<g filter="url(#sh)"><circle cx="322" cy="300" r="140" fill="#111114"/></g>
-<g fill="none" stroke="#fff" stroke-opacity=".08" stroke-width="2"><circle cx="322" cy="300" r="128"/><circle cx="322" cy="300" r="114"/><circle cx="322" cy="300" r="100"/><circle cx="322" cy="300" r="86"/></g>
-<path d="M322 300 L223 201 A140 140 0 0 1 265 173 Z" fill="#fff" fill-opacity=".1"/>
-<path d="M322 300 L421 399 A140 140 0 0 1 379 427 Z" fill="#fff" fill-opacity=".1"/>
-<circle cx="322" cy="300" r="62" fill="url(#lb)"/><circle cx="322" cy="300" r="8" fill="#111114"/>
+<circle cx="256" cy="262" r="56" fill="#0b0a0f"/>
+<circle cx="256" cy="262" r="44" fill="none" stroke="#fff" stroke-opacity=".1" stroke-width="3"/>
+<circle cx="256" cy="262" r="22" fill="url(#au)"/>
+<circle cx="256" cy="262" r="4" fill="#0b0a0f"/>
+<g stroke="#fff" stroke-opacity=".22" stroke-width="10" stroke-linecap="round"><path d="M222 342h68M222 370h68M222 398h68"/></g>
+<rect x="80" y="430" width="352" height="38" rx="19" fill="url(#au)"/>
+<rect x="104" y="436" width="304" height="8" rx="4" fill="#fff" fill-opacity=".45"/>
 </svg>
