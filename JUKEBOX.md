@@ -63,6 +63,16 @@ eigene Kürzel und ruft `Sync.leave()` auf.
 - Rekorde/Statistik löschen soll auf allen Geräten gelten: nach dem lokalen Löschen `Sync.reset('präfix')` aufrufen.
 - Spiele hören auf `addEventListener('jukebox-sync', …)` und zeichnen dann Startseite/Einstellungen neu.
 
+## Bestenliste der Tages-Challenges (`js/leaderboard.js` in der Jukebox + Worker, Bereich `/lb/`)
+
+- Nur sichtbar mit Code. Mitmachen ist freiwillig. Erst dann gehen Name, Emoji und Tagesergebnisse **lesbar** an den Server
+  und sind öffentlich. Der Code ist das Konto, gesendet wird nur seine Prüfsumme (wie beim Abgleich).
+- Die Ergebnisse trägt die Jukebox ein, wenn sie geöffnet wird. Sie liest dafür die Tagesergebnisse aus dem Speicher der Spiele
+  (Needle Drop `mq.daily`, Gold Record `gr.daily.<Tag>`; nachgespielte Tage zählen nicht). Pro Spiel und Tag zählt das erste Ergebnis.
+- Server prüft: Code muss existieren, Punkte müssen möglich sein (`LB_GAMES` in `worker/sync.js`), Namen ohne grobe Beleidigungen/Links.
+- Austreten oder „Code löschen“ entfernt Name und Punkte. Tagesergebnisse werden nach 60 Tagen gelöscht.
+- **Neues Spiel mit Tages-Challenge?** In `GAMES` in `js/leaderboard.js` und in `LB_GAMES` im Worker eintragen, dann Worker neu veröffentlichen.
+
 ## Neues Spiel
 
 1. Ordner neben den anderen anlegen, eigenes Repo, GitHub Pages.
