@@ -88,6 +88,15 @@ Regeln:
 - **Neues Spiel oder neue Wertung?** In `js/leaderboard.js` (`DAILY_RESULTS`, `HIGH`, `VIEWS`) und im Worker (`LB_GAMES`, `LB_HIGH`, `LB_STREAK`)
   eintragen, neue Tabellen in `worker/schema.sql`, dann `npx wrangler d1 execute jukebox-sync --remote --file schema.sql` und `npx wrangler deploy`.
 
+## Cover (Gold Record, Older or Newer)
+
+- Deezer liefert das Cover des Albums, auf dem der Track liegt – oft ein Sampler („Sommer Hits“, späte Soundtracks …).
+  `node scripts/check-covers.js` (im Ordner Spiele-Hub) findet solche Songs und sucht das Original-Cover: erst MusicBrainz/
+  Cover Art Archive (Original-Single/-Album aus der Zeit des Songs), sonst ein Album des Interpreten bei Deezer – sonst bleibt es.
+- Ergebnis: `data/covers.json` im Spiel (`{ id: "mb:<release-group>" | "<deezer-md5>" }`), die Spiele übernehmen es beim Laden.
+  Lädt ein Original-Cover nicht (oder nicht binnen 4 s), springt das Bild auf das Deezer-Cover zurück.
+- Nach neuen Songs das Skript erneut laufen lassen (Zwischenstand in `scripts/.cache/`, Bericht `scripts/.cache/covers-report.txt`).
+
 ## Neues Spiel
 
 1. Ordner neben den anderen anlegen, eigenes Repo, GitHub Pages.
