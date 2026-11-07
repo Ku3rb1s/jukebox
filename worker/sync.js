@@ -44,7 +44,7 @@ const LB_GAMES = {                           // gültige Punkte je Spiel (Plausi
 // Highscores (Allzeit-Rekorde): nur vergleichbare Einstellungen, je Spiel eine Kategorie (cat) pro Stufe und Modus
 const LB_HIGH = {
   'older-or-newer': { cat: /^(easy|normal|hard|pro)\.(show|blind)$/, ok: v => v >= 1 && v <= 3000 },   // längste Serie (Songauswahl „Alle“)
-  'gold-record': { cat: /^(easy|normal|hard)$/, ok: v => v >= 1 && v <= 15 },                         // höchste Stufe (Songauswahl „Alle“)
+  'gold-record': { cat: /^dia\.(easy|normal|hard)$/, ok: v => v >= 1 && v <= 100000 },             // wie oft Diamant (15/15) je Schwierigkeit
   'hit-or-miss': { cat: /^(60s|sd)\.(easy|normal|hard)$/, ok: v => v >= 1 && v <= 8000 },                                 // Punkte (60 s) bzw. richtig in Folge (Sudden Death)
 };
 // Serien der Tages-Challenge: aktuelle Serie in Tagen. Sie kann auch sinken (verpasster Tag), darum immer übernommen.

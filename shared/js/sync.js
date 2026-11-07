@@ -32,6 +32,8 @@ const Sync = (() => {
     [/^(gr|mq|hom)\.ach$/, 'union'],
     [/^gr\.top$/, 'top'],
     [/^(mq|oon|gr|hom)\.stats$/, 'device'],
+    [/^gr\.diamonds$/, 'device'],                   // Diamanten je Schwierigkeit (je Gerät gezählt, zusammengezählt angezeigt)
+    [/^gr\.diaStart$/, 'mapmax'],                   // Startwert der Diamanten aus der Zeit davor (für alle Geräte gleich)
   ];
   // Statistik mehrerer Geräte zusammenzählen (je Spiel eigener Aufbau)
   const COMBINE = {
@@ -46,6 +48,7 @@ const Sync = (() => {
       return { games: a.games + b.games, right: a.right + b.right, asked: a.asked + b.asked, best: Math.max(a.best, b.best),
         wins: (a.wins || 0) + (b.wins || 0), jokers: (a.jokers || 0) + (b.jokers || 0), types: pairs(a.types, b.types), dec: pairs(a.dec, b.dec) };
     },
+    'gr.diamonds': (a, b) => { const o = { ...a }; for (const [k, n] of Object.entries(b || {})) o[k] = (o[k] || 0) + (+n || 0); return o; },
     'oon.stats': (a, b) => ({ games: a.games + b.games, right: a.right + b.right, best: Math.max(a.best, b.best), years: Math.max(a.years || 0, b.years || 0) }),
     'hom.stats': (a, b) => {
       const types = { ...a.types };
@@ -303,7 +306,9 @@ const Sync = (() => {
     high: () => {
       const out = [];
       for (const d of ['easy', 'normal', 'hard', 'pro']) for (const m of ['show', 'blind']) out.push({ game: 'older-or-newer', cat: `${d}.${m}`, score: ls.get(`oon.best2.all.${d}.${m}`, 0) });
-      for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'gold-record', cat: d, score: ls.get(`gr.best.all.${d}`, 0) });
+      // Gold Record: wie oft Diamant (15/15) je Schwierigkeit – Startwert + alle Geräte (die höchste Stufe wäre fast immer 15)
+      const dStart = ls.get('gr.diaStart', null) || {}, dAll = view('gr.diamonds', ls.get('gr.diamonds', null)) || {};
+      for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'gold-record', cat: 'dia.' + d, score: (+dStart[d] || 0) + (+dAll[d] || 0) });
       for (const m of ['60s', 'sd']) for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'hit-or-miss', cat: `${m}.${d}`, score: ls.get(`hom.best.${m}.${d}`, 0) });   // Punkte (60 s) bzw. richtig in Folge
       return out.filter(x => Number.isInteger(x.score) && x.score > 0);
     },

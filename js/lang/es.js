@@ -153,5 +153,6 @@
     "Spiele": "Juegos",
     "Zur Jukebox": "A la Jukebox",
     "<b>Tipp:</b> Logo gedrückt halten – zur Jukebox und zu den anderen Spielen.": "<b>Consejo:</b> mantén pulsado el logo para ir a la Jukebox y a los demás juegos.",
+    "Gezählt wird, wie oft du Diamant (15/15) geholt hast – mit jeder Songauswahl.": "Cuenta cuántas veces has llegado al Diamante (15/15), con cualquier selección de canciones.",
   },
 };

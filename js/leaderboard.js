@@ -40,8 +40,10 @@ const Board = (() => {
     },
     'gold-record': {
       opts: [['diff', { easy: 'Leicht', normal: 'Normal', hard: 'Schwer' }]],
-      key: c => `gr.best.all.${c.diff}`, cat: c => c.diff,
-      fmt: n => n + '/15',
+      // Wie oft Diamant (15/15) – die höchste Stufe wäre bei fast allen 15 (gezählt in Gold Record: gr.diamonds + gr.diaStart)
+      cat: c => 'dia.' + c.diff,
+      fmt: n => '💎 ' + n.toLocaleString(LANG) + '×',
+      hint: 'Gezählt wird, wie oft du Diamant (15/15) geholt hast – mit jeder Songauswahl.',
     },
     'hit-or-miss': {
       opts: [['diff', { easy: 'Leicht', normal: 'Normal', hard: 'Schwer' }], ['hmode', { '60s': '60 Sekunden', sd: 'Sudden Death' }]],
@@ -186,7 +188,7 @@ const Board = (() => {
     let opts = '';
     if (view === 'daily') opts = seg({ day: tx('Heute'), week: tx('Diese Woche') }, sel.range, 'data-lb-range');
     if (view === 'high') { const c = highCombo(g); opts = HIGH[g].opts.map(([k, vals]) => seg(Object.fromEntries(Object.entries(vals).map(([x, y]) => [x, tx(y)])), c[k], 'data-lb-' + k)).join(''); }
-    const hint = view === 'high' ? tx('Gewertet wird dein Rekord mit der Songauswahl „Alle“.')
+    const hint = view === 'high' ? tx(HIGH[g].hint || 'Gewertet wird dein Rekord mit der Songauswahl „Alle“.')
       : view === 'streak' ? tx('Tage in Folge mit gespielter Tages-Challenge.') : '';
 
     // Liste: Treppchen für die ersten drei, danach Zeilen

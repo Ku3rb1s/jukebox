@@ -153,5 +153,6 @@
     "Spiele": "Games",
     "Zur Jukebox": "To the Jukebox",
     "<b>Tipp:</b> Logo gedrückt halten – zur Jukebox und zu den anderen Spielen.": "<b>Tip:</b> Press and hold the logo – to the Jukebox and the other games.",
+    "Gezählt wird, wie oft du Diamant (15/15) geholt hast – mit jeder Songauswahl.": "Counts how often you reached Diamond (15/15) – with any song selection.",
   },
 };
