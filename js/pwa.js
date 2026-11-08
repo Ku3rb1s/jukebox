@@ -68,7 +68,7 @@
     Object.defineProperty(this, 'open', { get: () => false, configurable: true });   // für die Spiele ist es schon zu
     this.classList.add('closing');
     const done = () => { if (closing.get(this) === anim) { finish(this, value); anim.cancel(); } };
-    now.set(this, done);
+    now.set(this, Object.assign(done, { t0: performance.now() }));
     anim.onfinish = done;
     setTimeout(done, dur + 120);              // falls die Animation ruht (Seite im Hintergrund)
   };
@@ -83,6 +83,8 @@
   document.addEventListener('click', e => {
     if (!now.size || !e.isTrusted || e.target.closest?.('dialog[open]:not(.closing)')) return;
     e.stopImmediatePropagation(); e.preventDefault();
+    // ganz kurz nach dem Schließen (Doppeltipp auf „Fertig“): nur schlucken – sonst träfe der zweite Tipp, was darunter liegt
+    if ([...now.values()].some(done => performance.now() - done.t0 < 150)) return;
     for (const done of [...now.values()]) done();
     const { clientX: x, clientY: y } = e;
     setTimeout(() => document.elementFromPoint(x, y)?.click(), 0);              // nach dem Freigeben der Seite (Scroll-Position)
