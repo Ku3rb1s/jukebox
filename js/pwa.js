@@ -47,9 +47,10 @@
   const animated = d => d.matches('.sheet,.alert,.ask');
   const EASE = 'cubic-bezier(.32,.72,0,1)';                                         // iOS-Kurve für Fenster
   const closing = new WeakMap();                                                     // Fenster → laufende Schließ-Animation
+  const now = new Map();                                                             // Fenster, das gerade wegfährt → sofort fertig schließen
 
   const finish = (d, value) => {
-    closing.delete(d); delete d.open;                                                // eigener open-Getter weg → wieder der echte
+    closing.delete(d); now.delete(d); delete d.open;                                 // eigener open-Getter weg → wieder der echte
     d.classList.remove('closing'); d.style.transform = '';
     nativeClose.call(d, value);
   };
@@ -67,14 +68,25 @@
     Object.defineProperty(this, 'open', { get: () => false, configurable: true });   // für die Spiele ist es schon zu
     this.classList.add('closing');
     const done = () => { if (closing.get(this) === anim) { finish(this, value); anim.cancel(); } };
+    now.set(this, done);
     anim.onfinish = done;
     setTimeout(done, dur + 120);              // falls die Animation ruht (Seite im Hintergrund)
   };
   P.showModal = function () {
     const anim = closing.get(this);
-    if (anim) { closing.delete(this); anim.cancel(); delete this.open; this.classList.remove('closing'); this.style.transform = ''; return; }
+    if (anim) { closing.delete(this); now.delete(this); anim.cancel(); delete this.open; this.classList.remove('closing'); this.style.transform = ''; return; }
     return nativeModal.call(this);
   };
+  // Tipp, während ein Fenster noch wegfährt: Bis zum Ende der Animation ist es technisch noch offen und sperrt die Seite
+  // dahinter – der Tipp (z. B. auf die nächste Station) ginge verloren. Darum: Fenster sofort fertig schließen und den
+  // Tipp an die Stelle weitergeben, auf die getippt wurde.
+  document.addEventListener('click', e => {
+    if (!now.size || !e.isTrusted || e.target.closest?.('dialog[open]:not(.closing)')) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    for (const done of [...now.values()]) done();
+    const { clientX: x, clientY: y } = e;
+    setTimeout(() => document.elementFromPoint(x, y)?.click(), 0);              // nach dem Freigeben der Seite (Scroll-Position)
+  }, true);
   // Escape: statt hartem Schließen dieselbe Animation
   document.addEventListener('cancel', e => { const d = e.target; if (d instanceof HTMLDialogElement && animated(d)) { e.preventDefault(); d.close(); } }, true);
   // <form method="dialog">: der Knopf schließt sonst ohne close()
