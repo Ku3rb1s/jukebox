@@ -9,11 +9,11 @@
       "icon": "https://ku3rb1s.github.io/musik-bingo-lobby/icon-192.png",
       "color": "#ff5a7a",
       "desc": {
-        "de": "Musik-Quiz mit Bingo-Karten fürs Handy: Lobby per QR-Code, Live-Sync, Tipps und mehrere Partien.",
-        "en": "Music quiz with bingo cards on your phone: lobby via QR code, live sync, hints and multiple games.",
-        "fr": "Quiz musical avec cartes de bingo sur le téléphone : lobby par QR code, synchro en direct, indices et plusieurs parties.",
-        "es": "Quiz musical con cartones de bingo en el móvil: sala por código QR, sincronización en directo, pistas y varias partidas.",
-        "nb": "Musikkquiz med bingobrett på mobilen: lobby via QR-kode, live-synk, hint og flere runder."
+        "de": "Musik-Bingo mit Karten fürs Handy: Lobby per QR-Code, Live-Sync und Tipps.",
+        "en": "Music bingo with cards on your phone: QR-code lobby, live sync and hints.",
+        "fr": "Bingo musical sur le téléphone : lobby par QR code, synchro en direct et indices.",
+        "es": "Bingo musical en el móvil: sala por código QR, sincronización en directo y pistas.",
+        "nb": "Musikkbingo på mobilen: lobby via QR-kode, live-synk og hint."
       },
       "tags": ["group", "lobby", "spotify"]
     },
@@ -24,11 +24,11 @@
       "icon": "https://ku3rb1s.github.io/needle-drop/icon-192.png?v=5",
       "color": "#f59e0b",
       "desc": {
-        "de": "Erkennst du den Song in 0,1 Sekunden? 22 Kategorien, Tägliche Challenge und Ergebnis zum Teilen.",
-        "en": "Can you name the song in 0.1 seconds? 22 categories, a daily challenge and results to share.",
-        "fr": "Reconnais-tu le morceau en 0,1 seconde ? 22 catégories, un défi du jour et des résultats à partager.",
-        "es": "¿Reconoces la canción en 0,1 segundos? 22 categorías, reto diario y resultados para compartir.",
-        "nb": "Kjenner du igjen sangen på 0,1 sekund? 22 kategorier, dagens utfordring og resultater å dele."
+        "de": "Erkennst du den Song in 0,1 Sekunden? 22 Kategorien und eine Tägliche Challenge.",
+        "en": "Can you name the song in 0.1 seconds? 22 categories and a daily challenge.",
+        "fr": "Reconnais-tu le morceau en 0,1 seconde ? 22 catégories et un défi du jour.",
+        "es": "¿Reconoces la canción en 0,1 segundos? 22 categorías y un reto diario.",
+        "nb": "Kjenner du igjen sangen på 0,1 sekund? 22 kategorier og dagens utfordring."
       },
       "tags": ["solo", "daily", "nologin"]
     },
@@ -39,11 +39,11 @@
       "icon": "https://ku3rb1s.github.io/older-or-newer/icon-192.png?v=4",
       "color": "#22c55e",
       "desc": {
-        "de": "Älter oder neuer? Ein Song läuft – kam er vor oder nach dem letzten raus? Wie Higher or Lower, mit über 2.000 Hits von 1954 bis heute – vier Schwierigkeitsstufen.",
-        "en": "Older or newer? A song plays – did it come out before or after the last one? Like Higher or Lower, with over 2,000 hits from 1954 to today – four difficulty levels.",
-        "fr": "Plus ancien ou plus récent ? Un morceau passe – est-il sorti avant ou après le précédent ? Comme Higher or Lower, avec plus de 2 000 tubes de 1954 à aujourd’hui – quatre niveaux de difficulté.",
-        "es": "¿Más antigua o más nueva? Suena una canción: ¿salió antes o después de la anterior? Como Higher or Lower, con más de 2000 éxitos desde 1954 hasta hoy y cuatro niveles de dificultad.",
-        "nb": "Eldre eller nyere? En sang spilles – kom den ut før eller etter den forrige? Som Higher or Lower, med over 2000 hits fra 1954 til i dag – fire vanskelighetsgrader."
+        "de": "Kam der Song vor oder nach dem letzten raus? Über 2.000 Hits von 1954 bis heute.",
+        "en": "Did the song come out before or after the last one? Over 2,000 hits since 1954.",
+        "fr": "Sorti avant ou après le précédent ? Plus de 2 000 tubes depuis 1954.",
+        "es": "¿La canción salió antes o después de la anterior? Más de 2000 éxitos desde 1954.",
+        "nb": "Kom sangen ut før eller etter den forrige? Over 2000 hits fra 1954 til i dag."
       },
       "tags": ["solo", "nologin"]
     },
@@ -54,11 +54,11 @@
       "icon": "https://ku3rb1s.github.io/gold-record/icon-192.png?v=2",
       "color": "#2f5bff",
       "desc": {
-        "de": "Musik-Quiz in 15 Stufen mit über 6.000 Songs: Songs erkennen, Interpreten und Jahre raten – von der Kassette über Gold und Platin bis zum Diamanten. 4 Joker, drei Schwierigkeitsstufen und eine Tägliche Challenge.",
-        "en": "Music quiz in 15 levels with over 6,000 songs: recognise songs, guess artists and years – from cassette via Gold and Platinum all the way to Diamond. 4 lifelines, three difficulty levels and a Daily Challenge.",
-        "fr": "Quiz musical en 15 paliers avec plus de 6 000 chansons : reconnais les chansons, devine artistes et années – de la cassette à l’Or, au Platine et jusqu’au Diamant. 4 jokers, trois niveaux de difficulté et un défi du jour.",
-        "es": "Quiz musical en 15 niveles con más de 6.000 canciones: reconoce canciones, adivina artistas y años, del casete al Oro, el Platino y hasta el Diamante. 4 comodines, tres niveles de dificultad y un reto diario.",
-        "nb": "Musikkquiz i 15 trinn med over 6 000 sanger: kjenn igjen sanger, gjett artister og år – fra kassett via Gull og Platina helt til Diamant. 4 livliner, tre vanskelighetsgrader og dagens utfordring."
+        "de": "15 Stufen bis zum Diamanten: Songs erkennen, Interpreten und Jahre raten.",
+        "en": "15 levels from cassette to Diamond: recognise songs, guess artists and years.",
+        "fr": "15 paliers jusqu’au Diamant : reconnais les chansons, devine artistes et années.",
+        "es": "15 niveles del casete al Diamante: reconoce canciones, adivina artistas y años.",
+        "nb": "15 trinn fra kassett til Diamant: kjenn igjen sanger, gjett artister og år."
       },
       "tags": ["solo", "daily", "nologin"]
     },
@@ -69,11 +69,11 @@
       "icon": "https://ku3rb1s.github.io/hit-or-miss/icon-192.png?v=1",
       "color": "#d946ef",
       "desc": {
-        "de": "Stimmt’s oder stimmt’s nicht? Ein Song läuft, dazu eine Behauptung – wisch nach rechts für Hit, nach links für Miss. 60 Sekunden, Sudden Death und eine Tages-Challenge.",
-        "en": "True or false? A song plays with a claim about it – swipe right for Hit, left for Miss. 60 seconds, Sudden Death and a daily challenge.",
-        "fr": "Vrai ou faux ? Un morceau passe avec une affirmation – glisse à droite pour Hit, à gauche pour Miss. 60 secondes, mort subite et un défi du jour.",
-        "es": "¿Verdadero o falso? Suena una canción con una afirmación: desliza a la derecha para Hit y a la izquierda para Miss. 60 segundos, muerte súbita y un reto diario.",
-        "nb": "Sant eller usant? En sang spilles med en påstand – sveip til høyre for Hit, til venstre for Miss. 60 sekunder, sudden death og dagens utfordring."
+        "de": "Ein Song, eine Behauptung: Stimmt’s? Wisch nach rechts (Hit) oder links (Miss).",
+        "en": "One song, one claim: true? Swipe right for Hit, left for Miss.",
+        "fr": "Un morceau, une affirmation : vrai ? Glisse à droite pour Hit, à gauche pour Miss.",
+        "es": "Una canción, una afirmación: ¿cierto? Desliza a derecha (Hit) o izquierda (Miss).",
+        "nb": "Én sang, én påstand: stemmer det? Sveip til høyre for Hit, til venstre for Miss."
       },
       "tags": ["solo", "daily", "nologin"]
     },
@@ -84,11 +84,11 @@
       "icon": "https://ku3rb1s.github.io/on-tour/icon-192.png?v=2",
       "color": "#e11d48",
       "desc": {
-        "de": "Eine Reise durch die Musikgeschichte: 24 Stationen von Memphis 1956 bis heute. An jeder Station sechs Aufgaben mit Musik – sammle Sterne und reise weiter.",
-        "en": "A journey through music history: 24 stops from Memphis 1956 to today. Six music tasks at every stop – collect stars and travel on.",
-        "fr": "Un voyage à travers l’histoire de la musique : 24 étapes, de Memphis 1956 à aujourd’hui. Six épreuves musicales à chaque étape – collectionne les étoiles et poursuis la route.",
-        "es": "Un viaje por la historia de la música: 24 paradas desde Memphis 1956 hasta hoy. Seis pruebas musicales en cada parada: consigue estrellas y sigue el viaje.",
-        "nb": "En reise gjennom musikkhistorien: 24 stopp fra Memphis 1956 til i dag. Seks musikkoppgaver på hvert stopp – samle stjerner og reis videre."
+        "de": "24 Stationen von Memphis 1956 bis heute – sammle Sterne und reise weiter.",
+        "en": "Travel through 24 stops from Memphis 1956 to today – collect stars and move on.",
+        "fr": "Voyage en 24 étapes de Memphis 1956 à aujourd’hui – gagne des étoiles et avance.",
+        "es": "Viaja por 24 paradas desde Memphis 1956 hasta hoy: gana estrellas y sigue adelante.",
+        "nb": "Reis gjennom 24 stopp fra Memphis 1956 til i dag – samle stjerner og reis videre."
       },
       "tags": ["solo", "nologin"]
     }
