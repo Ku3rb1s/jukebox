@@ -99,6 +99,7 @@ function render() {
       <span class="app-go"><svg class="ic"><use href="#i-play"/></svg><span>${tx('Spielen')}</span></span>
     </a>`).join('');
   renderToday();
+  AdventCal.renderCard();   // Adventskalender (js/advent.js), nur 25.11.–6.1.
   renderProfile();
   board()?.refresh();
 }
@@ -141,7 +142,7 @@ $('#btnBoard').onclick = () => board()?.open();
 sheet.addEventListener('click', e => { if (e.target === sheet || e.target.closest('[data-close]')) sheet.close(); });
 $('#langSel').onchange = e => setLang(e.target.value);
 $('#themeRow').onclick = e => { const b = e.target.closest('[data-theme-pick]'); if (b) setTheme(b.dataset.themePick); };
-self.liveLang = () => { render(); applyTheme(); renderProfile(); renderSync(); };
+self.liveLang = () => { render(); applyTheme(); renderProfile(); renderSync(); if ($('#advSheet').open) AdventCal.render(); };
 
 /* ---------- Auf allen Geräten: persönlicher Code (js/sync.js) ---------- */
 const SYNC_LINK = c => 'https://ku3rb1s.github.io/jukebox/#code=' + c;
@@ -327,8 +328,8 @@ Sync.onStatus(() => { if (!$('#syncInput') || document.activeElement !== $('#syn
 // Zurück aus einem Spiel (auch aus dem Zwischenspeicher des Browsers) oder anderer Tab: Stand neu zeigen
 addEventListener('pageshow', e => { if (e.persisted) render(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
-addEventListener('storage', e => { if (e.key && /^(mq|gr|oon)\./.test(e.key)) render(); });
-addEventListener('jukebox-sync', () => { render(); renderProfile(); theme = store.get('hub.theme') || store.get('mq.theme') || theme; applyTheme(); });
+addEventListener('storage', e => { if (e.key && /^(mq|gr|oon|ot)\./.test(e.key)) render(); });
+addEventListener('jukebox-sync', () => { render(); if ($('#advSheet').open) AdventCal.render(); renderProfile(); theme = store.get('hub.theme') || store.get('mq.theme') || theme; applyTheme(); });
 // Link aus dem QR-Code: …/jukebox/#code=K7QM-2XD9-HF4P → Code eintragen (und aus der Adresszeile entfernen)
 {
   const m = location.hash.match(/code=([A-Za-z0-9-]{12,16})/);
@@ -346,4 +347,6 @@ setInterval(() => { if ($('#syncState') && syncSheet.open) $('#syncState').textC
 applyTheme();
 renderProfile();
 renderSync();
+AdventCal.init();
+AdventCal.renderCard();
 load();

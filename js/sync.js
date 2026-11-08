@@ -35,6 +35,8 @@ const Sync = (() => {
     [/^gr\.diamonds$/, 'device'],                   // Diamanten je Schwierigkeit (je Gerät gezählt, zusammengezählt angezeigt)
     [/^gr\.diaStart$/, 'mapmax'],                   // Startwert der Diamanten aus der Zeit davor (für alle Geräte gleich)
     [/^ot\.(stars|stars2|astars)$/, 'mapmax'],      // On Tour: Sterne je Station (Haupt-Tour, Tour 2, Künstler-Touren) – der beste Wert zählt
+    [/^ot\.(advent|adventDay)$/, 'mapmax'],         // Adventskalender: Sterne je Türchen „Jahr.Tür“ (0 = geöffnet), am Tag selbst geöffnet (Serie)
+    [/^jb\.avatars$/, 'union'],                     // exklusive Avatare aus dem Adventskalender (js/profile.js)
     [/^ot\.ach$/, 'union'],
     [/^ot\.stats$/, 'device'],
   ];

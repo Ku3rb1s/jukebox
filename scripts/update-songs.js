@@ -13,7 +13,8 @@
 //   3. Older or Newer: automatische Songliste (build-auto, MusicBrainz) → Deezer-IDs (build-songs)
 //   4. Original-Cover für beide (check-covers.js)
 //   5. Hit or Miss: Datenpaket aus Gold Record + Older or Newer (build-data)
-//   6. On Tour: Datenpaket aus Hit or Miss + Gold Record (build-data) – Songs je Station
+//   6. On Tour: Datenpaket aus Hit or Miss + Gold Record (build-data) – Songs je Station; Adventskalender (build-advent,
+//      Weihnachtsliste aus dem Zwischenspeicher – neue Playlists holen: im Ordner On-Tour node scripts/build-advent.js --refresh)
 //   7. DATA_V erhöhen, wo sich Songdaten geändert haben (sonst laden Handys die neuen Daten erst später)
 // Vorsicht: Liegen in einem Spiel noch fremde, nicht eingecheckte Änderungen an den Daten, wird es übersprungen.
 // Dauer: meist wenige Minuten (Zwischenspeicher); bei vielen neuen Songs länger (MusicBrainz: 1 Abfrage/Sekunde).
@@ -26,7 +27,7 @@ const want = step => !only.length || only.includes(step);
 const today = new Date().toISOString().slice(0, 10);
 const G = { gr: path.join(DOCS, 'Gold-Record'), oon: path.join(DOCS, 'Older-or-Newer'), hom: path.join(DOCS, 'Hit-or-Miss'), ot: path.join(DOCS, 'On-Tour'), nd: path.join(DOCS, 'Musik-Quiz') };
 const DATA = { gr: ['songs.json', 'extra.json', 'more.json', 'years.json', 'genres.json', 'feat.json', 'billions.json', 'covers.json'],
-  oon: ['songs.json', 'songs-auto.txt', 'mb-years.json', 'dz-years.json', 'covers.json'], hom: ['tracks.json'], ot: ['tour.json'] };
+  oon: ['songs.json', 'songs-auto.txt', 'mb-years.json', 'dz-years.json', 'covers.json'], hom: ['tracks.json'], ot: ['tour.json', 'advent.json', 'advent-doors.json'] };
 
 const log = (...a) => console.log(...a);
 const git = (dir, ...a) => execFileSync('git', a, { cwd: dir, encoding: 'utf8' }).trim();
@@ -87,7 +88,7 @@ if (want('hom') && exists(G.hom) && (ok.hom = clean('hom'))) {
 
 // 6. On Tour – nach Hit or Miss (nimmt dessen Paket); Songs je Station werden fest ausgewählt
 // bauen → prüfen, ob Deezer zu jedem Song einen Ausschnitt hat → nochmal bauen (ohne stumme Songs)
-if (want('ot') && exists(G.ot) && (ok.ot = clean('ot'))) run(G.ot, 'scripts/build-data.js') && run(G.ot, 'scripts/check-previews.js') && run(G.ot, 'scripts/build-data.js');
+if (want('ot') && exists(G.ot) && (ok.ot = clean('ot'))) run(G.ot, 'scripts/build-data.js') && run(G.ot, 'scripts/check-previews.js') && run(G.ot, 'scripts/build-data.js') && run(G.ot, 'scripts/build-advent.js');
 
 // 7. DATA_V erhöhen, wo sich Songdaten geändert haben – aber nur, wenn js/game.js sonst unverändert ist
 const changed = k => ok[k] && git(G[k], 'status', '--porcelain', '--', ...DATA[k].map(f => 'data/' + f)).length > 0;

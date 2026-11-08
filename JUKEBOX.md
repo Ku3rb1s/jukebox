@@ -90,6 +90,12 @@ Regeln:
 - **Neues Spiel oder neue Wertung?** In `js/leaderboard.js` (`DAILY_RESULTS`, `HIGH`, `VIEWS`) und im Worker (`LB_GAMES`, `LB_HIGH`, `LB_STREAK`)
   eintragen, neue Tabellen in `worker/schema.sql`, dann `npx wrangler d1 execute jukebox-sync --remote --file schema.sql` und `npx wrangler deploy`.
 
+## Adventskalender (1.–24. Dezember)
+
+- Karte auf der Startseite (25.11.–6.1.) und Kalender (`#advent`) in der Jukebox: `js/advent.js`. Gespielt wird in On Tour (`on-tour/?advent=7`, `On-Tour/js/advent.js`).
+- Daten: `On-Tour/scripts/build-advent.js` (läuft in `update-songs.js` mit). Sterne `ot.advent`, Serie `ot.adventDay` (mapmax), exklusive Avatare `jb.avatars` (union, `shared/js/profile.js`).
+- Testen nur lokal mit `?date=2026-12-07` – dafür müssen Jukebox und On Tour unter einer Adresse laufen (`/jukebox/`, `/on-tour/`), sonst teilen sie den Speicher nicht.
+
 ## Cover (Gold Record, Older or Newer)
 
 - Deezer liefert das Cover des Albums, auf dem der Track liegt – oft ein Sampler („Sommer Hits“, späte Soundtracks …).
