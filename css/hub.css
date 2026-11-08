@@ -74,9 +74,9 @@ header{max-width:860px}
 .lb-views button{font-weight:800}
 .lb-vi{font-size:1rem}
 .lb-games{display:flex;gap:8px;margin-top:12px}
-.lb-game{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:.5em;padding:.5em .7em .5em .5em;border-radius:16px;border:0;font:inherit;font-size:.92rem;
-  font-weight:800;color:var(--text);cursor:pointer;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--line);white-space:nowrap;transition:background .2s}
-.lb-game span{overflow:hidden;text-overflow:ellipsis}
+.lb-game{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:.35em;padding:.55em .35em .5em;border-radius:16px;border:0;font:inherit;font-size:.8rem;line-height:1.15;
+  font-weight:800;color:var(--text);cursor:pointer;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--line);transition:background .2s}
+.lb-game span{max-width:100%;text-align:center;white-space:normal;overflow-wrap:anywhere}
 .lb-game img{width:28px;height:28px;border-radius:9px;flex:none}
 .lb-game.on{background:color-mix(in srgb,var(--c) 30%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--c) 75%,transparent)}
 .lb-hint{color:var(--muted);font-size:.8rem;margin:10px 0 0;text-align:center}
@@ -186,7 +186,7 @@ header{max-width:860px}
 @media (max-width:400px){.sync-qr{width:84px;height:84px}.sync-code .code{font-size:1.15rem}}
 
 /* Schmale Handys (iPhone SE): Spiele-Knöpfe nur mit Bild statt abgeschnittener Namen, Wertungen ohne Symbol */
-@media (max-width:360px){.lb-game span{display:none}.lb-game{padding:.45em}.lb-vi{display:none}.lb-me{gap:9px;padding-left:12px;padding-right:12px}.lb-me-s{font-size:.92rem}}
+@media (max-width:360px){.lb-game{font-size:.72rem}.lb-vi{display:none}.lb-me{gap:9px;padding-left:12px;padding-right:12px}.lb-me-s{font-size:.92rem}}
 /* Wiederkehrende Spieler: statt Einleitung nur Begrüßung + offene Tages-Challenges (kompakt) */
 .hub-hero.back .hub-intro{display:none}
 .hub-hero.back .hub-hi{margin:6px auto 2px;letter-spacing:-.02em}
