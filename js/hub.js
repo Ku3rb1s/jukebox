@@ -64,7 +64,8 @@ const STATUS = {
   // On Tour: Stationen mit mindestens 1 Stern (feste Reihenfolge, darum = offene Station − 1) und Sterne gesamt
   'on-tour': () => {
     const s = store.get('ot.stars') || {}, ON_TOUR_STATIONS = 24;   // Zahl der Stationen in On-Tour/js/stations.js
-    const v = Object.values(s).map(n => +n || 0), done = v.filter(n => n >= 1).length, stars = v.reduce((a, b) => a + b, 0);
+    const v = Object.entries(s).filter(([k]) => !k.startsWith('zugabe-')).map(([, n]) => +n || 0),   // ohne Bonus-Stationen
+      done = v.filter(n => n >= 1).length, stars = v.reduce((a, b) => a + b, 0);
     return stars ? stat('', '🗺️ ' + tx('Station {n} von {m}', { n: Math.min(done + 1, ON_TOUR_STATIONS), m: ON_TOUR_STATIONS })) + stat('', '⭐ ' + stars) : '';
   },
   'older-or-newer': () => {

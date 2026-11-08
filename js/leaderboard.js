@@ -1,7 +1,8 @@
 /* Jukebox – Bestenliste (Server: worker/sync.js, Bereich /lb/). Eigenes Fenster, geöffnet über den Knopf oben (oder #bestenliste).
    Drei Wertungen:
    - Tages-Challenge: Needle Drop, Gold Record und Hit or Miss, heute bzw. diese Woche
-   - Highscores: Allzeit-Rekorde aus Older or Newer, Gold Record und Hit or Miss (nur Songauswahl „Alle“, je Stufe/Modus – sonst nicht vergleichbar)
+   - Highscores: Allzeit-Rekorde aus Older or Newer, Gold Record und Hit or Miss (nur Songauswahl „Alle“, je Stufe/Modus – sonst nicht vergleichbar),
+     dazu On Tour: Sterne gesamt (Haupt-Tour bzw. alle Touren)
    - Serien: laufende Serie der Tages-Challenge (Needle Drop, Gold Record, Hit or Miss)
    - Anschauen kann jeder. Mitmachen ist freiwillig und braucht einen Code („Auf allen Geräten“) – fehlt er, wird er beim
      Mitmachen automatisch erstellt. Der Code ist das Konto, ohne E-Mail und Passwort.
@@ -45,6 +46,13 @@ const Board = (() => {
       fmt: n => '💎 ' + n.toLocaleString(LANG) + '×',
       hint: 'Gezählt wird, wie oft du Diamant (15/15) geholt hast – mit jeder Songauswahl.',
     },
+    // On Tour: gesammelte Sterne – Haupt-Tour (mit Bonus-Stationen) oder alle Touren zusammen (mit Künstler-Touren)
+    'on-tour': {
+      opts: [['otcat', { main: 'Haupt-Tour', all: 'Alle Touren' }]],
+      cat: c => c.otcat,
+      fmt: n => '⭐ ' + n.toLocaleString(LANG),
+      hint: 'Gezählt werden deine Sterne – in der Haupt-Tour mit Bonus-Stationen oder in allen Touren zusammen.',
+    },
     'hit-or-miss': {
       opts: [['diff', { easy: 'Leicht', normal: 'Normal', hard: 'Schwer' }], ['hmode', { '60s': '60 Sekunden', sd: 'Sudden Death' }]],
       key: c => `hom.best.${c.hmode}.${c.diff}`, cat: c => `${c.hmode}.${c.diff}`,
@@ -55,7 +63,7 @@ const Board = (() => {
 
   const VIEWS = {
     daily: { name: 'Tages-Challenge', icon: '📅', games: ['needle-drop', 'gold-record', 'hit-or-miss'] },
-    high: { name: 'Highscores', icon: '🏆', games: ['older-or-newer', 'gold-record', 'hit-or-miss'] },
+    high: { name: 'Highscores', icon: '🏆', games: ['older-or-newer', 'gold-record', 'hit-or-miss', 'on-tour'] },
     streak: { name: 'Serien', icon: '🔥', games: ['needle-drop', 'gold-record', 'hit-or-miss'] },
   };
   const MEDAL = ['🥇', '🥈', '🥉'];

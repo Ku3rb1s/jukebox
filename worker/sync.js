@@ -46,6 +46,7 @@ const LB_HIGH = {
   'older-or-newer': { cat: /^(easy|normal|hard|pro)\.(show|blind)$/, ok: v => v >= 1 && v <= 3000 },   // längste Serie (Songauswahl „Alle“)
   'gold-record': { cat: /^dia\.(easy|normal|hard)$/, ok: v => v >= 1 && v <= 100000 },             // wie oft Diamant (15/15) je Schwierigkeit
   'hit-or-miss': { cat: /^(60s|sd)\.(easy|normal|hard)$/, ok: v => v >= 1 && v <= 8000 },                                 // Punkte (60 s) bzw. richtig in Folge (Sudden Death)
+  'on-tour': { cat: /^(main|all)$/, ok: v => v >= 1 && v <= 3000 },   // Sterne: Haupt-Tour mit Bonus-Stationen bzw. alle Touren zusammen (mit Luft nach oben)
 };
 // Serien der Tages-Challenge: aktuelle Serie in Tagen. Sie kann auch sinken (verpasster Tag), darum immer übernommen.
 // Gezeigt wird sie nur, wenn sie zuletzt gestern oder heute gemeldet wurde – sonst ist sie wahrscheinlich gerissen.

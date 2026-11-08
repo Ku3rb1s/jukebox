@@ -317,6 +317,9 @@ const Sync = (() => {
       // Gold Record: wie oft Diamant (15/15) je Schwierigkeit – Startwert + alle Geräte (die höchste Stufe wäre fast immer 15)
       const dStart = ls.get('gr.diaStart', null) || {}, dAll = view('gr.diamonds', ls.get('gr.diamonds', null)) || {};
       for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'gold-record', cat: 'dia.' + d, score: (+dStart[d] || 0) + (+dAll[d] || 0) });
+      // On Tour: Sterne – Haupt-Tour (ot.stars, mit Bonus-Stationen) und alle Touren (dazu ot.astars, Künstler-Touren)
+      const sum = m => Object.values(m || {}).reduce((a, n) => a + (+n || 0), 0), otMain = sum(ls.get('ot.stars', null));
+      out.push({ game: 'on-tour', cat: 'main', score: otMain }, { game: 'on-tour', cat: 'all', score: otMain + sum(ls.get('ot.astars', null)) });
       for (const m of ['60s', 'sd']) for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'hit-or-miss', cat: `${m}.${d}`, score: ls.get(`hom.best.${m}.${d}`, 0) });   // Punkte (60 s) bzw. richtig in Folge
       return out.filter(x => Number.isInteger(x.score) && x.score > 0);
     },
