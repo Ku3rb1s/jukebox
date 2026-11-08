@@ -1,4 +1,4 @@
-/* Jukebox – Adventskalender: Karte auf der Startseite (25.11.–6.1.) und Kalender mit 24 Türchen.
+/* Jukebox – Adventskalender: Karte auf der Startseite (1.11.–6.1., vor dem 1.12. mit Countdown) und Kalender mit 24 Türchen.
    Gespielt wird in On Tour (on-tour/?advent=7, Code in On-Tour/js/advent.js); zurück kommt man hierher (#advent).
    Stand aus dem Speicher von On Tour (gleiche Adresse ku3rb1s.github.io, abgeglichen über js/sync.js):
      ot.advent { "<Jahr>.<Tür>": Sterne } (0 = geöffnet ohne Stern) · ot.adventDay { "<Jahr>.<Tür>": 1 } (am Tag selbst – Serie)
@@ -17,7 +17,9 @@ const AdventCal = (() => {
   const pad = n => String(n).padStart(2, '0');
   const get = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
   const today = () => testDate || new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' });
-  function season(d = today()) { const [y, m, day] = d.split('-').map(Number); return m === 12 ? y : m === 1 && day <= 6 ? y - 1 : m === 11 && day >= 25 ? y : null; }
+  // Saison (Jahr des Dezembers): 1.11.–6.1. – sonst null; lastYear: ohne Saison die letzte (für den Kalender über #advent)
+  function season(d = today()) { const [y, m, day] = d.split('-').map(Number); return m >= 11 ? y : m === 1 && day <= 6 ? y - 1 : null; }
+  const lastYear = () => season() ?? +today().slice(0, 4) - 1;
   const doorDate = (Y, n) => `${Y}-12-${pad(n)}`;
   const isOpen = (Y, n, d = today()) => d >= doorDate(Y, n) && d <= `${Y + 1}-01-06`;
   const daysTo = (a, b) => Math.round((Date.parse(b + 'T12:00:00Z') - Date.parse(a + 'T12:00:00Z')) / 864e5);
@@ -64,13 +66,13 @@ const AdventCal = (() => {
   /* ---------- Kalender ---------- */
   const sheet = () => $('#advSheet');
   async function render() {
-    const Y = season() ?? +today().slice(0, 4), s = state(Y), d = today(), meta = await loadMeta();
+    const Y = lastYear(), s = state(Y), d = today(), meta = await loadMeta();
     $('#advHead').innerHTML = `<div class="adv-h-k">${e(tx('Adventskalender {y}', { y: Y }))}</div>
       <div class="adv-h-st"><span class="pill">⭐ ${e(tx('{n} Sterne', { n: s.total }))}</span><span class="pill">🚪 ${e(tx('{n} von 24 Türchen', { n: s.done }))}</span>${s.cur ? `<span class="pill">🔥 ${e(tx('Serie {n}', { n: s.cur }))}</span>` : ''}</div>`;
     $('#advGrid').innerHTML = ORDER.map((n, k) => {
       const st = s.stars[n], open = isOpen(Y, n, d), played = st != null, isToday = n === s.todayDoor;
       const m = meta[n] || {}, img = played ? cover(m.c, n === FINAL ? 500 : 250) : '';
-      const cls = ['door', played ? 'played' : open ? 'open' : 'shut', isToday && !played ? 'today' : '', n === FINAL ? 'big' : '', WIDE.has(n) ? 'wide' : '', TALL.has(n) ? 'tall' : '', open && !played && !isToday ? 'late' : ''].filter(Boolean).join(' ');
+      const cls = ['door', played ? 'played' : open ? 'open' : 'shut', isToday && !played ? 'now' : '', n === FINAL ? 'big' : '', WIDE.has(n) ? 'wide' : '', TALL.has(n) ? 'tall' : '', open && !played && !isToday ? 'late' : ''].filter(Boolean).join(' ');
       const rot = ((n * 37) % 7 - 3) * .5;
       const starsHtml = played ? Array.from({ length: n === FINAL ? 4 : 3 }, (_, i) => `<i class="${i < st ? 'on' : ''}${i === 3 ? ' bonus' : ''}">★</i>`).join('') : '';
       const label = tx('Türchen {n}', { n }) + (played ? ' · ' + tx('{n} Sterne', { n: st }) : open ? '' : ' · ' + tx('noch zu'));
@@ -88,7 +90,7 @@ const AdventCal = (() => {
   let msgT = 0;
   function msg(t) { const m = $('#advMsg'); m.textContent = t; m.classList.add('on'); clearTimeout(msgT); msgT = setTimeout(() => m.classList.remove('on'), 2600); }
   function tapDoor(btn) {
-    const n = +btn.dataset.n, Y = season() ?? +today().slice(0, 4);
+    const n = +btn.dataset.n, Y = lastYear();
     if (!isOpen(Y, n)) {
       const k = daysTo(today(), doorDate(Y, n));
       btn.classList.remove('shake'); void btn.offsetWidth; btn.classList.add('shake');
@@ -99,13 +101,19 @@ const AdventCal = (() => {
     btn.classList.add('opening');
     setTimeout(go, 650);
   }
-  function open() {
-    render();
+  async function open() {
     const d = sheet();
     if (!d.open) d.showModal();
     snow.start();
+    await render();   // Raster entsteht erst nach dem Laden von advent-doors.json
     // heutiges Türchen sichtbar machen
-    requestAnimationFrame(() => d.querySelector('.door.today')?.scrollIntoView({ block: 'center', behavior: 'auto' }));
+    // im Fenster selbst rechnen: es fährt beim Öffnen noch herein (scrollIntoView würde die Zwischenposition nehmen)
+    const toNow = () => {
+      const b = d.querySelector('.door.now'), body = d.querySelector('.sheet-body'); if (!b || body.scrollTop) return;
+      const off = b.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop;
+      body.scrollTop = Math.max(0, off - body.clientHeight / 2 + b.offsetHeight / 2);
+    };
+    toNow(); setTimeout(toNow, 350);   // nochmal nach dem Hereinfahren
   }
 
   /* ---------- Schneefall (aus bei „Bewegung reduzieren“) ---------- */
