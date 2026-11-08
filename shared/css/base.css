@@ -439,3 +439,18 @@ html.ios .volume,html.ios .hint{display:none}
 [data-theme="oled"] .sheet-head{background:#09090a}
 [data-theme="oled"] dialog::backdrop{background:rgba(0,0,0,.8)}
 [data-theme="oled"] .alert,[data-theme="oled"] #toast{background:#151517}
+
+/* Endbildschirm (#end): nacheinander statt alles auf einmal – Ergebnis zuerst, dann Details, zuletzt die Knöpfe.
+   Kurz (zusammen unter 0,6 s) und nur Deko: alles ist sofort antippbar. „Bewegung reduzieren“ schaltet es oben ab. */
+#end:not(.hidden)>*,#end:not(.hidden) .lib-hero>*{animation:endIn .38s cubic-bezier(.23,1,.32,1) both}
+#end .lib-hero{animation:none!important}
+#end .lib-hero>:nth-child(1){animation-delay:.04s}
+#end .lib-hero>:nth-child(2){animation-delay:.1s}
+#end .lib-hero>:nth-child(3){animation-delay:.16s}
+#end .lib-hero>:nth-child(4){animation-delay:.22s}
+#end .lib-hero>:nth-child(n+5){animation-delay:.26s}
+#end>:nth-child(n+3){animation-delay:.3s}
+#end>.controls{animation-delay:.36s}
+#end:not(.hidden) .lib-hero>.lib-num{animation-name:endNum}
+@keyframes endIn{from{opacity:0;transform:translateY(8px)}}
+@keyframes endNum{from{opacity:0;transform:scale(.92)}}
