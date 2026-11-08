@@ -76,6 +76,21 @@
         "nb": "Sant eller usant? En sang spilles med en påstand – sveip til høyre for Hit, til venstre for Miss. 60 sekunder, sudden death og dagens utfordring."
       },
       "tags": ["solo", "daily", "nologin"]
+    },
+    {
+      "id": "on-tour",
+      "name": "On Tour",
+      "url": "https://ku3rb1s.github.io/on-tour/",
+      "icon": "https://ku3rb1s.github.io/on-tour/icon-192.png?v=2",
+      "color": "#14b8a6",
+      "desc": {
+        "de": "Eine Reise durch die Musikgeschichte: 24 Stationen von Memphis 1956 bis heute. An jeder Station sechs Aufgaben mit Musik – sammle Sterne und reise weiter.",
+        "en": "A journey through music history: 24 stops from Memphis 1956 to today. Six music tasks at every stop – collect stars and travel on.",
+        "fr": "Un voyage à travers l’histoire de la musique : 24 étapes, de Memphis 1956 à aujourd’hui. Six épreuves musicales à chaque étape – collectionne les étoiles et poursuis la route.",
+        "es": "Un viaje por la historia de la música: 24 paradas desde Memphis 1956 hasta hoy. Seis pruebas musicales en cada parada: consigue estrellas y sigue el viaje.",
+        "nb": "En reise gjennom musikkhistorien: 24 stopp fra Memphis 1956 til i dag. Seks musikkoppgaver på hvert stopp – samle stjerner og reis videre."
+      },
+      "tags": ["solo", "nologin"]
     }
   ]
 }

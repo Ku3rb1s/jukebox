@@ -61,6 +61,12 @@ const STATUS = {
     const dia = ['easy', 'normal', 'hard'].reduce((n, k) => n + (+start[k] || 0) + (+all[k] || 0), 0);
     return (d ? daily(d.done, d.streak) : '') + (dia ? stat('', '💎 ' + tx('Diamant: {n}×', { n: dia })) : '');
   },
+  // On Tour: Stationen mit mindestens 1 Stern (feste Reihenfolge, darum = offene Station − 1) und Sterne gesamt
+  'on-tour': () => {
+    const s = store.get('ot.stars') || {}, ON_TOUR_STATIONS = 24;   // Zahl der Stationen in On-Tour/js/stations.js
+    const v = Object.values(s).map(n => +n || 0), done = v.filter(n => n >= 1).length, stars = v.reduce((a, b) => a + b, 0);
+    return stars ? stat('', '🗺️ ' + tx('Station {n} von {m}', { n: Math.min(done + 1, ON_TOUR_STATIONS), m: ON_TOUR_STATIONS })) + stat('', '⭐ ' + stars) : '';
+  },
   'older-or-newer': () => {
     const st = Sync.view('oon.stats', store.get('oon.stats'));
     return st?.best ? stat('', '🏆 ' + tx('Rekord: {n} in Folge', { n: st.best })) : '';
@@ -119,7 +125,7 @@ function renderProfile() {
   $('#profName').placeholder = tx('Dein Name');
   // Wer schon gespielt hat (oder einen Namen hat), braucht die Erklärung oben nicht mehr: dann nur Begrüßung + „Heute noch offen“.
   // Beim ersten Besuch bleibt die Einleitung, damit man versteht, worum es geht.
-  const back = !!p.name || ['mq.stats', 'mq.daily', 'gr.stats', 'oon.stats', 'hom.stats'].some(k => store.get(k));
+  const back = !!p.name || ['mq.stats', 'mq.daily', 'gr.stats', 'oon.stats', 'hom.stats', 'ot.stars'].some(k => store.get(k));
   $('.hub-hero').classList.toggle('back', back);
   $('#hi').classList.toggle('hidden', !back);
   $('#hi').textContent = p.name ? tx('Hallo {n}!', { n: p.emoji + ' ' + p.name }) : tx('Schön, dass du da bist!');

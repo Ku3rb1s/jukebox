@@ -72,6 +72,7 @@
     "Tägliche Challenge erledigt": "Dagens utfordring fullført",
     "Tägliche Challenge offen": "Dagens utfordring venter",
     "Serie {n}": "Rekke {n}",
+    "Station {n} von {m}": "Stopp {n} av {m}",
     "Rekord: {n} in Folge": "Rekord: {n} på rad",
     "Heute noch offen:": "Gjenstår i dag:",
     "Alle Tages-Challenges erledigt – morgen gibt es neue.": "Alle dagens utfordringer er fullført – nye i morgen.",

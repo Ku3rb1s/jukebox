@@ -34,6 +34,9 @@ const Sync = (() => {
     [/^(mq|oon|gr|hom)\.stats$/, 'device'],
     [/^gr\.diamonds$/, 'device'],                   // Diamanten je Schwierigkeit (je Gerät gezählt, zusammengezählt angezeigt)
     [/^gr\.diaStart$/, 'mapmax'],                   // Startwert der Diamanten aus der Zeit davor (für alle Geräte gleich)
+    [/^ot\.(stars|stars2|astars)$/, 'mapmax'],      // On Tour: Sterne je Station (Haupt-Tour, Tour 2, Künstler-Touren) – der beste Wert zählt
+    [/^ot\.ach$/, 'union'],
+    [/^ot\.stats$/, 'device'],
   ];
   // Statistik mehrerer Geräte zusammenzählen (je Spiel eigener Aufbau)
   const COMBINE = {
@@ -50,6 +53,11 @@ const Sync = (() => {
     },
     'gr.diamonds': (a, b) => { const o = { ...a }; for (const [k, n] of Object.entries(b || {})) o[k] = (o[k] || 0) + (+n || 0); return o; },
     'oon.stats': (a, b) => ({ games: a.games + b.games, right: a.right + b.right, best: Math.max(a.best, b.best), years: Math.max(a.years || 0, b.years || 0) }),
+    'ot.stats': (a, b) => {
+      const types = { ...a.types };
+      for (const [k, [r, n]] of Object.entries(b.types || {})) { const t = types[k] || [0, 0]; types[k] = [t[0] + r, t[1] + n]; }
+      return { games: a.games + b.games, right: a.right + b.right, asked: a.asked + b.asked, perfect: (a.perfect || 0) + (b.perfect || 0), types };
+    },
     'hom.stats': (a, b) => {
       const types = { ...a.types };
       for (const [k, [r, n]] of Object.entries(b.types || {})) { const t = types[k] || [0, 0]; types[k] = [t[0] + r, t[1] + n]; }

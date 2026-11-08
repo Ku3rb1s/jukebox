@@ -1,10 +1,10 @@
-// Neue Songs für Gold Record, Older or Newer und Hit or Miss – alles in der richtigen Reihenfolge.
+// Neue Songs für Gold Record, Older or Newer, Hit or Miss und On Tour – alles in der richtigen Reihenfolge.
 // (Needle Drop aktualisiert sich selbst: GitHub-Automatik „Songlisten aktualisieren“ am 1. des Monats.)
 //
 // Aufruf im Ordner Spiele-Hub:
 //   node scripts/update-songs.js            alles bauen, danach Bericht – nichts wird hochgeladen
 //   node scripts/update-songs.js --commit   …und geänderte Songdaten einchecken und hochladen
-//   node scripts/update-songs.js --only gr,oon,covers,hom   nur einzelne Schritte
+//   node scripts/update-songs.js --only gr,oon,covers,hom,ot   nur einzelne Schritte
 //
 // Reihenfolge (jeder Schritt baut auf dem vorigen auf):
 //   1. Milliarden-Liste von Needle Drop übernehmen (dort monatlich automatisch aktualisiert)
@@ -13,7 +13,8 @@
 //   3. Older or Newer: automatische Songliste (build-auto, MusicBrainz) → Deezer-IDs (build-songs)
 //   4. Original-Cover für beide (check-covers.js)
 //   5. Hit or Miss: Datenpaket aus Gold Record + Older or Newer (build-data)
-//   6. DATA_V erhöhen, wo sich Songdaten geändert haben (sonst laden Handys die neuen Daten erst später)
+//   6. On Tour: Datenpaket aus Hit or Miss + Gold Record (build-data) – Songs je Station
+//   7. DATA_V erhöhen, wo sich Songdaten geändert haben (sonst laden Handys die neuen Daten erst später)
 // Vorsicht: Liegen in einem Spiel noch fremde, nicht eingecheckte Änderungen an den Daten, wird es übersprungen.
 // Dauer: meist wenige Minuten (Zwischenspeicher); bei vielen neuen Songs länger (MusicBrainz: 1 Abfrage/Sekunde).
 'use strict';
@@ -23,9 +24,9 @@ const args = process.argv.slice(2), COMMIT = args.includes('--commit');
 const only = (args[args.indexOf('--only') + 1] || '').split(',').filter(Boolean);
 const want = step => !only.length || only.includes(step);
 const today = new Date().toISOString().slice(0, 10);
-const G = { gr: path.join(DOCS, 'Gold-Record'), oon: path.join(DOCS, 'Older-or-Newer'), hom: path.join(DOCS, 'Hit-or-Miss'), nd: path.join(DOCS, 'Musik-Quiz') };
+const G = { gr: path.join(DOCS, 'Gold-Record'), oon: path.join(DOCS, 'Older-or-Newer'), hom: path.join(DOCS, 'Hit-or-Miss'), ot: path.join(DOCS, 'On-Tour'), nd: path.join(DOCS, 'Musik-Quiz') };
 const DATA = { gr: ['songs.json', 'extra.json', 'more.json', 'years.json', 'genres.json', 'feat.json', 'billions.json', 'covers.json'],
-  oon: ['songs.json', 'songs-auto.txt', 'mb-years.json', 'dz-years.json', 'covers.json'], hom: ['tracks.json'] };
+  oon: ['songs.json', 'songs-auto.txt', 'mb-years.json', 'dz-years.json', 'covers.json'], hom: ['tracks.json'], ot: ['tour.json'] };
 
 const log = (...a) => console.log(...a);
 const git = (dir, ...a) => execFileSync('git', a, { cwd: dir, encoding: 'utf8' }).trim();
@@ -51,6 +52,7 @@ const songsOf = {
   gr: () => ['songs.json', 'extra.json', 'more.json'].flatMap(f => readJson(path.join(G.gr, 'data', f))?.songs || []).map(s => ({ id: s.id, t: s.t, a: s.a, y: s.y })),
   oon: () => (readJson(path.join(G.oon, 'data', 'songs.json'))?.songs || []).map(s => ({ id: s.id, t: s.t, a: s.a, y: s.y })),
   hom: () => { const j = readJson(path.join(G.hom, 'data', 'tracks.json')); return (j?.tracks || []).map(t => ({ id: t.i, t: t.t, a: j.artists[t.a], y: t.y })); },
+  ot: () => (readJson(path.join(G.ot, 'data', 'tour.json'))?.songs || []).map(([id, t, a, y]) => ({ id, t, a, y })),
 };
 const before = {}; for (const k in songsOf) if (exists(G[k])) before[k] = songsOf[k]();
 const ok = {};
@@ -83,7 +85,10 @@ if (want('hom') && exists(G.hom) && (ok.hom = clean('hom'))) {
   run(G.hom, 'scripts/build-data.js') && exists(path.join(G.hom, 'scripts/build-versions.js')) && run(G.hom, 'scripts/build-versions.js') && run(G.hom, 'scripts/build-data.js');
 }
 
-// 6. DATA_V erhöhen, wo sich Songdaten geändert haben – aber nur, wenn js/game.js sonst unverändert ist
+// 6. On Tour – nach Hit or Miss (nimmt dessen Paket); Songs je Station werden fest ausgewählt
+if (want('ot') && exists(G.ot) && (ok.ot = clean('ot'))) run(G.ot, 'scripts/build-data.js');
+
+// 7. DATA_V erhöhen, wo sich Songdaten geändert haben – aber nur, wenn js/game.js sonst unverändert ist
 const changed = k => ok[k] && git(G[k], 'status', '--porcelain', '--', ...DATA[k].map(f => 'data/' + f)).length > 0;
 function bumpDataV(k) {
   const f = path.join(G[k], 'js', 'game.js');
@@ -98,9 +103,9 @@ function bumpDataV(k) {
 // Bericht
 log('\n════════ Bericht ════════');
 const result = {};
-for (const k of ['gr', 'oon', 'hom']) {
+for (const k of ['gr', 'oon', 'hom', 'ot']) {
   if (!ok[k]) continue;
-  const name = { gr: 'Gold Record', oon: 'Older or Newer', hom: 'Hit or Miss' }[k];
+  const name = { gr: 'Gold Record', oon: 'Older or Newer', hom: 'Hit or Miss', ot: 'On Tour' }[k];
   const now = songsOf[k](), old = new Set((before[k] || []).map(s => s.id)), nowIds = new Set(now.map(s => s.id));
   const added = now.filter(s => !old.has(s.id)), removed = (before[k] || []).filter(s => !nowIds.has(s.id));
   const isChanged = changed(k);

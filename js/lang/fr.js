@@ -72,6 +72,7 @@
     "Tägliche Challenge erledigt": "Défi du jour terminé",
     "Tägliche Challenge offen": "Défi du jour à relever",
     "Serie {n}": "Série {n}",
+    "Station {n} von {m}": "Étape {n} sur {m}",
     "Rekord: {n} in Folge": "Record : {n} d’affilée",
     "Heute noch offen:": "Encore à faire aujourd’hui :",
     "Alle Tages-Challenges erledigt – morgen gibt es neue.": "Tous les défis du jour sont faits – nouveaux défis demain.",

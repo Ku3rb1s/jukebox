@@ -14,6 +14,7 @@ Alle liegen unter `C:\Users\nik-r\Documents\Claude\`, jedes ist ein eigenes GitH
 | Older or Newer | `Older-or-Newer` | ku3rb1s.github.io/older-or-newer/ | 8892 | `oon.` |
 | Gold Record | `Gold-Record` | ku3rb1s.github.io/gold-record/ | 8893 | `gr.` |
 | Hit or Miss | `Hit-or-Miss` | ku3rb1s.github.io/hit-or-miss/ | 8894 | `hom.` |
+| On Tour | `On-Tour` | ku3rb1s.github.io/on-tour/ | 8895 | `ot.` |
 | Musik-Bingo | `Musik-Bingo-Lobby/mb` | ku3rb1s.github.io/musik-bingo-lobby/ | 8888 | `mb_` |
 
 Lokal starten: im Spiel-Ordner `node server.js`. Die Liste mit Repo-Namen steht auch in `Spiele-Hub/shared/games.json`.
@@ -107,7 +108,8 @@ Regeln:
 - Gold Record und Older or Newer: GitHub-Automatik `.github/workflows/update-songs.yml` im jeweiligen Repo, jeden Montag
   um 0:05 Uhr. Sie ruft `scripts/update-songs.js` aus der Jukebox auf: neue Songs, Originaljahre, Genres und Cover; DATA_V wird erhöht.
   Hochgeladen wird nur bei Änderungen. Per Hand: GitHub → Actions → „Songlisten aktualisieren“ → Run workflow.
-- Lokal genauso: `node scripts/update-songs.js` (nur bauen + Bericht), `--commit` (hochladen), `--only gr,oon,covers,hom`.
+- Lokal genauso: `node scripts/update-songs.js` (nur bauen + Bericht), `--commit` (hochladen), `--only gr,oon,covers,hom,ot`.
+- On Tour: baut sein Paket (`scripts/build-data.js`) danach aus Hit or Miss und Gold Record – die Songs je Station werden dabei fest gewählt.
   Ein Spiel mit offenen fremden Änderungen in `data/` wird übersprungen.
 - Hit or Miss: eigene Automatik zur selben Zeit (nimmt darum die Gold-Record- und Older-or-Newer-Daten der Vorwoche; so bleibt die Tägliche Challenge den ganzen Tag gleich): build-data → build-versions → build-data.
 

@@ -72,6 +72,7 @@
     "Tägliche Challenge erledigt": "Daily Challenge done",
     "Tägliche Challenge offen": "Daily Challenge open",
     "Serie {n}": "Streak {n}",
+    "Station {n} von {m}": "Stop {n} of {m}",
     "Rekord: {n} in Folge": "Record: {n} in a row",
     "Heute noch offen:": "Still open today:",
     "Alle Tages-Challenges erledigt – morgen gibt es neue.": "All daily challenges done – new ones tomorrow.",

@@ -72,6 +72,7 @@
     "Tägliche Challenge erledigt": "Reto diario completado",
     "Tägliche Challenge offen": "Reto diario pendiente",
     "Serie {n}": "Racha {n}",
+    "Station {n} von {m}": "Parada {n} de {m}",
     "Rekord: {n} in Folge": "Récord: {n} seguidas",
     "Heute noch offen:": "Pendiente hoy:",
     "Alle Tages-Challenges erledigt – morgen gibt es neue.": "Todos los retos diarios completados – mañana hay nuevos.",
