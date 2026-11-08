@@ -154,7 +154,9 @@ const Sync = (() => {
   const dirty = () => !!st && watchedKeys().some(k => { try { return st.snap[k] !== hash(localStorage.getItem(k)); } catch { return false; } });
 
   /* ---------- Zusammenführen ---------- */
-  const zFor = (z, k) => Math.max(0, ...Object.entries(z).filter(([p]) => k.startsWith(p)).map(([, t]) => t));
+  // Löschmarke: Präfix ('mq.best2.') oder mit '=' genau ein Schlüssel ('=ot.stars' trifft nicht 'ot.stars2')
+  const zHit = (p, k) => p[0] === '=' ? k === p.slice(1) : k.startsWith(p);
+  const zFor = (z, k) => Math.max(0, ...Object.entries(z).filter(([p]) => zHit(p, k)).map(([, t]) => t));
   /** Welches von zwei Ergebnissen desselben Tages zählt: am Tag selbst gespielt vor nachgespielt, fertig vor offen, dann mehr Punkte */
   const dayRank = r => [r && !r.late ? 1 : 0, r && r.done !== false ? 1 : 0, (r && (r.score ?? r.final)) || 0];
   function betterDay(l, r) {
@@ -203,9 +205,13 @@ const Sync = (() => {
           // Löschmarken (z. B. „Rekorde löschen“) beider Seiten
           for (const [p, t] of Object.entries(st.z || {})) doc.z[p] = Math.max(doc.z[p] || 0, t);
           const before = JSON.stringify(doc);
+          // Was älter als eine Löschmarke ist, schon vor dem Zusammenführen verwerfen – sonst holt „max“/„mapmax“
+          // gelöschte Werte aus dem alten Stand zurück (z. B. eine zurückgesetzte On-Tour-Tour)
+          for (const k of Object.keys(doc.k)) if (doc.k[k].t < zFor(doc.z, k)) delete doc.k[k];
 
           // Gemeinsame Werte
           for (const [k, e] of Object.entries(local)) {
+            if (e.t < zFor(doc.z, k)) continue;
             const rule = ruleOf(k);
             if (rule === 'device') ((doc.d[st.dev] ||= {})[k] = e);
             else doc.k[k] = mergeEntry(rule, doc.k[k], e);
@@ -283,7 +289,8 @@ const Sync = (() => {
   function leave() { st = null; save(); others = {}; ls.del('jb.syncOthers'); emit(); dispatchEvent(new CustomEvent('jukebox-sync', { detail: { changed: [] } })); }
   /** Code samt Daten beim Server löschen (die Daten auf den Geräten bleiben) */
   async function wipe() { if (!st) return; const { id } = await keys(st.code); await api('DELETE', id); leave(); }
-  /** Löschmarke setzen, z. B. „Alle Rekorde löschen“ (präfix = 'mq.best2.') – gilt dann auf allen Geräten */
+  /** Löschmarke setzen, z. B. „Alle Rekorde löschen“ (präfix = 'mq.best2.', genau ein Schlüssel: '=ot.astars') – gilt dann
+      auf allen Geräten. Den neuen lokalen Stand vorher schreiben: er ist jünger als die Marke und wird dann übernommen. */
   function reset(prefix) { if (!st) return; (st.z ||= {})[prefix] = now(); save(); soon(500); }
   /** Statistik über alle Geräte (eigener Wert + die der anderen Geräte) */
   function view(k, own) {
