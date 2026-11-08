@@ -86,7 +86,8 @@ if (want('hom') && exists(G.hom) && (ok.hom = clean('hom'))) {
 }
 
 // 6. On Tour – nach Hit or Miss (nimmt dessen Paket); Songs je Station werden fest ausgewählt
-if (want('ot') && exists(G.ot) && (ok.ot = clean('ot'))) run(G.ot, 'scripts/build-data.js');
+// bauen → prüfen, ob Deezer zu jedem Song einen Ausschnitt hat → nochmal bauen (ohne stumme Songs)
+if (want('ot') && exists(G.ot) && (ok.ot = clean('ot'))) run(G.ot, 'scripts/build-data.js') && run(G.ot, 'scripts/check-previews.js') && run(G.ot, 'scripts/build-data.js');
 
 // 7. DATA_V erhöhen, wo sich Songdaten geändert haben – aber nur, wenn js/game.js sonst unverändert ist
 const changed = k => ok[k] && git(G[k], 'status', '--porcelain', '--', ...DATA[k].map(f => 'data/' + f)).length > 0;
