@@ -31,6 +31,116 @@
   new MutationObserver(update).observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['open'] });
 })();
 
+// Fenster wie in iOS (Klasse .sheet, Rückfragen .alert/.ask):
+// - Schließen mit Bewegung: auf dem Handy gleitet ein Fenster nach unten weg (es kam ja auch von unten), sonst blendet es kurz aus.
+//   dialog.close() bleibt für die Spiele wie gewohnt: .open meldet sofort false, das echte Schließen (und das close-Ereignis)
+//   folgt nach der Animation. Wird das Fenster währenddessen wieder geöffnet, bleibt es einfach offen.
+//   Escape und <form method="dialog"> laufen ebenfalls über close().
+// - Wegwischen: Fenster am Kopf – oder im Inhalt, wenn der ganz oben ist – nach unten ziehen. Es folgt dem Finger 1:1;
+//   loslassen nach genug Weg oder mit Schwung schließt, sonst schnappt es zurück. Nach oben gibt es nur leicht nach (Gummiband).
+// Bei „Bewegung reduzieren“ nur kurzes Ausblenden.
+(() => {
+  if (typeof HTMLDialogElement === 'undefined') return;
+  const P = HTMLDialogElement.prototype, nativeClose = P.close, nativeModal = P.showModal;
+  const mobile = () => matchMedia('(max-width:640px)').matches;
+  const calm = () => matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const animated = d => d.matches('.sheet,.alert,.ask');
+  const EASE = 'cubic-bezier(.32,.72,0,1)';                                         // iOS-Kurve für Fenster
+  const closing = new WeakMap();                                                     // Fenster → laufende Schließ-Animation
+
+  const finish = (d, value) => {
+    closing.delete(d); delete d.open;                                                // eigener open-Getter weg → wieder der echte
+    d.classList.remove('closing'); d.style.transform = '';
+    nativeClose.call(d, value);
+  };
+  P.close = function (value) {
+    if (!this.open || closing.has(this) || !animated(this) || !this.isConnected) return closing.has(this) ? undefined : nativeClose.call(this, value);
+    const slide = mobile() && this.classList.contains('sheet') && !calm();
+    const from = this.style.transform || 'translateY(0)';
+    const frames = slide ? [{ transform: from }, { transform: 'translateY(100%)' }]
+      : calm() ? [{ opacity: 1 }, { opacity: 0 }]
+      : [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(8px) scale(.97)' }];
+    const anim = this.animate(frames, { duration: slide ? (this._flick || 280) : 160, easing: slide ? EASE : 'ease-out', fill: 'forwards' });
+    this._flick = 0;
+    closing.set(this, anim);
+    Object.defineProperty(this, 'open', { get: () => false, configurable: true });   // für die Spiele ist es schon zu
+    this.classList.add('closing');
+    anim.onfinish = () => { if (closing.get(this) === anim) { finish(this, value); anim.cancel(); } };
+  };
+  P.showModal = function () {
+    const anim = closing.get(this);
+    if (anim) { closing.delete(this); anim.cancel(); delete this.open; this.classList.remove('closing'); this.style.transform = ''; return; }
+    return nativeModal.call(this);
+  };
+  // Escape: statt hartem Schließen dieselbe Animation
+  document.addEventListener('cancel', e => { const d = e.target; if (d instanceof HTMLDialogElement && animated(d)) { e.preventDefault(); d.close(); } }, true);
+  // <form method="dialog">: der Knopf schließt sonst ohne close()
+  document.addEventListener('submit', e => {
+    const f = e.target, d = f.closest?.('dialog');
+    if (!d || !animated(d) || (e.submitter?.getAttribute('formmethod') || f.getAttribute('method') || '').toLowerCase() !== 'dialog') return;
+    e.preventDefault(); d.close(e.submitter?.value ?? '');
+  }, true);
+
+  // ---- Wegwischen (nur Handy, nur .sheet) ----
+  let g = null;
+  const scroller = (el, sheet) => {                                                  // nächster scrollbarer Bereich im Fenster
+    for (; el && el !== sheet; el = el.parentElement) {
+      const o = getComputedStyle(el).overflowY;
+      if ((o === 'auto' || o === 'scroll') && el.scrollHeight > el.clientHeight + 1) return el;
+    }
+    return null;
+  };
+  const rubber = (x, dim) => (x * dim * .55) / (dim + .55 * Math.abs(x));         // Gummiband: je weiter, desto weniger
+  document.addEventListener('touchstart', e => {
+    const sheet = e.target.closest?.('dialog.sheet');
+    if (!sheet || e.touches.length > 1 || !mobile() || closing.has(sheet) || e.target.closest('input[type=range],[data-nodrag]')) { g = null; return; }
+    const t = e.touches[0];
+    g = { sheet, x0: t.clientX, y0: t.clientY, dy: 0, on: false, scr: scroller(e.target, sheet), hist: [[t.clientY, e.timeStamp]] };
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (!g) return;
+    if (e.touches.length > 1) { reset(); return; }
+    const t = e.touches[0], dx = t.clientX - g.x0, dy = t.clientY - g.y0;
+    if (!g.on) {
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) { g = null; return; }   // seitlich: nicht unseres
+      if (dy < -10) { g = null; return; }                                           // nach oben: normal scrollen
+      if (dy > 10) {
+        if (g.scr && g.scr.scrollTop > 0) { g = null; return; }                     // Inhalt ist nicht oben: scrollen
+        g.on = true; g.y0 = t.clientY;                                              // ab hier 1:1, ohne Sprung
+        g.sheet.style.transition = 'none';
+        document.activeElement?.blur?.();
+      } else return;
+    }
+    e.preventDefault();
+    const d = t.clientY - g.y0;
+    g.dy = d > 0 ? d : rubber(d, g.sheet.offsetHeight);
+    g.sheet.style.transform = `translateY(${g.dy}px)`;
+    g.hist.push([t.clientY, e.timeStamp]); if (g.hist.length > 6) g.hist.shift();
+  }, { passive: false });
+  const reset = () => { if (g?.on) back(g.sheet); g = null; };
+  const back = sheet => {
+    const a = sheet.animate([{ transform: sheet.style.transform || 'none' }, { transform: 'translateY(0)' }], { duration: 300, easing: EASE });
+    sheet.style.transform = '';
+    a.onfinish = () => a.cancel();
+  };
+  const end = e => {
+    if (!g) return;
+    const { sheet, on, dy, hist } = g; g = null;
+    if (!on) return;
+    sheet.style.transition = '';
+    const [y1, t1] = hist[0], [y2, t2] = hist[hist.length - 1];
+    const v = t2 > t1 ? (y2 - y1) / (t2 - t1) : 0;                                   // px pro ms, positiv = nach unten
+    // Schwung nach unten oder mehr als ein Viertel weg → schließen; Schwung nach oben bricht immer ab
+    if (v > -0.1 && (dy > sheet.offsetHeight * .25 || v > 0.45)) {
+      const rest = sheet.offsetHeight - dy;
+      sheet._flick = Math.max(140, Math.min(300, v > 0 ? rest / (v * 1.6) : 280)); // mit Schwung schneller weg
+      sheet.close();
+    } else back(sheet);
+  };
+  document.addEventListener('touchend', end, { passive: true });
+  document.addEventListener('touchcancel', end, { passive: true });
+})();
+
 // iPhone/iPad als App vom Home-Bildschirm: Die Statusleiste (Uhr, Akku) liegt über der Seite, der Abstand kommt aus
 // env(safe-area-inset-top). iOS meldet ihn manchmal als 0 – vor allem nach einem Wechsel zu einem anderen Spiel
 // innerhalb der App. Dann rutscht die Kopfzeile unter die Statusleiste. Nur in diesem Fall einen Ersatzwert setzen.
