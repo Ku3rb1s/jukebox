@@ -256,8 +256,9 @@ const Board = (() => {
     box.querySelectorAll('[data-lb-game]').forEach(b => b.onclick = pick(() => { sel[view] = b.dataset.lbGame; }));
     box.querySelectorAll('[data-lb-range]').forEach(b => b.onclick = pick(() => { sel.range = b.dataset.lbRange; }));
     box.querySelectorAll('[data-lb-diff]').forEach(b => b.onclick = pick(() => { sel.diff[g] = b.dataset.lbDiff; }));
-    box.querySelectorAll('[data-lb-mode]').forEach(b => b.onclick = pick(() => { sel.mode = b.dataset.lbMode; }));
-    box.querySelectorAll('[data-lb-hmode]').forEach(b => b.onclick = pick(() => { sel.hmode = b.dataset.lbHmode; }));
+    // Weitere Highscore-Optionen (mode, hmode, otcat …): Wert landet in sel[key]
+    if (view === 'high') for (const [k] of HIGH[g].opts) if (k !== 'diff')
+      box.querySelectorAll('[data-lb-' + k + ']').forEach(b => b.onclick = pick(() => { sel[k] = b.getAttribute('data-lb-' + k); }));
     if ($('#lbJoin')) {
       // Ohne Namen geht es nicht: Knopf erst aktiv, wenn mindestens 2 Zeichen eingetragen sind
       const ready = () => { $('#lbJoin').disabled = joining || $('#lbName').value.trim().length < 2; };
