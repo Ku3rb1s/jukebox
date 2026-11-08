@@ -173,7 +173,7 @@ const Board = (() => {
 
   /* ---------- Anzeige ---------- */
   function draw() {
-    const box = $('#lb');
+    const box = $('#lb'), num = n => (+n || 0).toLocaleString(LANG);
     if (!DATA) return;
     const app = id => DATA.apps.find(a => a.id === id) || { name: id, color: '#888' };
     const view = sel.view, g = sel[view], a = app(g), p = Profile.get(), week = view === 'daily' && sel.range === 'week';
@@ -197,7 +197,7 @@ const Board = (() => {
         <div class="pod-emo">${esc(r.emoji)}<span class="pod-medal">${MEDAL[r.rank - 1] || r.rank}</span></div>
         <div class="pod-name" data-no-tx>${esc(r.name)}</div><div class="pod-score">${esc(fmt(r.score))}</div>
         <div class="pod-step"><span>${r.rank}</span></div></div>` : `<div class="pod p${place} empty"><div class="pod-step"></div></div>`;
-    const row = r => `<div class="lb-row${r.me ? ' me' : ''}"><span class="lb-rank">${r.rank}</span>
+    const row = r => `<div class="lb-row${r.me ? ' me' : ''}"><span class="lb-rank">${num(r.rank)}</span>
       <span class="lb-emo">${esc(r.emoji)}</span>
       <span class="lb-name"><span class="lb-n" data-no-tx>${esc(r.name)}</span>${week && r.days > 1 ? `<small>${tx('{n} Tage', { n: r.days })}</small>` : ''}</span>
       <b class="lb-score">${esc(fmt(r.score))}</b></div>`;
@@ -213,7 +213,7 @@ const Board = (() => {
     let bar = '';
     if (data && joined) {
       const mine = top.find(r => r.me) || data.me;
-      const where = mine ? `<b>${tx('Platz {r}', { r: mine.rank })}</b> <span>${tx('von {n}', { n: data.n })}</span>`
+      const where = mine ? `<b>${tx('Platz {r}', { r: num(mine.rank) })}</b> <span>${tx('von {n}', { n: num(data.n) })}</span>`
         : view === 'daily' ? `<span>${week ? tx('Diese Woche noch kein Ergebnis') : tx('Heute noch kein Ergebnis')}</span>`
         : view === 'high' ? `<span>${tx('Noch kein Rekord in dieser Wertung')}</span>` : `<span>${tx('Gerade keine laufende Serie')}</span>`;
       const go = !mine || (view === 'daily' && !week && !DAILY_RESULTS[g]?.().some(r => r.day === todayOf(g)));
@@ -233,14 +233,14 @@ const Board = (() => {
     box.innerHTML = `
       <div class="lb-top">
         ${seg(views, view, 'data-lb-view', 'lb-views')}
-        <div class="lb-games">${VIEWS[view].games.map(id => { const x = app(id); return `<button class="lb-game${id === g ? ' on' : ''}" data-lb-game="${id}" style="--c:${esc(x.color || '#888')}">${x.icon ? `<img src="${esc(x.icon)}" alt="">` : ''}<span>${esc(x.name)}</span></button>`; }).join('')}</div>
+        <div class="lb-games">${VIEWS[view].games.map(id => { const x = app(id); return `<button class="lb-game${id === g ? ' on' : ''}" data-lb-game="${id}" title="${esc(x.name)}" aria-label="${esc(x.name)}" style="--c:${esc(x.color || '#888')}">${x.icon ? `<img src="${esc(x.icon)}" alt="">` : ''}<span>${esc(x.name)}</span></button>`; }).join('')}</div>
         ${opts}
         ${hint ? `<p class="lb-hint">${hint}</p>` : ''}
       </div>
       ${msg && data && !(fresh && needSave) ? `<div class="lb-msg${fresh ? ' ok' : ''}">${esc(msg)}</div>` : ''}
       ${needSave ? `<div class="lb-msg ok">${esc(fresh ? msg : tx('Dein Code ist noch nicht gesichert. Ohne ihn kommst du auf einem neuen Gerät nicht mehr an deine Daten.'))}<button class="lb-save" id="lbSave">${tx('Code sichern')} →</button></div>` : ''}
       <div class="lb-board">${body}</div>
-      ${data ? `<div class="lb-foot">${tx('{n} Spieler', { n: data.n })}${joined ? ` · <button class="lb-leave" id="lbLeave"><span class="lbl">${tx('Austreten')}</span></button>` : ''}</div>` : ''}
+      ${data ? `<div class="lb-foot">${tx('{n} Spieler', { n: num(data.n) })}${joined ? ` · <button class="lb-leave" id="lbLeave"><span class="lbl">${tx('Austreten')}</span></button>` : ''}</div>` : ''}
       ${bar}`;
 
     const pick = fn => () => { fn(); keep(); data = null; msg = ''; fresh = false; draw(); load(true); };

@@ -60,12 +60,15 @@
     const frames = slide ? [{ transform: from }, { transform: 'translateY(100%)' }]
       : calm() ? [{ opacity: 1 }, { opacity: 0 }]
       : [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(8px) scale(.97)' }];
-    const anim = this.animate(frames, { duration: slide ? (this._flick || 280) : 160, easing: slide ? EASE : 'ease-out', fill: 'forwards' });
+    const dur = slide ? (this._flick || 280) : 160;
+    const anim = this.animate(frames, { duration: dur, easing: slide ? EASE : 'ease-out', fill: 'forwards' });
     this._flick = 0;
     closing.set(this, anim);
     Object.defineProperty(this, 'open', { get: () => false, configurable: true });   // für die Spiele ist es schon zu
     this.classList.add('closing');
-    anim.onfinish = () => { if (closing.get(this) === anim) { finish(this, value); anim.cancel(); } };
+    const done = () => { if (closing.get(this) === anim) { finish(this, value); anim.cancel(); } };
+    anim.onfinish = done;
+    setTimeout(done, dur + 120);              // falls die Animation ruht (Seite im Hintergrund)
   };
   P.showModal = function () {
     const anim = closing.get(this);

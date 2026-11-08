@@ -107,7 +107,7 @@ main{max-width:960px;margin:0 auto;padding:0 16px 40px}
 /* ---------- Spielfläche ---------- */
 /* z-index: Die Spielfläche (mit der fixen Bedienleiste darin) muss über Lobby-Leiste und Verlauf liegen */
 .stage{text-align:center;padding:22px 24px 26px;position:relative;z-index:3}
-.round-meta{display:flex;justify-content:space-between;gap:8px;margin-bottom:18px}
+.round-meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-bottom:18px}
 .pill{font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:.35em .85em;white-space:nowrap}
 .cat{display:flex;flex-direction:column;align-items:center;gap:8px}
 .cat-kicker{text-transform:uppercase;letter-spacing:3px;font-size:.7rem;color:var(--cat);font-weight:800;transition:color .4s}
@@ -288,6 +288,8 @@ button.cell{transform:none!important;filter:none!important}
 /* Längere Texte (z. B. Französisch) dürfen umbrechen statt über den Rand zu laufen */
 .seg button{min-width:0;white-space:normal;text-align:center;line-height:1.2}
 .seg button small{line-height:1.2;overflow-wrap:anywhere}
+/* Schmale Handys: lange Wörter (International, Internasjonalt) stoßen sonst an den Nachbarknopf */
+@media (max-width:360px){.seg button{font-size:.9rem;padding-left:.25em;padding-right:.25em;letter-spacing:-.015em}}
 .seg button.on{background:rgba(255,255,255,.16)}
 .check-res{text-align:center;margin:10px 0 4px;font-weight:800;font-size:1.15rem}
 .check-res.won{color:var(--accent)}
