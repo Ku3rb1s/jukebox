@@ -37,6 +37,8 @@
     "Dein Name": "Your name",
     "Avatar wechseln": "Change avatar",
     "Hallo {n}! Wähle ein Spiel": "Hi {n}! Pick a game",
+    "Hallo {n}!": "Hi {n}!",
+    "Schön, dass du da bist!": "Good to see you!",
     "Einstellungen": "Settings",
     "Wähle ein Spiel": "Pick a game",
     "Musik raten, Bingo spielen – mit Freunden oder allein.": "Guess music, play bingo – with friends or on your own.",

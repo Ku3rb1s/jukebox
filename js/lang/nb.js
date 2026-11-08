@@ -37,6 +37,8 @@
     "Dein Name": "Navnet ditt",
     "Avatar wechseln": "Bytt avatar",
     "Hallo {n}! Wähle ein Spiel": "Hei {n}! Velg et spill",
+    "Hallo {n}!": "Hei {n}!",
+    "Schön, dass du da bist!": "Hyggelig at du er her!",
     "Einstellungen": "Innstillinger",
     "Wähle ein Spiel": "Velg et spill",
     "Musik raten, Bingo spielen – mit Freunden oder allein.": "Gjett musikk, spill bingo – med venner eller alene.",

@@ -37,6 +37,8 @@
     "Dein Name": "Ton nom",
     "Avatar wechseln": "Changer d’avatar",
     "Hallo {n}! Wähle ein Spiel": "Salut {n} ! Choisis un jeu",
+    "Hallo {n}!": "Salut {n} !",
+    "Schön, dass du da bist!": "Content de te voir !",
     "Einstellungen": "Réglages",
     "Wähle ein Spiel": "Choisis un jeu",
     "Musik raten, Bingo spielen – mit Freunden oder allein.": "Deviner la musique, jouer au bingo – entre amis ou en solo.",

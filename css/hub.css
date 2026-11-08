@@ -187,3 +187,7 @@ header{max-width:860px}
 
 /* Schmale Handys (iPhone SE): Spiele-Knöpfe nur mit Bild statt abgeschnittener Namen, Wertungen ohne Symbol */
 @media (max-width:360px){.lb-game span{display:none}.lb-game{padding:.45em}.lb-vi{display:none}.lb-me{gap:9px;padding-left:12px;padding-right:12px}.lb-me-s{font-size:.92rem}}
+/* Wiederkehrende Spieler: statt Einleitung nur Begrüßung + offene Tages-Challenges (kompakt) */
+.hub-hero.back .hub-intro{display:none}
+.hub-hero.back .hub-hi{margin:6px auto 2px;letter-spacing:-.02em}
+.hub-hero.back .cat-kicker{display:none}

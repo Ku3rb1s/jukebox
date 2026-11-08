@@ -92,6 +92,7 @@ function render() {
       <span class="app-go"><svg class="ic"><use href="#i-play"/></svg><span>${tx('Spielen')}</span></span>
     </a>`).join('');
   renderToday();
+  renderProfile();
   board()?.refresh();
 }
 const board = () => typeof Board !== 'undefined' ? Board : null;   // js/leaderboard.js (wird nach dieser Datei geladen)
@@ -116,7 +117,13 @@ function renderProfile() {
   $('#profEmoji').textContent = p.emoji;
   if (document.activeElement !== $('#profName')) $('#profName').value = p.name;
   $('#profName').placeholder = tx('Dein Name');
-  $('#hello').textContent = p.name ? tx('Hallo {n}! Wähle ein Spiel', { n: p.emoji + ' ' + p.name }) : tx('Wähle ein Spiel');
+  // Wer schon gespielt hat (oder einen Namen hat), braucht die Erklärung oben nicht mehr: dann nur Begrüßung + „Heute noch offen“.
+  // Beim ersten Besuch bleibt die Einleitung, damit man versteht, worum es geht.
+  const back = !!p.name || ['mq.stats', 'mq.daily', 'gr.stats', 'oon.stats', 'hom.stats'].some(k => store.get(k));
+  $('.hub-hero').classList.toggle('back', back);
+  $('#hi').classList.toggle('hidden', !back);
+  $('#hi').textContent = p.name ? tx('Hallo {n}!', { n: p.emoji + ' ' + p.name }) : tx('Schön, dass du da bist!');
+  $('#hello').textContent = back ? tx('Wähle ein Spiel') : p.name ? tx('Hallo {n}! Wähle ein Spiel', { n: p.emoji + ' ' + p.name }) : tx('Wähle ein Spiel');
 }
 $('#profEmoji').onclick = () => Profile.pick(() => { renderProfile(); board()?.profileChanged(); });   // Auswahl-Fenster (js/profile.js)
 $('#profName').oninput = () => { Profile.set({ name: $('#profName').value }); renderProfile(); board()?.profileChanged(); };

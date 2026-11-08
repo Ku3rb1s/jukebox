@@ -37,6 +37,8 @@
     "Dein Name": "Tu nombre",
     "Avatar wechseln": "Cambiar avatar",
     "Hallo {n}! Wähle ein Spiel": "¡Hola, {n}! Elige un juego",
+    "Hallo {n}!": "¡Hola, {n}!",
+    "Schön, dass du da bist!": "¡Qué bien que estés aquí!",
     "Einstellungen": "Ajustes",
     "Wähle ein Spiel": "Elige un juego",
     "Musik raten, Bingo spielen – mit Freunden oder allein.": "Adivina música, juega al bingo – con amigos o a solas.",
