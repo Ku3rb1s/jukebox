@@ -141,6 +141,25 @@
   document.addEventListener('touchcancel', end, { passive: true });
 })();
 
+// Zahl hochzählen (Punkte am Rundenende): countUp(el, 1234, fmtN). Schnell am Anfang, sanft zum Schluss (unter 1 s).
+// Ziffern bleiben gleich breit (tabular-nums), damit nichts wackelt. Bei „Bewegung reduzieren“ oder kleinen Zahlen sofort.
+window.countUp = (el, to, fmt = String) => {
+  if (!el) return;
+  cancelAnimationFrame(el._cu || 0); clearTimeout(el._cuT);
+  to = Math.round(+to || 0);
+  el.style.fontVariantNumeric = 'tabular-nums';
+  if (to <= 1 || matchMedia('(prefers-reduced-motion:reduce)').matches) { el.textContent = fmt(to); return; }
+  const dur = Math.min(900, 350 + to * 40), t0 = performance.now();               // kleine Zahlen kürzer
+  const step = now => {
+    const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);          // ease-out
+    el.textContent = fmt(Math.round(to * e));
+    if (p < 1) el._cu = requestAnimationFrame(step);
+  };
+  el.textContent = fmt(0);
+  el._cu = requestAnimationFrame(step);
+  el._cuT = setTimeout(() => { cancelAnimationFrame(el._cu); el.textContent = fmt(to); }, dur + 150);   // falls rAF ruht (Seite im Hintergrund)
+};
+
 // iPhone/iPad als App vom Home-Bildschirm: Die Statusleiste (Uhr, Akku) liegt über der Seite, der Abstand kommt aus
 // env(safe-area-inset-top). iOS meldet ihn manchmal als 0 – vor allem nach einem Wechsel zu einem anderen Spiel
 // innerhalb der App. Dann rutscht die Kopfzeile unter die Statusleiste. Nur in diesem Fall einen Ersatzwert setzen.
