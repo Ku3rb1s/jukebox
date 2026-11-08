@@ -84,11 +84,11 @@
       "icon": "https://ku3rb1s.github.io/on-tour/icon-192.png?v=2",
       "color": "#e11d48",
       "desc": {
-        "de": "24 Stationen von Memphis 1956 bis heute – sammle Sterne und reise weiter.",
-        "en": "Travel through 24 stops from Memphis 1956 to today – collect stars and move on.",
-        "fr": "Voyage en 24 étapes de Memphis 1956 à aujourd’hui – gagne des étoiles et avance.",
-        "es": "Viaja por 24 paradas desde Memphis 1956 hasta hoy: gana estrellas y sigue adelante.",
-        "nb": "Reis gjennom 24 stopp fra Memphis 1956 til i dag – samle stjerner og reis videre."
+        "de": "24 Stationen von 1956 bis heute plus Touren mit deinen Stars – sammle Sterne.",
+        "en": "24 stops from 1956 to today plus tours with your favourite artists – collect stars.",
+        "fr": "24 étapes depuis 1956 et des tournées avec tes stars – gagne des étoiles.",
+        "es": "24 paradas desde 1956 y giras con tus artistas favoritos: gana estrellas.",
+        "nb": "24 stopp fra 1956 til i dag og turneer med favorittartistene dine – samle stjerner."
       },
       "tags": ["solo", "nologin"]
     }
