@@ -151,6 +151,8 @@
     "Weiteres Gerät verbinden: Dort die Jukebox öffnen und den QR-Code mit der Kamera scannen oder den Code eingeben. Deine Daten sind mit dem Code verschlüsselt – ohne ihn kann sie niemand lesen, auch wir nicht.": "Connecter un autre appareil : ouvre la Jukebox dessus et scanne le QR code avec l’appareil photo ou saisis le code. Tes données sont chiffrées avec le code – sans lui, personne ne peut les lire, pas même nous.",
     "Avatar wählen": "Choisir un avatar",
     "Tiere": "Animaux",
+    "Winter & Weihnachten": "Hiver & Noël",
+    "Essen & Trinken": "À boire et à manger",
     "Musik": "Musique",
     "Sonstiges": "Divers",
     "Spiele": "Jeux",

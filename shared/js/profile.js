@@ -1,15 +1,22 @@
 /* Gemeinsames Spielerprofil für alle Spiele auf ku3rb1s.github.io (Jukebox, Needle Drop, Older or Newer, Gold Record).
    Nur lokal auf diesem Gerät: { name, emoji } unter „jb.profile“. Fehlt der Name, wird der zuletzt im Bingo benutzte genommen.
-   Avatar: Profile.pick(fertig) öffnet ein Auswahl-Fenster mit allen Emojis (Gruppen Tiere, Musik, Sonstiges). */
+   Avatar: Profile.pick(fertig) öffnet ein Auswahl-Fenster mit allen Emojis (Gruppen Tiere, Winter & Weihnachten, Musik, Essen & Trinken, Sonstiges). */
 const Profile = (() => {
   const KEY = 'jb.profile';
   // Alle früheren Avatare sind weiter dabei. Die Gruppen dienen nur der Anzeige im Auswahl-Fenster.
   const GROUPS = [
     ['Tiere', ['🦊', '🐼', '🐸', '🦄', '🐙', '🦁', '🐧', '🐶', '🐱', '🐭', '🐹', '🐰', '🐻', '🐨', '🐯', '🐮', '🐷', '🐵', '🐔', '🐤',
       '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🐝', '🦋', '🐌', '🐞', '🐢', '🐍', '🦖', '🦕', '🦀', '🐠', '🐬', '🐳', '🦈',
-      '🦭', '🐊', '🦒', '🦓', '🦘', '🦥', '🦦', '🦔', '🦩', '🦜', '🦚', '🐲', '🐘', '🦛', '🐪', '🦙', '🐑', '🐐', '🦌', '🐈‍⬛']],
+      '🦭', '🐊', '🦒', '🦓', '🦘', '🦥', '🦦', '🦔', '🦩', '🦜', '🦚', '🐲', '🐘', '🦛', '🐪', '🦙', '🐑', '🐐', '🦌', '🐈‍⬛',
+      '🐇', '🦝', '🦫', '🦨', '🦡', '🦍', '🦧', '🐆', '🐅', '🦏', '🦣', '🦬', '🐓', '🦃', '🦢', '🦤', '🐦', '🐋', '🐡', '🦑',
+      '🐚', '🦞', '🦐', '🐛', '🐜', '🦗', '🦂', '🦎', '🐉', '🐩']],
+    ['Winter & Weihnachten', ['🎄', '🎅', '🤶', '⛄', '❄️', '🎁', '🔔', '🕯️', '🌟', '✨', '🍪', '🥛', '🧦', '🧣', '🧤', '🛷', '🎿', '🏂', '🥶', '☕',
+      '🍫', '🎆', '🎇', '🥂', '🍾']],
     ['Musik', ['🎧', '🎤', '🎸', '🥁', '🎹', '🎷', '🎺', '🎻', '🪕', '🪗', '🎼', '🎵', '🪩', '📻', '💿']],
-    ['Sonstiges', ['👽', '🤖', '👑', '🔥', '⭐', '🌈', '🚀', '⚡', '💎', '🎈', '😎', '🤠', '🥳', '👻', '🎃', '🍕', '🍩', '🌵', '🍄', '🌙']],
+    ['Essen & Trinken', ['🍕', '🍩', '🍔', '🍟', '🌭', '🌮', '🍣', '🍜', '🥨', '🥐', '🧁', '🍰', '🍦', '🍿', '🍉', '🍓', '🍒', '🍍', '🥑', '🥥',
+      '🍋', '🧃', '🧋', '🍭']],
+    ['Sonstiges', ['👽', '🤖', '👑', '🔥', '⭐', '🌈', '🚀', '⚡', '💎', '🎈', '😎', '🤠', '🥳', '👻', '🎃', '🌵', '🍄', '🌙',
+      '🤓', '🤩', '🥸', '🤡', '💀', '🧙', '🧛', '🧜', '🦸', '🥷', '⚽', '🏀', '🎮', '🎲', '🎯', '🛹', '🏆', '🌻', '🌸', '🍀', '🌍', '🪐']],
   ];
   const EMOJIS = GROUPS.flatMap(([, list]) => list);
   const DEFAULT = '🎧';

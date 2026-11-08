@@ -151,6 +151,8 @@
     "Weiteres Gerät verbinden: Dort die Jukebox öffnen und den QR-Code mit der Kamera scannen oder den Code eingeben. Deine Daten sind mit dem Code verschlüsselt – ohne ihn kann sie niemand lesen, auch wir nicht.": "Koble til en enhet til: Åpne Jukebox der og skann QR-koden med kameraet eller skriv inn koden. Dataene dine er kryptert med koden – uten den kan ingen lese dem, heller ikke vi.",
     "Avatar wählen": "Velg avatar",
     "Tiere": "Dyr",
+    "Winter & Weihnachten": "Vinter og jul",
+    "Essen & Trinken": "Mat og drikke",
     "Musik": "Musikk",
     "Sonstiges": "Annet",
     "Spiele": "Spill",
