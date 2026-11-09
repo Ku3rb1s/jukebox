@@ -15,6 +15,7 @@ Alle liegen unter `C:\Users\nik-r\Documents\Claude\`, jedes ist ein eigenes GitH
 | Gold Record | `Gold-Record` | ku3rb1s.github.io/gold-record/ | 8893 | `gr.` |
 | Hit or Miss | `Hit-or-Miss` | ku3rb1s.github.io/hit-or-miss/ | 8894 | `hom.` |
 | On Tour | `On-Tour` | ku3rb1s.github.io/on-tour/ | 8895 | `ot.` |
+| Piano Rain | `Piano-Rain` | ku3rb1s.github.io/piano-rain/ | 8896 | `pr.` |
 | Musik-Bingo | `Musik-Bingo-Lobby/mb` | ku3rb1s.github.io/musik-bingo-lobby/ | 8888 | `mb_` |
 
 Lokal starten: im Spiel-Ordner `node server.js`. Die Liste mit Repo-Namen steht auch in `Spiele-Hub/shared/games.json`.

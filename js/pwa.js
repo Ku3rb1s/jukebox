@@ -269,6 +269,7 @@ window.countUp = (el, to, fmt = String) => {
     ['Gold Record', 'gold-record/', 'icon-192.png?v=2'],
     ['Hit or Miss', 'hit-or-miss/', 'icon-192.png?v=1'],
     ['On Tour', 'on-tour/', 'icon-192.png?v=2'],
+    ['Piano Rain', 'piano-rain/', 'icon-192.png?v=1'],
     ['Musik-Bingo', 'musik-bingo-lobby/', 'icon-192.png'],
   ];
   const start = () => {

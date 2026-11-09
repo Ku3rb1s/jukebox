@@ -91,6 +91,21 @@
         "nb": "24 stopp fra 1956 til i dag og turneer med favorittartistene dine – samle stjerner."
       },
       "tags": ["solo", "nologin"]
+    },
+    {
+      "id": "piano-rain",
+      "name": "Piano Rain",
+      "url": "https://ku3rb1s.github.io/piano-rain/",
+      "icon": "https://ku3rb1s.github.io/piano-rain/icon-192.png?v=1",
+      "color": "#14b8a6",
+      "desc": {
+        "de": "Klavier lernen mit fallenden Noten – das iPad hört zu. Mit Weihnachtsliedern.",
+        "en": "Learn piano with falling notes – your iPad listens. Christmas songs and classics.",
+        "fr": "Apprends le piano avec des notes qui tombent – l’iPad t’écoute. Noël inclus.",
+        "es": "Aprende piano con notas que caen: el iPad escucha. Villancicos y clásica.",
+        "nb": "Lær piano med fallende noter – iPaden lytter. Julesanger og klassisk musikk."
+      },
+      "tags": ["solo", "nologin"]
     }
   ]
 }

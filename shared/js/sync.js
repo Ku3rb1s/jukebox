@@ -39,6 +39,9 @@ const Sync = (() => {
     [/^jb\.avatars$/, 'union'],                     // exklusive Avatare aus dem Adventskalender (js/profile.js)
     [/^ot\.ach$/, 'union'],
     [/^ot\.stats$/, 'device'],
+    [/^pr\.(stars|both|best|days)$/, 'mapmax'],     // Piano Rain: Sterne / beide Hände / beste Trefferquote je Lied, geübte Sekunden je Tag
+    [/^pr\.ach$/, 'union'],
+    [/^pr\.stats$/, 'device'],
   ];
   // Statistik mehrerer Geräte zusammenzählen (je Spiel eigener Aufbau)
   const COMBINE = {
@@ -60,6 +63,7 @@ const Sync = (() => {
       for (const [k, [r, n]] of Object.entries(b.types || {})) { const t = types[k] || [0, 0]; types[k] = [t[0] + r, t[1] + n]; }
       return { games: a.games + b.games, right: a.right + b.right, asked: a.asked + b.asked, perfect: (a.perfect || 0) + (b.perfect || 0), types };
     },
+    'pr.stats': (a, b) => ({ runs: (a.runs || 0) + (b.runs || 0), done: (a.done || 0) + (b.done || 0), notes: (a.notes || 0) + (b.notes || 0), secs: (a.secs || 0) + (b.secs || 0) }),
     'hom.stats': (a, b) => {
       const types = { ...a.types };
       for (const [k, [r, n]] of Object.entries(b.types || {})) { const t = types[k] || [0, 0]; types[k] = [t[0] + r, t[1] + n]; }
