@@ -102,91 +102,83 @@ const AdventCal = (() => {
     btn.classList.add('opening');
     setTimeout(go, 650);
   }
-  /* ---------- Spieluhr: „Jingle Bells“ (James Lord Pierpont, 1857 – gemeinfrei), im Browser erzeugt (Web Audio) ----------
-     Läuft leise, solange der Kalender offen ist; Knopf oben links schaltet sie aus (gemerkt in hub.adventMusic, nur dieses Gerät).
-     Ohne Tipp (zurück aus On Tour über #advent) darf der Browser noch keinen Ton spielen – dann startet sie beim ersten Tipp. */
+  /* ---------- Musik: ruhige Weihnachtslieder am Klavier (echte Aufnahmen, 30-s-Ausschnitte von Deezer wie in den Spielen) ----------
+     Auswahl aus der Deezer-Playlist „Christmas Calm Piano“ (Deezer-Redaktion, 6777052164): nur bekannte Weihnachtslieder.
+     Los geht es mit „Jingle Bells“, danach gemischt; jeder Ausschnitt wird weich ein- und ausgeblendet. Leise (VOL).
+     Läuft nur, solange der Kalender offen ist; Knopf oben links schaltet sie aus (gemerkt in hub.adventMusic, nur dieses Gerät).
+     Ohne Tipp (zurück aus On Tour über #advent) darf der Browser noch keinen Ton spielen – dann startet sie beim ersten Tipp.
+     Fehlt ein Stück bei Deezer, kommt einfach das nächste. */
   const music = (() => {
-    // Noten „Name+Oktave:Länge“, Länge in Achteln (Viertel = 2): Strophe, dann Refrain
-    const VERSE = 'G4:2 E5:2 D5:2 C5:2 G4:6 G4:1 G4:1 G4:2 E5:2 D5:2 C5:2 A4:8 A4:2 F5:2 E5:2 D5:2 B4:8 G5:2 G5:2 F5:2 D5:2 E5:8 '
-      + 'G4:2 E5:2 D5:2 C5:2 G4:8 G4:2 E5:2 D5:2 C5:2 A4:6 A4:2 A4:2 F5:2 E5:2 D5:2 G5:2 G5:2 G5:2 G5:2 A5:2 G5:2 F5:2 D5:2 C5:4 G5:4';
-    const CHORUS = 'E5:2 E5:2 E5:4 E5:2 E5:2 E5:4 E5:2 G5:2 C5:3 D5:1 E5:8 F5:2 F5:2 F5:3 F5:1 F5:2 E5:2 E5:2 E5:1 E5:1 E5:2 D5:2 D5:2 E5:2 D5:4 G5:4 '
-      + 'E5:2 E5:2 E5:4 E5:2 E5:2 E5:4 E5:2 G5:2 C5:3 D5:1 E5:8 F5:2 F5:2 F5:3 F5:1 F5:2 E5:2 E5:2 E5:1 E5:1 G5:2 G5:2 F5:2 D5:2 C5:8';
-    // Begleitung: ein Akkord je Takt (8 Achtel) – Bass auf Schlag 1, leiser gebrochener Akkord auf Schlag 3
-    const VERSE_CH = 'C C C F F G G C C C C F F G G C', CHORUS_CH = 'C C C C F C D G C C C C F C G C';
-    const CHORDS = { C: [48, 60, 64, 67], F: [53, 57, 60, 65], G: [55, 59, 62, 67], D: [50, 57, 62, 66] };   // [Bass, Akkordtöne]
-    const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-    const parse = str => str.trim().split(/\s+/).map(t => { const [n, l] = t.split(':'); return [12 * (+n[1] + 1) + SEMI[n[0]], +l]; });
-    // alle Töne eines Durchgangs: [Zeit in Achteln, MIDI-Ton, Stimme]
-    const EVENTS = (() => {
-      const ev = [];
-      let u = 0;
-      for (const [m, l] of parse(`${VERSE} ${CHORUS} ${CHORUS}`)) { ev.push([u, m, 'mel']); u += l; }
-      const bars = `${VERSE_CH} ${CHORUS_CH} ${CHORUS_CH}`.split(' ');
-      bars.forEach((c, k) => {
-        const [bass, ...tri] = CHORDS[c], b = k * 8;
-        ev.push([b, bass, 'bass']);
-        tri.forEach((m, j) => ev.push([b + 4 + j * .5, m, 'soft']));   // sanft gebrochen
-      });
-      return ev.sort((x, y) => x[0] - y[0]);
-    })();
-    const LEN = Math.max(...EVENTS.map(e => e[0])) + 8;
-    const EIGHTH = .34, PAUSE = 3;   // gemächlich (etwa 88 Schläge pro Minute); Pause zwischen den Durchgängen
-    const KEY = 'hub.adventMusic';
-    let ctx = null, out = null, timer = 0, i = 0, playing = false;
+    const LIST = [
+      [1132561982, 'Jingle Bells', 'Martèn LeGrand'], [1125777882, 'The Christmas Song', 'Stephan Moccio'],
+      [22345441, 'It’s the Most Wonderful Time of the Year', 'Chad Lawson'], [2470078035, 'O Tannenbaum', 'Alexis Ffrench'],
+      [1978028367, 'Last Christmas', 'Fabrizio Paterlini'], [1509354402, 'Deck the Halls', 'Belle Chen'],
+      [1824043897, 'We Wish You a Merry Christmas', 'Belle Chen'], [425478032, 'White Christmas', 'Michael Forster'],
+      [425478062, 'Let It Snow', 'Michael Forster'], [1129177012, 'Happy Xmas (War Is Over)', 'Alexis Ffrench'],
+      [1922157607, 'Silent Night', 'John Crome'], [2944169791, 'Driving Home for Christmas', 'Lucas Johansson'],
+      [1913087377, 'Silver Bells', 'Maurice Hofer'], [1125777982, 'O Holy Night', 'Stephan Moccio'],
+      [1509475932, 'The Christmas Waltz', 'Chad Lawson'], [66597759, 'Tanz der Zuckerfee (Der Nussknacker)', 'Martha Argerich'],
+      [1501979772, 'It’s Beginning to Look a Lot Like Christmas', 'Mila Crowell'],
+    ];
+    const KEY = 'hub.adventMusic', VOL = .22, FADE = 2.2;
+    let el = null, ctx = null, gain = null, order = [], k = -1, playing = false, run = 0, cbn = 0, volT = 0;
     const on = () => get(KEY) !== false;
+    // Deezer-API ohne CORS → JSONP (wie js/deezer.js der Spiele); liefert jedes Mal einen frischen Vorschau-Link (laufen nach ca. 15 Minuten ab)
+    const track = id => new Promise((res, rej) => {
+      const cb = `__advdz${++cbn}`, s = document.createElement('script'), to = setTimeout(() => end(new Error('timeout')), 10000);
+      const end = (err, d) => { clearTimeout(to); window[cb] = () => {}; s.remove(); err ? rej(err) : res(d); };
+      window[cb] = d => d && !d.error && d.preview ? end(null, d) : end(new Error('dz'));
+      s.onerror = () => end(new Error('net'));
+      s.src = `https://api.deezer.com/track/${id}?output=jsonp&callback=${cb}`;
+      document.head.appendChild(s);
+    });
     function setup() {
-      if (ctx) return;
-      ctx = new (window.AudioContext || window.webkitAudioContext)();
-      out = ctx.createGain(); out.gain.value = 0;
-      // warm: Höhen leicht gedämpft, dazu zwei weiche Echos wie in einem Raum
-      const warm = ctx.createBiquadFilter(); warm.type = 'lowpass'; warm.frequency.value = 3200;
-      out.connect(warm); warm.connect(ctx.destination);
-      for (const [time, amount] of [[.23, .26], [.37, .2]]) {
-        const dl = ctx.createDelay(1), fb = ctx.createGain(), lp = ctx.createBiquadFilter(), wet = ctx.createGain();
-        dl.delayTime.value = time; fb.gain.value = amount; lp.type = 'lowpass'; lp.frequency.value = 1800; wet.gain.value = .5;
-        warm.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(wet); wet.connect(ctx.destination);
+      if (el) return;
+      el = new Audio(); el.crossOrigin = 'anonymous'; el.preload = 'auto';
+      el.addEventListener('ended', () => playing && next());
+      el.addEventListener('error', () => playing && el.src && next());
+      el.addEventListener('timeupdate', () => { if (playing && !el._out && el.duration && el.duration - el.currentTime < FADE + .2) { el._out = true; fade(0, FADE); } });
+      // Lautstärke über Web Audio – auf dem iPhone lässt sich audio.volume nicht ändern (Vorschauen erlauben CORS)
+      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); gain = ctx.createGain(); gain.gain.value = 0; ctx.createMediaElementSource(el).connect(gain).connect(ctx.destination); } catch { ctx = gain = null; }
+    }
+    function fade(v, sec) {
+      if (gain) { const t = ctx.currentTime; gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(v, t + sec); return; }
+      clearInterval(volT); const from = el.volume, t0 = performance.now();
+      volT = setInterval(() => { const p = Math.min(1, (performance.now() - t0) / (sec * 1000)); el.volume = from + (v - from) * p; if (p >= 1) clearInterval(volT); }, 50);
+    }
+    const nowLine = s => { const b = $('#advNow'); if (!b) return; b.textContent = s ? `♪ ${s[1]} · ${s[2]}` : ''; b.classList.toggle('hidden', !s); };
+    async function play() {
+      const my = ++run, s = order[k];
+      try {
+        const t = await track(s[0]);
+        if (my !== run || !playing) return;
+        el._out = false; el.src = t.preview;
+        if (gain) gain.gain.value = 0; else el.volume = 0;
+        nowLine(s);
+        await el.play();
+        fade(VOL, FADE);
+      } catch (e) {
+        if (my !== run || !playing) return;
+        if (e?.name === 'NotAllowedError') return;   // noch kein Tipp – unlock() startet beim ersten Tipp
+        setTimeout(() => my === run && playing && next(), 400);   // Stück fehlt bei Deezer: nächstes
       }
     }
-    // Spieluhr/Celesta: Grundton (zwei leicht verstimmte Stimmen = wärmer) + leise Obertöne, weicher Anschlag, langes Ausklingen
-    const VOICE = {
-      mel: { vol: .5, parts: [[1, 1, 2.4], [1.004, .5, 2.2], [2, .14, .9], [4.01, .025, .3]] },
-      soft: { vol: .16, parts: [[1, 1, 1.8], [2, .1, .6]] },
-      bass: { vol: .32, parts: [[1, 1, 2.2], [2, .08, .8]] },
-    };
-    function note(midi, t, v) {
-      const f = 440 * 2 ** ((midi - 69) / 12), { vol, parts } = VOICE[v];
-      for (const [mul, p, dec] of parts) {
-        const o = ctx.createOscillator(), g = ctx.createGain();
-        o.type = 'sine'; o.frequency.value = f * mul;
-        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol * p, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + dec);
-        o.connect(g).connect(out); o.start(t); o.stop(t + dec + .05);
-      }
-    }
-    let base = 0;   // Startzeit des laufenden Durchgangs
-    function tick() {
-      while (true) {   // immer gut eine Sekunde im Voraus planen
-        if (i >= EVENTS.length) { i = 0; base += LEN * EIGHTH + PAUSE; }
-        const [u, m, v] = EVENTS[i], t = base + u * EIGHTH;
-        if (t > ctx.currentTime + 1.2) break;
-        note(m, t, v); i++;
-      }
-      timer = setTimeout(tick, 250);
-    }
+    function next() { k = (k + 1) % order.length; play(); }
     function start() {
       if (!on() || playing) return;
       try { setup(); } catch { return; }
-      ctx.resume?.().catch(() => {});
-      playing = true; i = 0; base = ctx.currentTime + .2;
-      out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setValueAtTime(out.gain.value, ctx.currentTime); out.gain.linearRampToValueAtTime(.1, ctx.currentTime + 1);
-      clearTimeout(timer); tick();
+      ctx?.resume?.().catch(() => {});
+      if (!order.length) order = [LIST[0], ...LIST.slice(1).map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1])];
+      playing = true; next();   // beim ersten Öffnen „Jingle Bells“, danach jeweils das nächste Stück
     }
     function stop() {
       if (!playing) return;
-      playing = false; clearTimeout(timer);
-      const t = ctx.currentTime; out.gain.cancelScheduledValues(t); out.gain.setValueAtTime(out.gain.value, t); out.gain.linearRampToValueAtTime(0, t + .4);
-      setTimeout(() => { if (!playing) ctx.suspend?.().catch(() => {}); }, 600);
+      playing = false; run++; nowLine(null);
+      fade(0, .5);
+      setTimeout(() => { if (!playing) { el.pause(); ctx?.suspend?.().catch(() => {}); } }, 600);
     }
-    const unlock = () => { if (playing && ctx?.state === 'suspended') ctx.resume().catch(() => {}); };
+    // erster Tipp im Kalender: Ton freigeben, falls der Browser vorher nicht durfte
+    const unlock = () => { if (!playing || !el) return; ctx?.resume?.().catch(() => {}); if (el.paused && el.src) el.play().then(() => fade(VOL, FADE)).catch(() => {}); };
     function paint() {
       const b = $('#advMusic'); if (!b) return;
       b.textContent = on() ? '🔔' : '🔕';
@@ -248,7 +240,8 @@ const AdventCal = (() => {
     d.addEventListener('click', ev => {
       if (ev.target.closest('#advMusic')) return music.toggle();
       const b = ev.target.closest('.door'); if (b) return tapDoor(b);
-      if (ev.target === d || ev.target.closest('[data-close]')) d.close();
+      // direkt aufräumen: das „close“-Ereignis kommt in manchen Browsern verzögert (wie in js/profile.js)
+      if (ev.target === d || ev.target.closest('[data-close]')) { snow.stop(); music.stop(); d.close(); }
     });
     // Seite verlassen (Türchen öffnet On Tour, App im Hintergrund): Musik aus; zurück: wieder an
     document.addEventListener('visibilitychange', () => { if (document.hidden) music.stop(); else if (d.open) music.start(); });
