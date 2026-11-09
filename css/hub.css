@@ -267,4 +267,6 @@ header{max-width:860px}
 .adv-vol input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-6px}
 .adv-vol input[type=range]::-moz-range-thumb{width:16px;height:16px}
 .adv-vol.off input[type=range]{opacity:.45}
-@media (max-width:440px){.adv-vol{margin-left:2px;gap:2px}.adv-music{width:34px;height:34px;font-size:1.05rem}.adv-vol input[type=range]{width:52px}}
+@media (max-width:440px){.adv-vol{margin-left:2px;gap:2px}.adv-vol input[type=range]{width:52px}}
+/* Handy und Tablet: Lautstärke über die Tasten am Gerät – dort nur die Glocke */
+@media (pointer:coarse){.adv-vol input[type=range]{display:none}}
