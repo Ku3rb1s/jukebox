@@ -111,36 +111,64 @@ const AdventCal = (() => {
       + 'G4:2 E5:2 D5:2 C5:2 G4:8 G4:2 E5:2 D5:2 C5:2 A4:6 A4:2 A4:2 F5:2 E5:2 D5:2 G5:2 G5:2 G5:2 G5:2 A5:2 G5:2 F5:2 D5:2 C5:4 G5:4';
     const CHORUS = 'E5:2 E5:2 E5:4 E5:2 E5:2 E5:4 E5:2 G5:2 C5:3 D5:1 E5:8 F5:2 F5:2 F5:3 F5:1 F5:2 E5:2 E5:2 E5:1 E5:1 E5:2 D5:2 D5:2 E5:2 D5:4 G5:4 '
       + 'E5:2 E5:2 E5:4 E5:2 E5:2 E5:4 E5:2 G5:2 C5:3 D5:1 E5:8 F5:2 F5:2 F5:3 F5:1 F5:2 E5:2 E5:2 E5:1 E5:1 G5:2 G5:2 F5:2 D5:2 C5:8';
+    // Begleitung: ein Akkord je Takt (8 Achtel) – Bass auf Schlag 1, leiser gebrochener Akkord auf Schlag 3
+    const VERSE_CH = 'C C C F F G G C C C C F F G G C', CHORUS_CH = 'C C C C F C D G C C C C F C G C';
+    const CHORDS = { C: [48, 60, 64, 67], F: [53, 57, 60, 65], G: [55, 59, 62, 67], D: [50, 57, 62, 66] };   // [Bass, Akkordtöne]
     const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-    const NOTES = `${VERSE} ${CHORUS} ${CHORUS}`.trim().split(/\s+/).map(t => { const [n, l] = t.split(':'); return [12 * (+n[1] + 1) + SEMI[n[0]], +l]; });
-    const EIGHTH = .24, PAUSE = 2.5;   // ruhiges Tempo; Pause zwischen den Durchgängen
+    const parse = str => str.trim().split(/\s+/).map(t => { const [n, l] = t.split(':'); return [12 * (+n[1] + 1) + SEMI[n[0]], +l]; });
+    // alle Töne eines Durchgangs: [Zeit in Achteln, MIDI-Ton, Stimme]
+    const EVENTS = (() => {
+      const ev = [];
+      let u = 0;
+      for (const [m, l] of parse(`${VERSE} ${CHORUS} ${CHORUS}`)) { ev.push([u, m, 'mel']); u += l; }
+      const bars = `${VERSE_CH} ${CHORUS_CH} ${CHORUS_CH}`.split(' ');
+      bars.forEach((c, k) => {
+        const [bass, ...tri] = CHORDS[c], b = k * 8;
+        ev.push([b, bass, 'bass']);
+        tri.forEach((m, j) => ev.push([b + 4 + j * .5, m, 'soft']));   // sanft gebrochen
+      });
+      return ev.sort((x, y) => x[0] - y[0]);
+    })();
+    const LEN = Math.max(...EVENTS.map(e => e[0])) + 8;
+    const EIGHTH = .34, PAUSE = 3;   // gemächlich (etwa 88 Schläge pro Minute); Pause zwischen den Durchgängen
     const KEY = 'hub.adventMusic';
-    let ctx = null, out = null, timer = 0, at = 0, i = 0, playing = false;
+    let ctx = null, out = null, timer = 0, i = 0, playing = false;
     const on = () => get(KEY) !== false;
     function setup() {
       if (ctx) return;
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       out = ctx.createGain(); out.gain.value = 0;
-      // leises Echo wie in einem Raum
-      const dl = ctx.createDelay(1), fb = ctx.createGain(), lp = ctx.createBiquadFilter();
-      dl.delayTime.value = .27; fb.gain.value = .28; lp.type = 'lowpass'; lp.frequency.value = 2600;
-      out.connect(ctx.destination); out.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(ctx.destination);
+      // warm: Höhen leicht gedämpft, dazu zwei weiche Echos wie in einem Raum
+      const warm = ctx.createBiquadFilter(); warm.type = 'lowpass'; warm.frequency.value = 3200;
+      out.connect(warm); warm.connect(ctx.destination);
+      for (const [time, amount] of [[.23, .26], [.37, .2]]) {
+        const dl = ctx.createDelay(1), fb = ctx.createGain(), lp = ctx.createBiquadFilter(), wet = ctx.createGain();
+        dl.delayTime.value = time; fb.gain.value = amount; lp.type = 'lowpass'; lp.frequency.value = 1800; wet.gain.value = .5;
+        warm.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(wet); wet.connect(ctx.destination);
+      }
     }
-    // ein Spieluhr-Ton: Grundton + leise Obertöne, kurzer Anschlag, langes Ausklingen
-    function bell(midi, t) {
-      const f = 440 * 2 ** ((midi - 69) / 12);
-      for (const [mul, vol, dec] of [[1, .55, 1.4], [2, .18, .7], [3.01, .07, .35]]) {
+    // Spieluhr/Celesta: Grundton (zwei leicht verstimmte Stimmen = wärmer) + leise Obertöne, weicher Anschlag, langes Ausklingen
+    const VOICE = {
+      mel: { vol: .5, parts: [[1, 1, 2.4], [1.004, .5, 2.2], [2, .14, .9], [4.01, .025, .3]] },
+      soft: { vol: .16, parts: [[1, 1, 1.8], [2, .1, .6]] },
+      bass: { vol: .32, parts: [[1, 1, 2.2], [2, .08, .8]] },
+    };
+    function note(midi, t, v) {
+      const f = 440 * 2 ** ((midi - 69) / 12), { vol, parts } = VOICE[v];
+      for (const [mul, p, dec] of parts) {
         const o = ctx.createOscillator(), g = ctx.createGain();
         o.type = 'sine'; o.frequency.value = f * mul;
-        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + dec);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol * p, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + dec);
         o.connect(g).connect(out); o.start(t); o.stop(t + dec + .05);
       }
     }
+    let base = 0;   // Startzeit des laufenden Durchgangs
     function tick() {
-      while (at < ctx.currentTime + 1.2) {   // immer gut eine Sekunde im Voraus planen
-        const [m, l] = NOTES[i];
-        bell(m, at); at += l * EIGHTH;
-        if (++i >= NOTES.length) { i = 0; at += PAUSE; }
+      while (true) {   // immer gut eine Sekunde im Voraus planen
+        if (i >= EVENTS.length) { i = 0; base += LEN * EIGHTH + PAUSE; }
+        const [u, m, v] = EVENTS[i], t = base + u * EIGHTH;
+        if (t > ctx.currentTime + 1.2) break;
+        note(m, t, v); i++;
       }
       timer = setTimeout(tick, 250);
     }
@@ -148,8 +176,8 @@ const AdventCal = (() => {
       if (!on() || playing) return;
       try { setup(); } catch { return; }
       ctx.resume?.().catch(() => {});
-      playing = true; i = 0; at = ctx.currentTime + .15;
-      out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setValueAtTime(out.gain.value, ctx.currentTime); out.gain.linearRampToValueAtTime(.09, ctx.currentTime + .6);
+      playing = true; i = 0; base = ctx.currentTime + .2;
+      out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setValueAtTime(out.gain.value, ctx.currentTime); out.gain.linearRampToValueAtTime(.1, ctx.currentTime + 1);
       clearTimeout(timer); tick();
     }
     function stop() {
