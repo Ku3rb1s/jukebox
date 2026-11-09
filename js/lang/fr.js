@@ -182,5 +182,7 @@
     "Sterne: 1 ab 3 richtigen, 2 ab 5, 3 bei allen 6. Verpasste Türchen lassen sich bis 6. Januar nachholen – dann zählen die Sterne, aber nicht die Serie.": "Étoiles : 1 dès 3 bonnes réponses, 2 dès 5, 3 avec les 6. Les cases manquées se rattrapent jusqu’au 6 janvier – les étoiles comptent, mais pas la série.",
     "Hinter den Türchen 6, 12, 18 und 24 warten Avatare, die es nur hier gibt.": "Derrière les cases 6, 12, 18 et 24 t’attendent des avatars qu’on ne trouve qu’ici.",
     "Der Adventskalender ist vorbei.": "Le calendrier de l’Avent est terminé.",
+    "Musik ausschalten": "Couper la musique",
+    "Musik einschalten": "Activer la musique",
   },
 };

@@ -97,14 +97,84 @@ const AdventCal = (() => {
       return msg(k > 0 ? (k === 1 ? tx('Noch 1 Tag Geduld') : tx('Noch {n} Tage Geduld', { n: k })) : tx('Der Adventskalender ist vorbei.'));
     }
     const go = () => { location.href = withDate(OT + '?advent=' + n); };
+    music.stop();
     if (reduced() || btn.classList.contains('played')) return go();
     btn.classList.add('opening');
     setTimeout(go, 650);
   }
+  /* ---------- Spieluhr: „Jingle Bells“ (James Lord Pierpont, 1857 – gemeinfrei), im Browser erzeugt (Web Audio) ----------
+     Läuft leise, solange der Kalender offen ist; Knopf oben links schaltet sie aus (gemerkt in hub.adventMusic, nur dieses Gerät).
+     Ohne Tipp (zurück aus On Tour über #advent) darf der Browser noch keinen Ton spielen – dann startet sie beim ersten Tipp. */
+  const music = (() => {
+    // Noten „Name+Oktave:Länge“, Länge in Achteln (Viertel = 2): Strophe, dann Refrain
+    const VERSE = 'G4:2 E5:2 D5:2 C5:2 G4:6 G4:1 G4:1 G4:2 E5:2 D5:2 C5:2 A4:8 A4:2 F5:2 E5:2 D5:2 B4:8 G5:2 G5:2 F5:2 D5:2 E5:8 '
+      + 'G4:2 E5:2 D5:2 C5:2 G4:8 G4:2 E5:2 D5:2 C5:2 A4:6 A4:2 A4:2 F5:2 E5:2 D5:2 G5:2 G5:2 G5:2 G5:2 A5:2 G5:2 F5:2 D5:2 C5:4 G5:4';
+    const CHORUS = 'E5:2 E5:2 E5:4 E5:2 E5:2 E5:4 E5:2 G5:2 C5:3 D5:1 E5:8 F5:2 F5:2 F5:3 F5:1 F5:2 E5:2 E5:2 E5:1 E5:1 E5:2 D5:2 D5:2 E5:2 D5:4 G5:4 '
+      + 'E5:2 E5:2 E5:4 E5:2 E5:2 E5:4 E5:2 G5:2 C5:3 D5:1 E5:8 F5:2 F5:2 F5:3 F5:1 F5:2 E5:2 E5:2 E5:1 E5:1 G5:2 G5:2 F5:2 D5:2 C5:8';
+    const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+    const NOTES = `${VERSE} ${CHORUS} ${CHORUS}`.trim().split(/\s+/).map(t => { const [n, l] = t.split(':'); return [12 * (+n[1] + 1) + SEMI[n[0]], +l]; });
+    const EIGHTH = .24, PAUSE = 2.5;   // ruhiges Tempo; Pause zwischen den Durchgängen
+    const KEY = 'hub.adventMusic';
+    let ctx = null, out = null, timer = 0, at = 0, i = 0, playing = false;
+    const on = () => get(KEY) !== false;
+    function setup() {
+      if (ctx) return;
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      out = ctx.createGain(); out.gain.value = 0;
+      // leises Echo wie in einem Raum
+      const dl = ctx.createDelay(1), fb = ctx.createGain(), lp = ctx.createBiquadFilter();
+      dl.delayTime.value = .27; fb.gain.value = .28; lp.type = 'lowpass'; lp.frequency.value = 2600;
+      out.connect(ctx.destination); out.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(ctx.destination);
+    }
+    // ein Spieluhr-Ton: Grundton + leise Obertöne, kurzer Anschlag, langes Ausklingen
+    function bell(midi, t) {
+      const f = 440 * 2 ** ((midi - 69) / 12);
+      for (const [mul, vol, dec] of [[1, .55, 1.4], [2, .18, .7], [3.01, .07, .35]]) {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = f * mul;
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + dec);
+        o.connect(g).connect(out); o.start(t); o.stop(t + dec + .05);
+      }
+    }
+    function tick() {
+      while (at < ctx.currentTime + 1.2) {   // immer gut eine Sekunde im Voraus planen
+        const [m, l] = NOTES[i];
+        bell(m, at); at += l * EIGHTH;
+        if (++i >= NOTES.length) { i = 0; at += PAUSE; }
+      }
+      timer = setTimeout(tick, 250);
+    }
+    function start() {
+      if (!on() || playing) return;
+      try { setup(); } catch { return; }
+      ctx.resume?.().catch(() => {});
+      playing = true; i = 0; at = ctx.currentTime + .15;
+      out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setValueAtTime(out.gain.value, ctx.currentTime); out.gain.linearRampToValueAtTime(.09, ctx.currentTime + .6);
+      clearTimeout(timer); tick();
+    }
+    function stop() {
+      if (!playing) return;
+      playing = false; clearTimeout(timer);
+      const t = ctx.currentTime; out.gain.cancelScheduledValues(t); out.gain.setValueAtTime(out.gain.value, t); out.gain.linearRampToValueAtTime(0, t + .4);
+      setTimeout(() => { if (!playing) ctx.suspend?.().catch(() => {}); }, 600);
+    }
+    const unlock = () => { if (playing && ctx?.state === 'suspended') ctx.resume().catch(() => {}); };
+    function paint() {
+      const b = $('#advMusic'); if (!b) return;
+      b.textContent = on() ? '🔔' : '🔕';
+      b.setAttribute('aria-pressed', String(on()));
+      b.setAttribute('aria-label', on() ? tx('Musik ausschalten') : tx('Musik einschalten'));
+      b.title = b.getAttribute('aria-label');
+    }
+    function toggle() { try { localStorage.setItem(KEY, JSON.stringify(!on())); } catch {} paint(); on() ? start() : stop(); }
+    return { start, stop, unlock, paint, toggle };
+  })();
+
   async function open() {
     const d = sheet();
     if (!d.open) d.showModal();
     snow.start();
+    music.paint(); music.start();
     await render();   // Raster entsteht erst nach dem Laden von advent-doors.json
     // heutiges Türchen sichtbar machen
     // im Fenster selbst rechnen: es fährt beim Öffnen noch herein (scrollIntoView würde die Zwischenposition nehmen)
@@ -146,11 +216,16 @@ const AdventCal = (() => {
 
   function init() {
     const d = sheet(); if (!d) return;
+    d.addEventListener('pointerdown', () => music.unlock());   // Ton erst nach einem Tipp (Browser-Regel)
     d.addEventListener('click', ev => {
+      if (ev.target.closest('#advMusic')) return music.toggle();
       const b = ev.target.closest('.door'); if (b) return tapDoor(b);
       if (ev.target === d || ev.target.closest('[data-close]')) d.close();
     });
-    d.addEventListener('close', () => { snow.stop(); if (location.hash === '#advent') history.replaceState(null, '', location.pathname + location.search); });
+    // Seite verlassen (Türchen öffnet On Tour, App im Hintergrund): Musik aus; zurück: wieder an
+    document.addEventListener('visibilitychange', () => { if (document.hidden) music.stop(); else if (d.open) music.start(); });
+    addEventListener('pagehide', () => music.stop());
+    d.addEventListener('close', () => { snow.stop(); music.stop(); if (location.hash === '#advent') history.replaceState(null, '', location.pathname + location.search); });
     addEventListener('resize', () => snow.size());
     $('#advCard').onclick = ev => { ev.preventDefault(); open(); };
     // zurück aus On Tour (…/jukebox/#advent): gleich den Kalender zeigen

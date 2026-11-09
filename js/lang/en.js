@@ -182,5 +182,7 @@
     "Sterne: 1 ab 3 richtigen, 2 ab 5, 3 bei allen 6. Verpasste Türchen lassen sich bis 6. Januar nachholen – dann zählen die Sterne, aber nicht die Serie.": "Stars: 1 for 3 correct, 2 for 5, 3 for all 6. Missed doors can be caught up on until 6 January – the stars count, but not the streak.",
     "Hinter den Türchen 6, 12, 18 und 24 warten Avatare, die es nur hier gibt.": "Behind doors 6, 12, 18 and 24 there are avatars you can only get here.",
     "Der Adventskalender ist vorbei.": "The Advent calendar is over.",
+    "Musik ausschalten": "Turn music off",
+    "Musik einschalten": "Turn music on",
   },
 };

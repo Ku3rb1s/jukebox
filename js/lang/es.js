@@ -182,5 +182,7 @@
     "Sterne: 1 ab 3 richtigen, 2 ab 5, 3 bei allen 6. Verpasste Türchen lassen sich bis 6. Januar nachholen – dann zählen die Sterne, aber nicht die Serie.": "Estrellas: 1 con 3 aciertos, 2 con 5, 3 con los 6. Las ventanas perdidas se pueden recuperar hasta el 6 de enero: cuentan las estrellas, pero no la racha.",
     "Hinter den Türchen 6, 12, 18 und 24 warten Avatare, die es nur hier gibt.": "Detrás de las ventanas 6, 12, 18 y 24 hay avatares que solo existen aquí.",
     "Der Adventskalender ist vorbei.": "El calendario de Adviento ha terminado.",
+    "Musik ausschalten": "Apagar la música",
+    "Musik einschalten": "Encender la música",
   },
 };

@@ -182,5 +182,7 @@
     "Sterne: 1 ab 3 richtigen, 2 ab 5, 3 bei allen 6. Verpasste Türchen lassen sich bis 6. Januar nachholen – dann zählen die Sterne, aber nicht die Serie.": "Stjerner: 1 for 3 riktige, 2 for 5, 3 for alle 6. Luker du har gått glipp av, kan tas igjen til 6. januar – stjernene teller, men ikke rekka.",
     "Hinter den Türchen 6, 12, 18 und 24 warten Avatare, die es nur hier gibt.": "Bak luke 6, 12, 18 og 24 venter avatarer du bare får her.",
     "Der Adventskalender ist vorbei.": "Julekalenderen er over.",
+    "Musik ausschalten": "Slå av musikken",
+    "Musik einschalten": "Slå på musikken",
   },
 };
