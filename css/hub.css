@@ -259,6 +259,12 @@ header{max-width:860px}
   .door.now .flap,.adv-card.due .adv-card-ic{animation:none}
   .flap{transition:none}
 }
-.adv-music{grid-column:1;grid-row:1;justify-self:start;margin-left:6px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.08);font-size:1.2rem;cursor:pointer;line-height:1}
+.adv-music{width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.08);font-size:1.2rem;cursor:pointer;line-height:1}
 .adv-music[aria-pressed="false"]{opacity:.6}
 .adv-now{max-width:520px;margin:10px auto 0;text-align:center;font-size:.78rem;color:var(--muted);opacity:.8}
+.adv-vol{grid-column:1;grid-row:1;justify-self:start;display:flex;align-items:center;gap:4px;margin-left:6px;min-width:0}
+.adv-vol input[type=range]{width:72px;height:28px;flex:none}
+.adv-vol input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-6px}
+.adv-vol input[type=range]::-moz-range-thumb{width:16px;height:16px}
+.adv-vol.off input[type=range]{opacity:.45}
+@media (max-width:440px){.adv-vol{margin-left:2px;gap:2px}.adv-music{width:34px;height:34px;font-size:1.05rem}.adv-vol input[type=range]{width:52px}}

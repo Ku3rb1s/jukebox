@@ -184,5 +184,6 @@
     "Der Adventskalender ist vorbei.": "El calendario de Adviento ha terminado.",
     "Musik ausschalten": "Apagar la música",
     "Musik einschalten": "Encender la música",
+    "Lautstärke": "Volumen",
   },
 };

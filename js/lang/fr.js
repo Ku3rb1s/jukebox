@@ -184,5 +184,6 @@
     "Der Adventskalender ist vorbei.": "Le calendrier de l’Avent est terminé.",
     "Musik ausschalten": "Couper la musique",
     "Musik einschalten": "Activer la musique",
+    "Lautstärke": "Volume",
   },
 };

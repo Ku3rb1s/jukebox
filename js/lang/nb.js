@@ -184,5 +184,6 @@
     "Der Adventskalender ist vorbei.": "Julekalenderen er over.",
     "Musik ausschalten": "Slå av musikken",
     "Musik einschalten": "Slå på musikken",
+    "Lautstärke": "Volum",
   },
 };

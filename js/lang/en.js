@@ -184,5 +184,6 @@
     "Der Adventskalender ist vorbei.": "The Advent calendar is over.",
     "Musik ausschalten": "Turn music off",
     "Musik einschalten": "Turn music on",
+    "Lautstärke": "Volume",
   },
 };

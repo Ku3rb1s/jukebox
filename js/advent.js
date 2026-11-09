@@ -120,8 +120,11 @@ const AdventCal = (() => {
       [1509475932, 'The Christmas Waltz', 'Chad Lawson'], [66597759, 'Tanz der Zuckerfee (Der Nussknacker)', 'Martha Argerich'],
       [1501979772, 'It’s Beginning to Look a Lot Like Christmas', 'Mila Crowell'],
     ];
-    const KEY = 'hub.adventMusic', VOL = .22, FADE = 2.2;
-    let el = null, ctx = null, gain = null, order = [], k = -1, playing = false, run = 0, cbn = 0, volT = 0;
+    // Lautstärke: Regler 0–100 (hub.adventVol, nur dieses Gerät), 50 = leise Grundeinstellung
+    const KEY = 'hub.adventMusic', VKEY = 'hub.adventVol', MAX = .44;
+    const level = () => { const v = get(VKEY); return Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 50; };
+    const VOL = () => MAX * level() / 100;
+    let order = [], k = -1, playing = false, run = 0, cbn = 0;
     const on = () => get(KEY) !== false;
     // Deezer-API ohne CORS → JSONP (wie js/deezer.js der Spiele); liefert jedes Mal einen frischen Vorschau-Link (laufen nach ca. 15 Minuten ab)
     const track = id => new Promise((res, rej) => {
@@ -132,62 +135,107 @@ const AdventCal = (() => {
       s.src = `https://api.deezer.com/track/${id}?output=jsonp&callback=${cb}`;
       document.head.appendChild(s);
     });
+    function nowLine(s) { const b = $('#advNow'); if (!b) return; b.textContent = s ? `♪ ${s[1]} · ${s[2]}` : ''; b.classList.toggle('hidden', !s); }
+    /* Zwei Spuren im Wechsel: Gegen Ende eines Ausschnitts setzt das nächste Stück auf der anderen Spur ein, beide werden
+       XF Sekunden lang überblendet (gleich laut: Sinus/Kosinus – kein Loch in der Mitte). Gesamtlautstärke über master (Regler).
+       Ohne Web Audio: dieselben Kurven über audio.volume. */
+    const XF = 4, FIRST = 3;   // Überblenden / erstes Einblenden in Sekunden
+    let ctx = null, master = null, P = [], cur = 0;
+    function mk() {
+      const el = new Audio(); el.crossOrigin = 'anonymous'; el.preload = 'auto';
+      const p = { el, g: null, v: 0, iv: 0, out: false };
+      if (ctx) { p.g = ctx.createGain(); p.g.gain.value = 0; ctx.createMediaElementSource(el).connect(p.g).connect(master); }
+      const done = () => { if (playing && p === P[cur] && !p.out) { p.out = true; next(); } };
+      el.addEventListener('timeupdate', () => { if (el.duration && el.duration - el.currentTime < XF + .1) done(); });
+      el.addEventListener('ended', done);
+      el.addEventListener('error', () => { if (el.src) done(); });
+      return p;
+    }
     function setup() {
-      if (el) return;
-      el = new Audio(); el.crossOrigin = 'anonymous'; el.preload = 'auto';
-      el.addEventListener('ended', () => playing && next());
-      el.addEventListener('error', () => playing && el.src && next());
-      el.addEventListener('timeupdate', () => { if (playing && !el._out && el.duration && el.duration - el.currentTime < FADE + .2) { el._out = true; fade(0, FADE); } });
-      // Lautstärke über Web Audio – auf dem iPhone lässt sich audio.volume nicht ändern (Vorschauen erlauben CORS)
-      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); gain = ctx.createGain(); gain.gain.value = 0; ctx.createMediaElementSource(el).connect(gain).connect(ctx.destination); } catch { ctx = gain = null; }
+      if (P.length) return;
+      // Web Audio: auf dem iPhone lässt sich audio.volume nicht ändern (die Vorschauen erlauben CORS)
+      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination); } catch { ctx = master = null; }
+      P = [mk(), mk()];
     }
-    function fade(v, sec) {
-      if (gain) { const t = ctx.currentTime; gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t); gain.gain.linearRampToValueAtTime(v, t + sec); return; }
-      clearInterval(volT); const from = el.volume, t0 = performance.now();
-      volT = setInterval(() => { const p = Math.min(1, (performance.now() - t0) / (sec * 1000)); el.volume = from + (v - from) * p; if (p >= 1) clearInterval(volT); }, 50);
+    // Spur auf „to“ (0…1) blenden: hoch mit Sinus-, runter mit Kosinus-Kurve
+    function ramp(p, to, sec) {
+      clearInterval(p.iv);
+      const shape = (from, x) => from + (to - from) * (to > from ? Math.sin(x * Math.PI / 2) : 1 - Math.cos(x * Math.PI / 2));
+      if (p.g) {
+        const g = p.g.gain, t = ctx.currentTime, from = g.value, c = new Float32Array(32);
+        for (let i = 0; i < 32; i++) c[i] = shape(from, i / 31);
+        g.cancelScheduledValues(t);
+        try { g.setValueCurveAtTime(c, t, sec); } catch { g.setValueAtTime(from, t); g.linearRampToValueAtTime(to, t + sec); }
+        p.v = to; return;
+      }
+      const from = p.v, t0 = performance.now();
+      p.iv = setInterval(() => { const x = Math.min(1, (performance.now() - t0) / (sec * 1000)); p.v = shape(from, x); p.el.volume = Math.min(1, p.v * VOL()); if (x >= 1) clearInterval(p.iv); }, 50);
     }
-    const nowLine = s => { const b = $('#advNow'); if (!b) return; b.textContent = s ? `♪ ${s[1]} · ${s[2]}` : ''; b.classList.toggle('hidden', !s); };
-    async function play() {
-      const my = ++run, s = order[k];
+    function setMaster(sec) {
+      if (!master) return P.forEach(p => { p.el.volume = Math.min(1, p.v * VOL()); });
+      const g = master.gain, t = ctx.currentTime, to = playing ? VOL() : 0;
+      g.cancelScheduledValues(t); g.setValueAtTime(g.value, t);
+      sec ? g.linearRampToValueAtTime(to, t + sec) : g.setValueAtTime(to, t);
+    }
+    async function next() {
+      const my = ++run, old = P[cur], nx = P[1 - cur], first = !old.el.src || old.el.paused;
+      k = (k + 1) % order.length;
+      const s = order[k];
       try {
         const t = await track(s[0]);
         if (my !== run || !playing) return;
-        el._out = false; el.src = t.preview;
-        if (gain) gain.gain.value = 0; else el.volume = 0;
-        nowLine(s);
-        await el.play();
-        fade(VOL, FADE);
+        nx.out = false; nx.el.src = t.preview;
+        if (nx.g) nx.g.gain.value = 0; else nx.el.volume = 0;
+        nx.v = 0; cur = 1 - cur; nowLine(s);
+        await nx.el.play();
+        ramp(nx, 1, first ? FIRST : XF);
+        if (!first) { ramp(old, 0, XF); setTimeout(() => { if (P[cur] !== old) old.el.pause(); }, XF * 1000 + 300); }
       } catch (e) {
         if (my !== run || !playing) return;
         if (e?.name === 'NotAllowedError') return;   // noch kein Tipp – unlock() startet beim ersten Tipp
-        setTimeout(() => my === run && playing && next(), 400);   // Stück fehlt bei Deezer: nächstes
+        setTimeout(() => my === run && playing && next(), 400);   // Stück fehlt bei Deezer: das nächste
       }
     }
-    function next() { k = (k + 1) % order.length; play(); }
     function start() {
       if (!on() || playing) return;
       try { setup(); } catch { return; }
       ctx?.resume?.().catch(() => {});
       if (!order.length) order = [LIST[0], ...LIST.slice(1).map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1])];
-      playing = true; next();   // beim ersten Öffnen „Jingle Bells“, danach jeweils das nächste Stück
+      playing = true; setMaster(.8);
+      next();   // beim ersten Öffnen „Jingle Bells“, danach jeweils das nächste Stück
     }
     function stop() {
       if (!playing) return;
       playing = false; run++; nowLine(null);
-      fade(0, .5);
-      setTimeout(() => { if (!playing) { el.pause(); ctx?.suspend?.().catch(() => {}); } }, 600);
+      if (master) setMaster(.8); else P.forEach(p => ramp(p, 0, .8));
+      setTimeout(() => { if (playing) return; P.forEach(p => { p.el.pause(); p.out = false; }); ctx?.suspend?.().catch(() => {}); }, 900);
     }
     // erster Tipp im Kalender: Ton freigeben, falls der Browser vorher nicht durfte
-    const unlock = () => { if (!playing || !el) return; ctx?.resume?.().catch(() => {}); if (el.paused && el.src) el.play().then(() => fade(VOL, FADE)).catch(() => {}); };
+    function unlock() {
+      if (!playing || !P.length) return;
+      ctx?.resume?.().catch(() => {});
+      const p = P[cur];
+      if (p.el.paused && p.el.src) p.el.play().then(() => ramp(p, 1, FIRST)).catch(() => {});
+    }
     function paint() {
       const b = $('#advMusic'); if (!b) return;
       b.textContent = on() ? '🔔' : '🔕';
       b.setAttribute('aria-pressed', String(on()));
       b.setAttribute('aria-label', on() ? tx('Musik ausschalten') : tx('Musik einschalten'));
       b.title = b.getAttribute('aria-label');
+      const r = $('#advVol'); if (!r) return;
+      r.value = level(); r.style.setProperty('--p', level() + '%'); r.setAttribute('aria-label', tx('Lautstärke')); r.title = tx('Lautstärke');
+      r.closest('.adv-vol')?.classList.toggle('off', !on());
+    }
+    // Regler bewegt: sofort lauter/leiser (ohne Einblenden); bei ausgeschalteter Musik schaltet er sie wieder ein
+    function setLevel(v) {
+      try { localStorage.setItem(VKEY, JSON.stringify(+v)); } catch {}
+      if (!on()) return toggle();
+      paint();
+      if (playing) setMaster(0);
     }
     function toggle() { try { localStorage.setItem(KEY, JSON.stringify(!on())); } catch {} paint(); on() ? start() : stop(); }
-    return { start, stop, unlock, paint, toggle };
+    return { start, stop, unlock, paint, toggle, setLevel };
   })();
 
   async function open() {
@@ -236,7 +284,8 @@ const AdventCal = (() => {
 
   function init() {
     const d = sheet(); if (!d) return;
-    d.addEventListener('pointerdown', () => music.unlock());   // Ton erst nach einem Tipp (Browser-Regel)
+    d.addEventListener('pointerdown', () => music.unlock());
+    $('#advVol')?.addEventListener('input', ev => music.setLevel(ev.target.value));   // Ton erst nach einem Tipp (Browser-Regel)
     d.addEventListener('click', ev => {
       if (ev.target.closest('#advMusic')) return music.toggle();
       const b = ev.target.closest('.door'); if (b) return tapDoor(b);
