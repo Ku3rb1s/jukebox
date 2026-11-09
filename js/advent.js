@@ -78,7 +78,7 @@ const AdventCal = (() => {
       const label = tx('Türchen {n}', { n }) + (played ? ' · ' + tx('{n} Sterne', { n: st }) : open ? '' : ' · ' + tx('noch zu'));
       return `<button class="${cls}" data-n="${n}" style="--c:${COLORS[(n * 5) % COLORS.length]};--r:${rot}deg" aria-label="${e(label)}">
         <span class="door-in">${img ? `<img src="${e(img)}" alt="" loading="lazy">` : ''}${played ? `<span class="door-no">${n}</span><span class="door-st">${starsHtml}</span>` : `<span class="door-gift">${e(m.i || '🎁')}</span>`}</span>
-        ${n === FINAL && !played ? '<i class="door-bow" aria-hidden="true">🎀</i>' : ''}<span class="flap"><b>${n}</b>${!played && AVATARS[n] ? '<i class="door-av" aria-hidden="true">🎁</i>' : ''}</span></button>`;
+        ${capSvg(n, WIDE.has(n) || n === FINAL ? 2 : 1)}${n === FINAL && !played ? '<i class="door-bow" aria-hidden="true">🎀</i>' : ''}<span class="flap"><b>${n}</b>${!played && AVATARS[n] ? '<i class="door-av" aria-hidden="true">🎁</i>' : ''}</span></button>`;
     }).join('');
     const avs = Object.entries(AVATARS).filter(([n]) => s.stars[n] == null).map(([, a]) => a);
     $('#advFoot').innerHTML = [
@@ -273,35 +273,95 @@ const AdventCal = (() => {
       const off = b.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop;
       body.scrollTop = Math.max(0, off - body.clientHeight / 2 + b.offsetHeight / 2);
     };
-    toNow(); setTimeout(toNow, 350);   // nochmal nach dem Hereinfahren
+    toNow(); setTimeout(toNow, 350);
+    drawLights(); setTimeout(drawLights, 350);   // nach dem Hereinfahren hat die Kette ihre echte Breite   // nochmal nach dem Hereinfahren
+  }
+
+  /* ---------- Deko: Lichterkette und Schneehauben (SVG, aus festen Startwerten – sieht jedes Mal gleich aus) ---------- */
+  const seeded = n => { let a = n * 2654435761 >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; };
+  /** Lichterkette als ein Stück: Kabel hängt zwischen Haken in Bögen durch, die Lämpchen sitzen mit Fassung auf dem Kabel
+      und hängen passend zur Neigung. Neu gezeichnet bei jeder Breite (render, resize). */
+  const BULBS = [['#ff4d4d', '#ffd0d0'], ['#ffc53d', '#fff1c2'], ['#3ddc84', '#d2ffe6'], ['#4dabff', '#d6ecff'], ['#ff7ad9', '#ffe0f6']];
+  function drawLights() {
+    const box = $('#advLights'); if (!box) return;
+    const W = Math.round(box.clientWidth); if (!W || box.dataset.w === String(W)) return;
+    box.dataset.w = W;
+    const H = 44, top = 4, sag = 13, segs = Math.max(3, Math.round(W / 92)), sw = W / segs, per = 3;
+    let wire = '', bulbs = '', defs = '', i = 0;
+    BULBS.forEach(([c, hi], k) => { defs += `<radialGradient id="ab${k}" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="${hi}"/><stop offset=".45" stop-color="${c}"/><stop offset="1" stop-color="${c}" stop-opacity=".85"/></radialGradient>`
+      + `<radialGradient id="ag${k}"><stop offset="0" stop-color="${c}" stop-opacity=".75"/><stop offset=".4" stop-color="${c}" stop-opacity=".25"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`; });
+    for (let s = 0; s < segs; s++) {
+      const x0 = s * sw, x1 = x0 + sw, cx = x0 + sw / 2, cy = top + 2 * sag;
+      wire += `M${x0.toFixed(1)} ${top} Q${cx.toFixed(1)} ${cy} ${x1.toFixed(1)} ${top} `;
+      for (let j = 1; j <= per; j++) {
+        const t = j / (per + 1), x = x0 + t * sw, y = (1 - t) ** 2 * top + 2 * (1 - t) * t * cy + t * t * top;
+        const ang = Math.atan2(4 * sag * (1 - 2 * t), sw) * 180 / Math.PI * .6;   // hängt etwas der Neigung nach
+        const k = i % BULBS.length, d = (((i * 7) % 11) * .27).toFixed(2);
+        bulbs += `<g transform="translate(${x.toFixed(1)} ${(y - .5).toFixed(1)}) rotate(${ang.toFixed(1)})">`
+          + `<circle class="al-glow" style="animation-delay:${d}s" cx="0" cy="12" r="13" fill="url(#ag${k})"/>`
+          + `<rect x="-2.7" y="-.6" width="5.4" height="5.8" rx="1.3" fill="#6f8a7b"/><rect x="-2.7" y="3.6" width="5.4" height="1.1" fill="#4d6457"/><rect x="-1.6" y="0" width="1.1" height="3.4" rx=".5" fill="#a9c0b3" opacity=".6"/>`
+          + `<path class="al-bulb" style="animation-delay:${d}s" d="M0 5 C4.6 5 5 9.5 4.4 12.5 C3.8 15.8 1.8 18 0 18 C-1.8 18 -3.8 15.8 -4.4 12.5 C-5 9.5 -4.6 5 0 5Z" fill="url(#ab${k})"/></g>`;
+        i++;
+      }
+    }
+    const hooks = Array.from({ length: segs + 1 }, (_, s) => `<circle cx="${(s * sw).toFixed(1)}" cy="${top}" r="1.8" fill="#6f8a7b"/>`).join('');
+    box.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true"><defs>${defs}</defs>`
+      + `<path d="${wire}" fill="none" stroke="#587566" stroke-width="1.9" stroke-linecap="round"/>${hooks}${bulbs}</svg>`;
+  }
+  /** Schneehaube für ein Türchen: unregelmäßige, weiche Schneeschicht mit ein, zwei kleinen Nasen nach unten */
+  function capSvg(n, span) {
+    const R = seeded(n + 11), W = 100 * span, pts = [];
+    const steps = 4 * span;
+    for (let i = 0; i <= steps; i++) pts.push([i / steps * W, i === 0 || i === steps ? 7.5 : 1 + R() * 4.5]);
+    let d = `M0 ${pts[0][1] + 4} `;
+    for (let i = 0; i < pts.length - 1; i++) { const [x0, y0] = pts[i], [x1, y1] = pts[i + 1]; d += `Q${x0.toFixed(1)} ${(y0 - 3).toFixed(1)} ${((x0 + x1) / 2).toFixed(1)} ${((y0 + y1) / 2 - 1).toFixed(1)} `; }
+    d += `L${W} ${pts[pts.length - 1][1] + 3} `;
+    // Unterkante von rechts nach links, mit Nasen
+    const drips = new Set(Array.from({ length: span === 2 ? 2 : 1 }, () => 0.15 + R() * .7));
+    let x = W;
+    const bottom = 11;
+    d += `L${W - 2} ${bottom} `;
+    for (const p of [...drips].sort((a, b) => b - a)) {
+      const dx = p * W, wdt = 7 + R() * 5, depth = 4 + R() * 3.5;
+      d += `L${(dx + wdt).toFixed(1)} ${bottom} C${(dx + wdt * .7).toFixed(1)} ${bottom} ${(dx + wdt * .75).toFixed(1)} ${(bottom + depth).toFixed(1)} ${dx.toFixed(1)} ${(bottom + depth).toFixed(1)} C${(dx - wdt * .75).toFixed(1)} ${(bottom + depth).toFixed(1)} ${(dx - wdt * .7).toFixed(1)} ${bottom} ${(dx - wdt).toFixed(1)} ${bottom} `;
+      x = dx - wdt;
+    }
+    d += `L2 ${bottom} Z`;
+    return `<svg class="cap" viewBox="-2 0 ${W + 4} 18" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" fill="url(#capFill)"/><path d="${d}" fill="none" stroke="rgba(160,190,220,.55)" stroke-width=".8" vector-effect="non-scaling-stroke"/></svg>`;
   }
 
   /* ---------- Schneefall (aus bei „Bewegung reduzieren“) ----------
-     Drei Ebenen für Tiefe: hinten klein, blass und langsam, vorne größer und schneller. Weiche Flocken (vorgezeichnete
-     Leucht-Kreise), sanfter Wind, der langsam stärker und schwächer wird; jede Flocke schaukelt etwas für sich. */
+     Wie bei echtem Schnee vor einer Kamera: viele kleine, langsame Flocken hinten (scharf, blass), mittlere, und wenige große
+     ganz vorne – unscharf und durchscheinend, weil sie außerhalb der Schärfe liegen. Tempo in Pixeln pro Sekunde (vorn schneller:
+     Tiefe), jede Flocke schaukelt sanft für sich, dazu ein leichter, langsam wechselnder Wind. */
   const snow = (() => {
-    let raf = 0, flakes = [], cv, x, w, h, sprite, t0 = 0, last = 0;
-    const LAYERS = [{ n: .45, r: [.6, 1.3], v: [.18, .35], a: [.25, .45] }, { n: .35, r: [1.2, 2.2], v: [.35, .6], a: [.45, .7] }, { n: .2, r: [2.2, 3.6], v: [.6, 1], a: [.65, .9] }];
+    let raf = 0, flakes = [], cv, x, w, h, sharp, soft, t0 = 0, last = 0;
+    const LAYERS = [
+      { n: .55, r: [.9, 1.6], v: [14, 24], a: [.4, .7], amp: [4, 9], img: 'sharp' },
+      { n: .34, r: [1.6, 2.6], v: [26, 42], a: [.65, .95], amp: [8, 16], img: 'sharp' },
+      { n: .11, r: [4, 8], v: [50, 72], a: [.22, .38], amp: [14, 26], img: 'soft' },
+    ];
     const rnd = ([a, b]) => a + Math.random() * (b - a);
-    function makeSprite() {   // weiche Flocke: heller Kern, leuchtender Rand (einmal zeichnen, dann nur kopieren)
+    // Flocke als weiche Scheibe: „sharp“ mit kurzem Rand, „soft“ (vorne, unscharf) mit langem Verlauf
+    function disc(stops) {
       const c = document.createElement('canvas'), s = 64; c.width = c.height = s;
       const g = c.getContext('2d'), gr = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-      gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.35, 'rgba(255,255,255,.9)'); gr.addColorStop(.6, 'rgba(235,245,255,.35)'); gr.addColorStop(1, 'rgba(235,245,255,0)');
-      g.fillStyle = gr; g.fillRect(0, 0, s, s); return c;
+      for (const [o, a] of stops) gr.addColorStop(o, `rgba(255,255,255,${a})`);
+      g.fillStyle = gr; g.beginPath(); g.arc(s / 2, s / 2, s / 2, 0, 7); g.fill(); return c;
     }
     function size() { const r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1); w = r.width; h = r.height; cv.width = w * dpr; cv.height = h * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0); }
-    function flake(L, y) { return { L, x: Math.random() * w, y: y ?? Math.random() * h, r: rnd(L.r), v: rnd(L.v), a: rnd(L.a), p: Math.random() * 6.3, s: .6 + Math.random() * .9 }; }
+    const flake = (L, y) => ({ L, x: Math.random() * w, y: y ?? Math.random() * h, r: rnd(L.r), v: rnd(L.v), a: rnd(L.a), amp: rnd(L.amp), fr: .5 + Math.random() * .9, p: Math.random() * 6.3 });
     function frame(now) {
-      const dt = Math.min(3, (now - (last || now)) / 16.7); last = now;
-      const t = (now - t0) / 1000, wind = Math.sin(t / 7) * .35 + Math.sin(t / 2.3) * .12;   // Wind: langsame Böen
+      const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
+      const t = (now - t0) / 1000, wind = 6 * Math.sin(t / 9) + 3 * Math.sin(t / 3.7 + 1);   // px/s, langsame Böen
       x.clearRect(0, 0, w, h);
       for (const f of flakes) {
         f.y += f.v * dt;
-        f.x += (wind * (.4 + f.v) + Math.sin(t * f.s + f.p) * .25 * f.v) * dt;
-        if (f.y > h + 8) Object.assign(f, flake(f.L, -8));
-        if (f.x > w + 8) f.x = -8; else if (f.x < -8) f.x = w + 8;
-        const d = f.r * 4;   // Leuchtrand um den Kern
-        x.globalAlpha = f.a; x.drawImage(sprite, f.x - d / 2, f.y - d / 2, d, d);
+        f.x += (wind * f.v / 40 + Math.cos(t * f.fr + f.p) * f.amp * .5) * dt;
+        if (f.y > h + 10) Object.assign(f, flake(f.L, -10));
+        if (f.x > w + 10) f.x = -10; else if (f.x < -10) f.x = w + 10;
+        const d = f.r * 2;
+        x.globalAlpha = f.a; x.drawImage(f.L.img === 'soft' ? soft : sharp, f.x - d / 2, f.y - d / 2, d, d);
       }
       x.globalAlpha = 1;
       raf = sheet().open ? requestAnimationFrame(frame) : 0;
@@ -310,8 +370,10 @@ const AdventCal = (() => {
       start() {
         cv = $('#advSnow'); if (!cv || raf) return;
         if (reduced()) { cv.classList.add('hidden'); return; }
-        cv.classList.remove('hidden'); x = cv.getContext('2d'); size(); sprite ||= makeSprite();
-        const total = Math.round(Math.min(140, w * h / 5500));
+        cv.classList.remove('hidden'); x = cv.getContext('2d'); size();
+        sharp ||= disc([[0, 1], [.55, .95], [.8, .45], [1, 0]]);
+        soft ||= disc([[0, .7], [.35, .55], [.7, .2], [1, 0]]);
+        const total = Math.round(Math.min(220, w * h / 2600));
         flakes = LAYERS.flatMap(L => Array.from({ length: Math.round(total * L.n) }, () => flake(L)));
         t0 = performance.now(); last = 0;
         raf = requestAnimationFrame(frame);
@@ -323,8 +385,6 @@ const AdventCal = (() => {
 
   function init() {
     const d = sheet(); if (!d) return;
-    const lights = $('#advLights');
-    if (lights) lights.innerHTML = Array.from({ length: 15 }, (_, i) => `<i style="--d:${((i * 7) % 11) * .23}s"></i>`).join('');
     d.addEventListener('pointerdown', () => music.unlock());
     $('#advVol')?.addEventListener('input', ev => music.setLevel(ev.target.value));   // Ton erst nach einem Tipp (Browser-Regel)
     d.addEventListener('click', ev => {
@@ -337,7 +397,7 @@ const AdventCal = (() => {
     document.addEventListener('visibilitychange', () => { if (document.hidden) music.stop(); else if (d.open) music.start(); });
     addEventListener('pagehide', () => music.stop());
     d.addEventListener('close', () => { snow.stop(); music.stop(); if (location.hash === '#advent') history.replaceState(null, '', location.pathname + location.search); });
-    addEventListener('resize', () => snow.size());
+    addEventListener('resize', () => { snow.size(); drawLights(); });
     $('#advCard').onclick = ev => { ev.preventDefault(); open(); };
     // zurück aus On Tour (…/jukebox/#advent): gleich den Kalender zeigen
     if (location.hash === '#advent') setTimeout(open, 120);

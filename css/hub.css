@@ -207,9 +207,9 @@ header{max-width:860px}
 .adv-card.due .adv-card-ic{animation:advWiggle 2.4s ease-in-out infinite}
 @keyframes advWiggle{0%,80%,100%{transform:rotate(0)}85%{transform:rotate(-10deg)}90%{transform:rotate(9deg)}95%{transform:rotate(-5deg)}}
 
-.adv-sheet{height:min(900px,calc(100dvh - 48px));overflow:hidden;background:linear-gradient(170deg,rgba(11,42,38,.92),rgba(42,12,20,.94))!important}
+.adv-sheet{height:min(900px,calc(100dvh - 48px));overflow:hidden;background:linear-gradient(170deg,#0c2925,#1a1a1f 55%,#2a0d16)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .adv-sheet .sheet-head,.adv-sheet .sheet-body{position:relative;z-index:1}
-.adv-snow{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.adv-snow{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}   /* vor dem Kalender, wie echter Schneefall */
 .adv-head{text-align:center;margin:6px 0 14px}
 .adv-h-k{font-weight:800;font-size:1.3rem;margin-bottom:8px}
 .adv-h-st{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
@@ -271,28 +271,19 @@ header{max-width:860px}
 /* Handy und Tablet: Lautstärke über die Tasten am Gerät – dort nur die Glocke */
 @media (pointer:coarse){.adv-vol input[type=range]{display:none}}
 
-/* Lichterkette über dem Kalender: Kabel in Bögen, bunte Lämpchen, sanftes Funkeln (ruhig bei „Bewegung reduzieren“) */
-.adv-lights{position:relative;display:flex;justify-content:space-between;max-width:520px;height:30px;margin:-4px auto 6px;padding:0 4px}
-.adv-lights::before{content:"";position:absolute;left:0;right:0;top:0;height:16px;pointer-events:none;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='16' viewBox='0 0 70 16'%3E%3Cpath d='M0 2 Q17.5 16 35 2 T70 2' fill='none' stroke='%23324a3f' stroke-width='2'/%3E%3C/svg%3E") 0 0/70px 16px repeat-x}
-.adv-lights i{position:relative;top:9px;width:9px;height:13px;border-radius:50% 50% 45% 45%;--l:#ef4444;background:var(--l);
-  box-shadow:0 0 8px 2px var(--l),0 0 18px 4px color-mix(in srgb,var(--l) 45%,transparent);animation:advTwinkle 2.6s ease-in-out var(--d) infinite}
-.adv-lights i::before{content:"";position:absolute;left:2px;top:-4px;width:5px;height:5px;border-radius:1px;background:#556b5f}
-.adv-lights i:nth-child(even){top:2px}
-.adv-lights i:nth-child(4n+2){--l:#fbbf24}
-.adv-lights i:nth-child(4n+3){--l:#22c55e}
-.adv-lights i:nth-child(4n){--l:#38bdf8}
-@keyframes advTwinkle{0%,100%{opacity:1;filter:brightness(1.15)}50%{opacity:.45;filter:brightness(.8)}}
-/* Schneehaube auf jedem Türchen */
-.door::before{content:"";position:absolute;left:5px;right:5px;top:-5px;height:10px;z-index:3;pointer-events:none;border-radius:8px 8px 6px 6px;
-  background:linear-gradient(#fff,#e6eef8);box-shadow:0 2px 3px rgba(0,0,0,.25)}
-.door::after{content:"";position:absolute;top:2px;left:28%;width:8px;height:9px;z-index:3;pointer-events:none;border-radius:0 0 6px 6px;background:#eef4fb;
-  box-shadow:22px -1px 0 -1px #eef4fb}
-.door.big::after{left:18%;box-shadow:46px -1px 0 -1px #eef4fb,110px 0 0 -2px #eef4fb}
+/* Lichterkette (js/advent.js drawLights: Kabel und Lämpchen in einem SVG) – sanftes Glimmen, ruhig bei „Bewegung reduzieren“ */
+.adv-lights{max-width:520px;height:44px;margin:-6px auto 2px}
+.adv-lights svg{display:block;overflow:visible}
+.al-glow{animation:alGlow 3.2s ease-in-out infinite}
+.al-bulb{animation:alBulb 3.2s ease-in-out infinite}
+@keyframes alGlow{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes alBulb{0%,100%{opacity:1}50%{opacity:.78}}
+/* Schneehaube (js/advent.js capSvg): unregelmäßige Schneeschicht über der Oberkante, leichter Schatten */
+.door .cap{position:absolute;left:-3px;top:-8px;width:calc(100% + 6px);height:17px;z-index:3;pointer-events:none;overflow:visible;filter:drop-shadow(0 1.5px 1.5px rgba(0,0,0,.3))}
 /* Tür 24: Geschenk mit goldenem Band, Schleife und Anhänger */
 .door.big .flap{background:linear-gradient(90deg,transparent 45%,#f59e0b 45%,#fde68a 50%,#f59e0b 55%,transparent 55%),
   linear-gradient(transparent 45%,#f59e0b 45%,#fde68a 50%,#f59e0b 55%,transparent 55%),linear-gradient(150deg,var(--c),color-mix(in srgb,var(--c) 55%,#000))}
 .door.big .flap b{padding:4px 16px;border-radius:14px;background:color-mix(in srgb,var(--c) 85%,#000);box-shadow:0 0 0 3px #fbbf24,0 6px 14px rgba(0,0,0,.35);line-height:1.1}
 .door-bow{position:absolute;left:50%;top:-22px;transform:translateX(-50%);font-style:normal;font-size:2.6rem;line-height:1;z-index:5;pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.4));transition:opacity .3s}
 .door.opening .door-bow{opacity:0}
-@media (prefers-reduced-motion:reduce){.adv-lights i{animation:none}}
+@media (prefers-reduced-motion:reduce){.al-glow,.al-bulb{animation:none}}
