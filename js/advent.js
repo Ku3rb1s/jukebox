@@ -104,7 +104,7 @@ const AdventCal = (() => {
   }
   /* ---------- Musik: ruhige Weihnachtslieder am Klavier (echte Aufnahmen, 30-s-Ausschnitte von Deezer wie in den Spielen) ----------
      Auswahl aus der Deezer-Playlist „Christmas Calm Piano“ (Deezer-Redaktion, 6777052164): nur bekannte Weihnachtslieder.
-     Los geht es mit „Jingle Bells“, danach gemischt; jeder Ausschnitt wird weich ein- und ausgeblendet. Leise (VOL).
+     Zufällige Reihenfolge (bei jedem Laden der Seite neu gemischt); jeder Ausschnitt wird weich ein- und ausgeblendet. Leise (VOL).
      Läuft nur, solange der Kalender offen ist; Knopf oben links schaltet sie aus (gemerkt in hub.adventMusic, nur dieses Gerät).
      Ohne Tipp (zurück aus On Tour über #advent) darf der Browser noch keinen Ton spielen – dann startet sie beim ersten Tipp.
      Fehlt ein Stück bei Deezer, kommt einfach das nächste. */
@@ -222,9 +222,9 @@ const AdventCal = (() => {
       if (!on() || playing) return;
       try { setup(); } catch { return; }
       ctx?.resume?.().catch(() => {});
-      if (!order.length) order = [LIST[0], ...LIST.slice(1).map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1])];
+      if (!order.length) order = LIST.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1]);   // zufällige Reihenfolge
       playing = true; setMaster(1);
-      next();   // beim ersten Öffnen „Jingle Bells“, danach jeweils das nächste Stück
+      next();   // beim Öffnen jeweils das nächste Stück der gemischten Liste
     }
     function stop() {
       if (!playing) return;
