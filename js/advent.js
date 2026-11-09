@@ -78,7 +78,7 @@ const AdventCal = (() => {
       const label = tx('Türchen {n}', { n }) + (played ? ' · ' + tx('{n} Sterne', { n: st }) : open ? '' : ' · ' + tx('noch zu'));
       return `<button class="${cls}" data-n="${n}" style="--c:${COLORS[(n * 5) % COLORS.length]};--r:${rot}deg" aria-label="${e(label)}">
         <span class="door-in">${img ? `<img src="${e(img)}" alt="" loading="lazy">` : ''}${played ? `<span class="door-no">${n}</span><span class="door-st">${starsHtml}</span>` : `<span class="door-gift">${e(m.i || '🎁')}</span>`}</span>
-        <span class="flap"><b>${n}</b>${!played && AVATARS[n] ? '<i class="door-av" aria-hidden="true">🎁</i>' : ''}</span></button>`;
+        ${n === FINAL && !played ? '<i class="door-bow" aria-hidden="true">🎀</i>' : ''}<span class="flap"><b>${n}</b>${!played && AVATARS[n] ? '<i class="door-av" aria-hidden="true">🎁</i>' : ''}</span></button>`;
     }).join('');
     const avs = Object.entries(AVATARS).filter(([n]) => s.stars[n] == null).map(([, a]) => a);
     $('#advFoot').innerHTML = [
@@ -254,17 +254,32 @@ const AdventCal = (() => {
     toNow(); setTimeout(toNow, 350);   // nochmal nach dem Hereinfahren
   }
 
-  /* ---------- Schneefall (aus bei „Bewegung reduzieren“) ---------- */
+  /* ---------- Schneefall (aus bei „Bewegung reduzieren“) ----------
+     Drei Ebenen für Tiefe: hinten klein, blass und langsam, vorne größer und schneller. Weiche Flocken (vorgezeichnete
+     Leucht-Kreise), sanfter Wind, der langsam stärker und schwächer wird; jede Flocke schaukelt etwas für sich. */
   const snow = (() => {
-    let raf = 0, flakes = [], cv, x, w, h;
+    let raf = 0, flakes = [], cv, x, w, h, sprite, t0 = 0, last = 0;
+    const LAYERS = [{ n: .45, r: [.6, 1.3], v: [.18, .35], a: [.25, .45] }, { n: .35, r: [1.2, 2.2], v: [.35, .6], a: [.45, .7] }, { n: .2, r: [2.2, 3.6], v: [.6, 1], a: [.65, .9] }];
+    const rnd = ([a, b]) => a + Math.random() * (b - a);
+    function makeSprite() {   // weiche Flocke: heller Kern, leuchtender Rand (einmal zeichnen, dann nur kopieren)
+      const c = document.createElement('canvas'), s = 64; c.width = c.height = s;
+      const g = c.getContext('2d'), gr = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+      gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.35, 'rgba(255,255,255,.9)'); gr.addColorStop(.6, 'rgba(235,245,255,.35)'); gr.addColorStop(1, 'rgba(235,245,255,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, s, s); return c;
+    }
     function size() { const r = cv.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1); w = r.width; h = r.height; cv.width = w * dpr; cv.height = h * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0); }
-    function frame() {
+    function flake(L, y) { return { L, x: Math.random() * w, y: y ?? Math.random() * h, r: rnd(L.r), v: rnd(L.v), a: rnd(L.a), p: Math.random() * 6.3, s: .6 + Math.random() * .9 }; }
+    function frame(now) {
+      const dt = Math.min(3, (now - (last || now)) / 16.7); last = now;
+      const t = (now - t0) / 1000, wind = Math.sin(t / 7) * .35 + Math.sin(t / 2.3) * .12;   // Wind: langsame Böen
       x.clearRect(0, 0, w, h);
-      x.fillStyle = 'rgba(255,255,255,.75)';
       for (const f of flakes) {
-        f.y += f.v; f.x += Math.sin((f.y + f.p) / 40) * .35;
-        if (f.y > h + 4) { f.y = -4; f.x = Math.random() * w; }
-        x.globalAlpha = f.a; x.beginPath(); x.arc(f.x, f.y, f.r, 0, 7); x.fill();
+        f.y += f.v * dt;
+        f.x += (wind * (.4 + f.v) + Math.sin(t * f.s + f.p) * .25 * f.v) * dt;
+        if (f.y > h + 8) Object.assign(f, flake(f.L, -8));
+        if (f.x > w + 8) f.x = -8; else if (f.x < -8) f.x = w + 8;
+        const d = f.r * 4;   // Leuchtrand um den Kern
+        x.globalAlpha = f.a; x.drawImage(sprite, f.x - d / 2, f.y - d / 2, d, d);
       }
       x.globalAlpha = 1;
       raf = sheet().open ? requestAnimationFrame(frame) : 0;
@@ -273,8 +288,10 @@ const AdventCal = (() => {
       start() {
         cv = $('#advSnow'); if (!cv || raf) return;
         if (reduced()) { cv.classList.add('hidden'); return; }
-        cv.classList.remove('hidden'); x = cv.getContext('2d'); size();
-        flakes = Array.from({ length: Math.round(Math.min(90, w * h / 9000)) }, () => ({ x: Math.random() * w, y: Math.random() * h, r: .8 + Math.random() * 2.2, v: .25 + Math.random() * .8, a: .35 + Math.random() * .6, p: Math.random() * 300 }));
+        cv.classList.remove('hidden'); x = cv.getContext('2d'); size(); sprite ||= makeSprite();
+        const total = Math.round(Math.min(140, w * h / 5500));
+        flakes = LAYERS.flatMap(L => Array.from({ length: Math.round(total * L.n) }, () => flake(L)));
+        t0 = performance.now(); last = 0;
         raf = requestAnimationFrame(frame);
       },
       stop() { cancelAnimationFrame(raf); raf = 0; },
@@ -284,6 +301,8 @@ const AdventCal = (() => {
 
   function init() {
     const d = sheet(); if (!d) return;
+    const lights = $('#advLights');
+    if (lights) lights.innerHTML = Array.from({ length: 15 }, (_, i) => `<i style="--d:${((i * 7) % 11) * .23}s"></i>`).join('');
     d.addEventListener('pointerdown', () => music.unlock());
     $('#advVol')?.addEventListener('input', ev => music.setLevel(ev.target.value));   // Ton erst nach einem Tipp (Browser-Regel)
     d.addEventListener('click', ev => {
