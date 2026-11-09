@@ -137,18 +137,25 @@ const AdventCal = (() => {
     });
     function nowLine(s) { const b = $('#advNow'); if (!b) return; b.textContent = s ? `♪ ${s[1]} · ${s[2]}` : ''; b.classList.toggle('hidden', !s); }
     /* Zwei Spuren im Wechsel: Gegen Ende eines Ausschnitts setzt das nächste Stück auf der anderen Spur ein, beide werden
-       XF Sekunden lang überblendet (gleich laut: Sinus/Kosinus – kein Loch in der Mitte). Gesamtlautstärke über master (Regler).
-       Ohne Web Audio: dieselben Kurven über audio.volume. */
-    const XF = 4, FIRST = 3;   // Überblenden / erstes Einblenden in Sekunden
+       XF Sekunden lang überblendet – gleich laut (Sinus/Kosinus, kein Loch in der Mitte) und wie im Radio: Das alte Stück
+       wird beim Leiserwerden dumpfer (Tiefpass schließt), das neue öffnet sich von dumpf zu klar. Das nächste Stück wird
+       vorab geladen (prep), damit die Überblendung ohne Wartezeit beginnt. Gesamtlautstärke über master (Regler).
+       Ohne Web Audio: dieselben Lautstärke-Kurven über audio.volume (ohne Klangfilter). */
+    const XF = 6, FIRST = 4, OUT = 1.2;   // Überblenden / erstes Einblenden / Ausblenden beim Schließen (Sekunden)
+    const OPEN = 18000, DULL = 650;      // Tiefpass: offen / dumpf (Hz)
     let ctx = null, master = null, P = [], cur = 0;
     function mk() {
       const el = new Audio(); el.crossOrigin = 'anonymous'; el.preload = 'auto';
-      const p = { el, g: null, v: 0, iv: 0, out: false };
-      if (ctx) { p.g = ctx.createGain(); p.g.gain.value = 0; ctx.createMediaElementSource(el).connect(p.g).connect(master); }
+      const p = { el, g: null, f: null, v: 0, iv: 0, out: false, ready: null };
+      if (ctx) {
+        p.g = ctx.createGain(); p.g.gain.value = 0;
+        p.f = ctx.createBiquadFilter(); p.f.type = 'lowpass'; p.f.frequency.value = OPEN; p.f.Q.value = .5;
+        ctx.createMediaElementSource(el).connect(p.f).connect(p.g).connect(master);
+      }
       const done = () => { if (playing && p === P[cur] && !p.out) { p.out = true; next(); } };
       el.addEventListener('timeupdate', () => { if (el.duration && el.duration - el.currentTime < XF + .1) done(); });
       el.addEventListener('ended', done);
-      el.addEventListener('error', () => { if (el.src) done(); });
+      el.addEventListener('error', () => { if (el.src && p === P[cur]) done(); });
       return p;
     }
     function setup() {
@@ -157,15 +164,17 @@ const AdventCal = (() => {
       try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination); } catch { ctx = master = null; }
       P = [mk(), mk()];
     }
-    // Spur auf „to“ (0…1) blenden: hoch mit Sinus-, runter mit Kosinus-Kurve
+    // Spur auf „to“ (0…1) blenden: hoch mit Sinus-, runter mit Kosinus-Kurve; dazu der Klang (hoch: öffnet, runter: wird dumpf)
     function ramp(p, to, sec) {
       clearInterval(p.iv);
       const shape = (from, x) => from + (to - from) * (to > from ? Math.sin(x * Math.PI / 2) : 1 - Math.cos(x * Math.PI / 2));
       if (p.g) {
-        const g = p.g.gain, t = ctx.currentTime, from = g.value, c = new Float32Array(32);
-        for (let i = 0; i < 32; i++) c[i] = shape(from, i / 31);
+        const g = p.g.gain, t = ctx.currentTime, from = g.value, c = new Float32Array(48);
+        for (let i = 0; i < 48; i++) c[i] = shape(from, i / 47);
         g.cancelScheduledValues(t);
         try { g.setValueCurveAtTime(c, t, sec); } catch { g.setValueAtTime(from, t); g.linearRampToValueAtTime(to, t + sec); }
+        const fr = p.f.frequency; fr.cancelScheduledValues(t); fr.setValueAtTime(Math.max(60, fr.value), t);
+        fr.exponentialRampToValueAtTime(to > from ? OPEN : DULL, t + sec * (to > from ? .85 : 1));
         p.v = to; return;
       }
       const from = p.v, t0 = performance.now();
@@ -175,21 +184,34 @@ const AdventCal = (() => {
       if (!master) return P.forEach(p => { p.el.volume = Math.min(1, p.v * VOL()); });
       const g = master.gain, t = ctx.currentTime, to = playing ? VOL() : 0;
       g.cancelScheduledValues(t); g.setValueAtTime(g.value, t);
-      sec ? g.linearRampToValueAtTime(to, t + sec) : g.setValueAtTime(to, t);
+      if (!sec) return g.setValueAtTime(to, t);
+      // weich (S-Kurve) statt gerade
+      const c = new Float32Array(32), from = g.value;
+      for (let i = 0; i < 32; i++) c[i] = from + (to - from) * (1 - Math.cos(i / 31 * Math.PI)) / 2;
+      try { g.setValueCurveAtTime(c, t, sec); } catch { g.linearRampToValueAtTime(to, t + sec); }
+    }
+    // nächstes Stück schon laden (auf der freien Spur), damit die nächste Überblendung sofort beginnt
+    async function prep() {
+      const my = run, s = order[(k + 1) % order.length], p = P[1 - cur];
+      try {
+        const t = await track(s[0]);
+        if (my !== run || !playing || P[1 - cur] !== p || !p.el.paused) return;
+        p.el.src = t.preview; p.el.load(); p.ready = s[0];
+      } catch {}
     }
     async function next() {
       const my = ++run, old = P[cur], nx = P[1 - cur], first = !old.el.src || old.el.paused;
       k = (k + 1) % order.length;
       const s = order[k];
       try {
-        const t = await track(s[0]);
-        if (my !== run || !playing) return;
-        nx.out = false; nx.el.src = t.preview;
-        if (nx.g) nx.g.gain.value = 0; else nx.el.volume = 0;
+        if (nx.ready !== s[0]) { const t = await track(s[0]); if (my !== run || !playing) return; nx.el.src = t.preview; }
+        nx.ready = null; nx.out = false; nx.el.currentTime = 0;
+        if (nx.g) { nx.g.gain.cancelScheduledValues(0); nx.g.gain.value = 0; nx.f.frequency.cancelScheduledValues(0); nx.f.frequency.value = first ? 2500 : 1200; } else nx.el.volume = 0;
         nx.v = 0; cur = 1 - cur; nowLine(s);
         await nx.el.play();
         ramp(nx, 1, first ? FIRST : XF);
-        if (!first) { ramp(old, 0, XF); setTimeout(() => { if (P[cur] !== old) old.el.pause(); }, XF * 1000 + 300); }
+        if (!first) ramp(old, 0, XF);
+        setTimeout(() => { if (my !== run || !playing) return; if (!first) old.el.pause(); prep(); }, (first ? 1 : XF) * 1000 + 300);
       } catch (e) {
         if (my !== run || !playing) return;
         if (e?.name === 'NotAllowedError') return;   // noch kein Tipp – unlock() startet beim ersten Tipp
@@ -201,14 +223,14 @@ const AdventCal = (() => {
       try { setup(); } catch { return; }
       ctx?.resume?.().catch(() => {});
       if (!order.length) order = [LIST[0], ...LIST.slice(1).map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1])];
-      playing = true; setMaster(.8);
+      playing = true; setMaster(1);
       next();   // beim ersten Öffnen „Jingle Bells“, danach jeweils das nächste Stück
     }
     function stop() {
       if (!playing) return;
       playing = false; run++; nowLine(null);
-      if (master) setMaster(.8); else P.forEach(p => ramp(p, 0, .8));
-      setTimeout(() => { if (playing) return; P.forEach(p => { p.el.pause(); p.out = false; }); ctx?.suspend?.().catch(() => {}); }, 900);
+      if (master) setMaster(OUT); else P.forEach(p => ramp(p, 0, OUT));
+      setTimeout(() => { if (playing) return; P.forEach(p => { p.el.pause(); p.out = false; p.ready = null; }); ctx?.suspend?.().catch(() => {}); }, OUT * 1000 + 150);
     }
     // erster Tipp im Kalender: Ton freigeben, falls der Browser vorher nicht durfte
     function unlock() {
