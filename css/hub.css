@@ -292,3 +292,7 @@ header{max-width:860px}
 .door-bow{position:absolute;left:50%;top:-22px;transform:translateX(-50%);font-style:normal;font-size:2.6rem;line-height:1;z-index:5;pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.4));transition:opacity .3s}
 .door.opening .door-bow{opacity:0}
 @media (prefers-reduced-motion:reduce){.al-glow,.al-bulb{animation:none}}
+/* Bester Highscore (Needle Drop): wo er geholt wurde */
+.pod-where{font-size:.7rem;line-height:1.25;color:var(--muted);max-width:100%;text-align:center;margin-top:2px;opacity:.85;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lb-name small.lb-where{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

@@ -3,6 +3,8 @@
   name: 'English',
   flag: '🇬🇧',
   dict: {
+    "Bester Highscore (alle Kategorien)": "Best high score (all categories)",
+    "Dein höchster Rekord aus allen Kategorien und Stufen – mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Your highest record across all categories and levels – with 10 songs, “Classic” ladder, “Search” answers and “Standard” mode.",
     "70er": "70s",
     "80er": "80s",
     "90er": "90s",

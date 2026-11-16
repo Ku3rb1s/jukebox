@@ -55,11 +55,15 @@ const Board = (() => {
     },
     // Needle Drop: Rekord je Kategorie und Stufe (Kategorien wie ND_CATS in shared/js/sync.js) – viele Kategorien → Auswahlliste
     'needle-drop': {
-      opts: [['ndcat', { '70s': '70er', '80s': '80er', '90s': '90er', '00s': '2000er', '10s': '2010er', '20s': '2020er', pop: 'Pop', rap: 'Hip-Hop & Rap',
+      opts: [['ndcat', { best: 'Bester Highscore (alle Kategorien)', '70s': '70er', '80s': '80er', '90s': '90er', '00s': '2000er', '10s': '2010er', '20s': '2020er', pop: 'Pop', rap: 'Hip-Hop & Rap',
         rnb: 'R&B', rock: 'Rock', edm: 'EDM', latin: 'Latin', derap: 'Deutschrap', depop: 'Deutsch-Pop', schlager: 'Schlager & Party',
         ndw: 'Neue Deutsche Welle', now: 'Aktuelle Hits', billion: 'Billionärs Club', tiktok: 'TikTok-Hits', film: 'Film & Serien', disney: 'Disney', esc: 'Eurovision' }],
         ['diff', { easy: 'Leicht', normal: 'Normal', hard: 'Schwer' }]],
-      cat: c => `${c.ndcat}.${c.diff}`, def: { ndcat: '80s' },
+      cat: c => c.ndcat === 'best' ? 'best' : `${c.ndcat}.${c.diff}`, def: { ndcat: 'best' },
+      // „Bester Highscore“: Stufe spielt keine Rolle (Leiste ausblenden), dafür steht dabei, wo er geholt wurde
+      only: (k, c) => k !== 'diff' || c.ndcat !== 'best',
+      where: cat => { const [c, d] = cat.split('.'), o = Object.fromEntries(HIGH['needle-drop'].opts); return o.ndcat[c] ? tx(o.ndcat[c]) + ' · ' + tx(o.diff[d] || d) : ''; },
+      hintFor: c => c.ndcat === 'best' ? 'Dein höchster Rekord aus allen Kategorien und Stufen – mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.' : null,
       fmt: n => n.toLocaleString(LANG) + ' ' + tx('Pkt.'),
       hint: 'Gewertet wird dein Rekord mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.',
     },
@@ -200,26 +204,27 @@ const Board = (() => {
     const fmt = n => view === 'high' ? HIGH[g].fmt(n)
       : view === 'streak' ? (n === 1 ? tx('1 Tag') : tx('{n} Tage', { n }))
       : g === 'needle-drop' || g === 'hit-or-miss' ? n.toLocaleString(LANG) + ' ' + tx('Pkt.') : week ? tx('{n} Stufen', { n }) : n + '/15';
+    const whereOf = r => view === 'high' && r.cat && HIGH[g].where ? HIGH[g].where(r.cat) : '';
     const seg = (items, cur, attr, cls = '') => `<div class="seg lb-seg ${cls}">${Object.entries(items).map(([k, v]) => `<button class="${k === cur ? 'on' : ''}" ${attr}="${k}">${v}</button>`).join('')}</div>`;
 
     // Kopf: Wertung, Spiel, Optionen
     let opts = '';
     if (view === 'daily') opts = seg({ day: tx('Heute'), week: tx('Diese Woche') }, sel.range, 'data-lb-range');
     const pickList = (items, cur, attr) => `<select class="lb-pick" ${attr}>${Object.entries(items).map(([k, v]) => `<option value="${k}"${k === cur ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select>`;
-    if (view === 'high') { const c = highCombo(g); opts = HIGH[g].opts.map(([k, vals]) => { const items = Object.fromEntries(Object.entries(vals).map(([x, y]) => [x, tx(y)]));
+    if (view === 'high') { const c = highCombo(g); opts = HIGH[g].opts.filter(([k]) => !HIGH[g].only || HIGH[g].only(k, c)).map(([k, vals]) => { const items = Object.fromEntries(Object.entries(vals).map(([x, y]) => [x, tx(y)]));
       return Object.keys(items).length > 5 ? pickList(items, c[k], 'data-lb-' + k) : seg(items, c[k], 'data-lb-' + k); }).join(''); }
-    const hint = view === 'high' ? tx(HIGH[g].hint || 'Gewertet wird dein Rekord mit der Songauswahl „Alle“.')
+    const hint = view === 'high' ? tx(HIGH[g].hintFor?.(highCombo(g)) || HIGH[g].hint || 'Gewertet wird dein Rekord mit der Songauswahl „Alle“.')
       : view === 'streak' ? tx('Tage in Folge mit gespielter Tages-Challenge.') : '';
 
     // Liste: Treppchen für die ersten drei, danach Zeilen
     const top = data?.top || [];
     const pod = (r, place) => r ? `<div class="pod p${place}${r.me ? ' me' : ''}">
         <div class="pod-emo">${esc(r.emoji)}<span class="pod-medal">${MEDAL[r.rank - 1] || r.rank}</span></div>
-        <div class="pod-name" data-no-tx>${esc(r.name)}</div><div class="pod-score">${esc(fmt(r.score))}</div>
+        <div class="pod-name" data-no-tx>${esc(r.name)}</div><div class="pod-score">${esc(fmt(r.score))}</div>${whereOf(r) ? `<div class="pod-where">${esc(whereOf(r))}</div>` : ''}
         <div class="pod-step"><span>${r.rank}</span></div></div>` : `<div class="pod p${place} empty"><div class="pod-step"></div></div>`;
     const row = r => `<div class="lb-row${r.me ? ' me' : ''}"><span class="lb-rank">${num(r.rank)}</span>
       <span class="lb-emo">${esc(r.emoji)}</span>
-      <span class="lb-name"><span class="lb-n" data-no-tx>${esc(r.name)}</span>${week && r.days > 1 ? `<small>${tx('{n} Tage', { n: r.days })}</small>` : ''}</span>
+      <span class="lb-name"><span class="lb-n" data-no-tx>${esc(r.name)}</span>${week && r.days > 1 ? `<small>${tx('{n} Tage', { n: r.days })}</small>` : whereOf(r) ? `<small class="lb-where">${esc(whereOf(r))}</small>` : ''}</span>
       <b class="lb-score">${esc(fmt(r.score))}</b></div>`;
     const empty = view === 'high' ? tx('Noch keine Rekorde in dieser Wertung.') : view === 'streak' ? tx('Gerade hat niemand eine laufende Serie.')
       : week ? tx('Diese Woche hat noch niemand gespielt.') : tx('Heute hat noch niemand gespielt.');
@@ -293,7 +298,7 @@ const Board = (() => {
       sel.view = view; sel[view] = game;
       if (view === 'high' && game === 'needle-drop' && cat) {
         const [c, d] = cat.split('.'), o = Object.fromEntries(HIGH[game].opts);
-        if (o.ndcat[c]) sel.ndcat = c;
+        if (o.ndcat[c]) sel.ndcat = c;   // auch 'best'
         if (o.diff[d]) sel.diff[game] = d;
       }
       keep(); data = null;

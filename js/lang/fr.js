@@ -3,6 +3,8 @@
   name: 'Français',
   flag: '🇫🇷',
   dict: {
+    "Bester Highscore (alle Kategorien)": "Meilleur score (toutes catégories)",
+    "Dein höchster Rekord aus allen Kategorien und Stufen – mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Ton meilleur record, toutes catégories et niveaux confondus – avec 10 titres, échelle « Classique », réponse « Rechercher » et mode « Standard ».",
     "70er": "Années 70",
     "80er": "Années 80",
     "90er": "Années 90",
