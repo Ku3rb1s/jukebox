@@ -119,7 +119,7 @@ function renderToday() {
   box.classList.toggle('all', !open.length);
   box.innerHTML = open.length
     ? `<span class="today-h">📅 ${tx('Heute noch offen:')}</span>` + open.map(({ a, d }) =>
-      `<a class="today-go" href="${esc(a.url)}" style="--c:${esc(a.color || '#888')}"><img src="${esc(a.icon)}" alt="">${esc(a.name)}${d.streak ? ` <small>🔥 ${d.streak}</small>` : ''}</a>`).join('')
+      `<a class="today-go" href="${esc(a.url + (a.url.includes('?') ? '&' : '?') + 'daily=1')}" style="--c:${esc(a.color || '#888')}"><img src="${esc(a.icon)}" alt="">${esc(a.name)}${d.streak ? ` <small>🔥 ${d.streak}</small>` : ''}</a>`).join('')
     : `<span class="today-h">✓ ${tx('Alle Tages-Challenges erledigt – morgen gibt es neue.')}</span>`;
 }
 
