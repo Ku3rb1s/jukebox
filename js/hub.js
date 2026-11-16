@@ -339,7 +339,9 @@ addEventListener('jukebox-sync', () => { render(); if ($('#advSheet').open) Adve
 // Link aus dem QR-Code: …/jukebox/#code=K7QM-2XD9-HF4P → Code eintragen (und aus der Adresszeile entfernen)
 {
   const m = location.hash.match(/code=([A-Za-z0-9-]{12,16})/);
-  if (location.hash === '#bestenliste') { history.replaceState(null, '', location.pathname + location.search); setTimeout(() => board()?.open(), 300); }
+  // #bestenliste – oder mit Vorauswahl aus einem Spiel: #bestenliste=needle-drop/high/80s.normal
+  const lb = location.hash.match(/^#bestenliste(?:=(.+))?$/);
+  if (lb) { history.replaceState(null, '', location.pathname + location.search); setTimeout(() => board()?.open(decodeURIComponent(lb[1] || '')), 300); }
   if (location.hash === '#sync') { history.replaceState(null, '', location.pathname + location.search); setTimeout(() => $('#syncCta').click(), 300); }
   if (m) {
     history.replaceState(null, '', location.pathname + location.search);

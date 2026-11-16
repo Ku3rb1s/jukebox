@@ -47,6 +47,8 @@ const LB_HIGH = {
   'gold-record': { cat: /^dia\.(easy|normal|hard)$/, ok: v => v >= 1 && v <= 100000 },             // wie oft Diamant (15/15) je Schwierigkeit
   'hit-or-miss': { cat: /^(60s|sd)\.(easy|normal|hard)$/, ok: v => v >= 1 && v <= 8000 },                                 // Punkte (60 s) bzw. richtig in Folge (Sudden Death)
   'on-tour': { cat: /^(main|all)$/, ok: v => v >= 1 && v <= 3000 },   // Sterne: Haupt-Tour mit Bonus-Stationen bzw. alle Touren zusammen (mit Luft nach oben)
+  // Needle Drop: Punkte je Kategorie und Stufe (10 Songs × höchstens 600) – Kategorien wie ND_CATS in shared/js/sync.js
+  'needle-drop': { cat: /^(70s|80s|90s|00s|10s|20s|pop|rap|rnb|rock|edm|latin|derap|depop|schlager|ndw|now|billion|tiktok|film|disney|esc)\.(easy|normal|hard)$/, ok: v => v >= 1 && v <= 6000 },
 };
 // Serien der Tages-Challenge: aktuelle Serie in Tagen. Sie kann auch sinken (verpasster Tag), darum immer übernommen.
 // Gezeigt wird sie nur, wenn sie zuletzt gestern oder heute gemeldet wurde – sonst ist sie wahrscheinlich gerissen.

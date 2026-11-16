@@ -313,6 +313,8 @@ const Sync = (() => {
   const dayOf = tz => new Date().toLocaleDateString('sv-SE', tz ? { timeZone: tz } : {});
   const prevDay = d => new Date(Date.parse(d) - 864e5).toISOString().slice(0, 10);
   const streakOf = (has, d) => { if (!has(d)) d = prevDay(d); let n = 0; while (has(d)) { n++; d = prevDay(d); } return n; };
+  // Kategorien von Needle Drop mit Bestenliste (ohne „Eigene Playlist“) – gleiche Liste im Server (worker/sync.js) und in js/leaderboard.js
+  const ND_CATS = ['70s', '80s', '90s', '00s', '10s', '20s', 'pop', 'rap', 'rnb', 'rock', 'edm', 'latin', 'derap', 'depop', 'schlager', 'ndw', 'now', 'billion', 'tiktok', 'film', 'disney', 'esc'];
   const BOARD = {
     // Tages-Challenge: Ergebnisse von heute und gestern (am Tag selbst gespielt, nicht nachgespielt)
     daily: () => {
@@ -334,6 +336,8 @@ const Sync = (() => {
       const sum = m => Object.values(m || {}).reduce((a, n) => a + (+n || 0), 0), otMain = sum(ls.get('ot.stars', null));
       out.push({ game: 'on-tour', cat: 'main', score: otMain }, { game: 'on-tour', cat: 'all', score: otMain + sum(ls.get('ot.astars', null)) });
       for (const m of ['60s', 'sd']) for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'hit-or-miss', cat: `${m}.${d}`, score: ls.get(`hom.best.${m}.${d}`, 0) });   // Punkte (60 s) bzw. richtig in Folge
+      // Needle Drop: Rekord je Kategorie und Stufe – nur vergleichbare Regeln (10 Songs, Klassisch, Suchen, Standard)
+      for (const c of ND_CATS) for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'needle-drop', cat: `${c}.${d}`, score: ls.get(`mq.best2.${c}.${d}.10.classic.search`, 0) });
       return out.filter(x => Number.isInteger(x.score) && x.score > 0);
     },
     // Laufende Serie der Tages-Challenge
@@ -357,7 +361,7 @@ const Sync = (() => {
         const flag = ls.get('jb.lbOn', null);                                  // abgeglichen; fehlt er (ältere Geräte), zählt hub.lb
         if (!(flag === null ? m.on : flag === true)) return null;
         const post = (p, body) => fetch(LB + p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...body }), cache: 'no-store' })
-          .then(r => { if (!r.ok) throw new Error(r.status); });
+          .then(r => { if (!r.ok) throw new Error(r.status); return r.json().catch(() => ({})); });
         const jobs = [];
         const scores = BOARD.daily().filter(x => m.sent[x.game + '|' + x.day] !== x.score);
         if (scores.length) jobs.push(post('score', { scores }).then(() => {
@@ -365,7 +369,12 @@ const Sync = (() => {
           m.sent = Object.fromEntries(Object.entries(m.sent).sort((a, b) => b[0].slice(-10).localeCompare(a[0].slice(-10))).slice(0, 12));
         }));
         const highs = BOARD.high().filter(x => x.score > (m.hs[x.game + '|' + x.cat] || 0));
-        if (highs.length) jobs.push(post('high', { scores: highs }).then(() => { for (const h of highs) m.hs[h.game + '|' + h.cat] = h.score; }));
+        // In Paketen zu höchstens 40 (mehr nimmt der Server nicht an). Abgehakt wird nur, wenn der Server alle gespeichert hat –
+        // sonst (z. B. Server kennt eine neue Wertung noch nicht) beim nächsten Abgleich nochmal
+        for (let i = 0; i < highs.length; i += 40) {
+          const part = highs.slice(i, i + 40);
+          jobs.push(post('high', { scores: part }).then(j => { if (j.saved == null || j.saved >= part.length) for (const h of part) m.hs[h.game + '|' + h.cat] = h.score; }));
+        }
         const today = dayOf('Europe/Berlin');
         const streaks = BOARD.streak().filter(x => !m.st[x.game] || m.st[x.game][0] !== x.score || m.st[x.game][1] !== today);
         if (streaks.length) jobs.push(post('streak', { scores: streaks }).then(() => { for (const s of streaks) m.st[s.game] = [s.score, today]; }));

@@ -5,5 +5,8 @@ module.exports = {
   tables: ['TAGS'],                                              // Schlagwörter auf den Spiel-Kacheln
   // Bestenliste (js/leaderboard.js): Wertungen und Stufen laufen über tx(Variable)
   add: ['Tages-Challenge', 'Highscores', 'Serien', 'Leicht', 'Normal', 'Schwer', 'Profi', 'Mit Titel', 'Nur hören',
-    "Gezählt wird, wie oft du Diamant (15/15) geholt hast – mit jeder Songauswahl."],
+    "Gezählt wird, wie oft du Diamant (15/15) geholt hast – mit jeder Songauswahl.",
+    // Needle Drop: Kategorien und Hinweis zur Highscore-Wertung
+    "70er", "80er", "90er", "2000er", "2010er", "2020er", "Hip-Hop & Rap", "Deutschrap", "Deutsch-Pop", "Schlager & Party", "Aktuelle Hits", "Billionärs Club", "TikTok-Hits", "Film & Serien", "Eurovision", "Latin",
+    "Gewertet wird dein Rekord mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“."],
 };

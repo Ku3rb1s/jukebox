@@ -53,6 +53,16 @@ const Board = (() => {
       fmt: n => '⭐ ' + n.toLocaleString(LANG),
       hint: 'Gezählt werden deine Sterne – in der Haupt-Tour mit Bonus-Stationen oder in allen Touren zusammen.',
     },
+    // Needle Drop: Rekord je Kategorie und Stufe (Kategorien wie ND_CATS in shared/js/sync.js) – viele Kategorien → Auswahlliste
+    'needle-drop': {
+      opts: [['ndcat', { '70s': '70er', '80s': '80er', '90s': '90er', '00s': '2000er', '10s': '2010er', '20s': '2020er', pop: 'Pop', rap: 'Hip-Hop & Rap',
+        rnb: 'R&B', rock: 'Rock', edm: 'EDM', latin: 'Latin', derap: 'Deutschrap', depop: 'Deutsch-Pop', schlager: 'Schlager & Party',
+        ndw: 'Neue Deutsche Welle', now: 'Aktuelle Hits', billion: 'Billionärs Club', tiktok: 'TikTok-Hits', film: 'Film & Serien', disney: 'Disney', esc: 'Eurovision' }],
+        ['diff', { easy: 'Leicht', normal: 'Normal', hard: 'Schwer' }]],
+      cat: c => `${c.ndcat}.${c.diff}`, def: { ndcat: '80s' },
+      fmt: n => n.toLocaleString(LANG) + ' ' + tx('Pkt.'),
+      hint: 'Gewertet wird dein Rekord mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.',
+    },
     'hit-or-miss': {
       opts: [['diff', { easy: 'Leicht', normal: 'Normal', hard: 'Schwer' }], ['hmode', { '60s': '60 Sekunden', sd: 'Sudden Death' }]],
       key: c => `hom.best.${c.hmode}.${c.diff}`, cat: c => `${c.hmode}.${c.diff}`,
@@ -63,7 +73,7 @@ const Board = (() => {
 
   const VIEWS = {
     daily: { name: 'Tages-Challenge', icon: '📅', games: ['needle-drop', 'gold-record', 'hit-or-miss'] },
-    high: { name: 'Highscores', icon: '🏆', games: ['older-or-newer', 'gold-record', 'hit-or-miss', 'on-tour'] },
+    high: { name: 'Highscores', icon: '🏆', games: ['needle-drop', 'older-or-newer', 'gold-record', 'hit-or-miss', 'on-tour'] },
     streak: { name: 'Serien', icon: '🔥', games: ['needle-drop', 'gold-record', 'hit-or-miss'] },
   };
   const MEDAL = ['🥇', '🥈', '🥉'];
@@ -78,7 +88,7 @@ const Board = (() => {
     const c = {};
     for (const [k, vals] of HIGH[g].opts) {
       const cur = k === 'diff' ? sel.diff[g] : sel[k];
-      c[k] = vals[cur] ? cur : (vals.normal ? 'normal' : Object.keys(vals)[0]);
+      c[k] = vals[cur] ? cur : (vals.normal ? 'normal' : HIGH[g].def?.[k] || Object.keys(vals)[0]);
     }
     return c;
   };
@@ -195,7 +205,9 @@ const Board = (() => {
     // Kopf: Wertung, Spiel, Optionen
     let opts = '';
     if (view === 'daily') opts = seg({ day: tx('Heute'), week: tx('Diese Woche') }, sel.range, 'data-lb-range');
-    if (view === 'high') { const c = highCombo(g); opts = HIGH[g].opts.map(([k, vals]) => seg(Object.fromEntries(Object.entries(vals).map(([x, y]) => [x, tx(y)])), c[k], 'data-lb-' + k)).join(''); }
+    const pickList = (items, cur, attr) => `<select class="lb-pick" ${attr}>${Object.entries(items).map(([k, v]) => `<option value="${k}"${k === cur ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select>`;
+    if (view === 'high') { const c = highCombo(g); opts = HIGH[g].opts.map(([k, vals]) => { const items = Object.fromEntries(Object.entries(vals).map(([x, y]) => [x, tx(y)]));
+      return Object.keys(items).length > 5 ? pickList(items, c[k], 'data-lb-' + k) : seg(items, c[k], 'data-lb-' + k); }).join(''); }
     const hint = view === 'high' ? tx(HIGH[g].hint || 'Gewertet wird dein Rekord mit der Songauswahl „Alle“.')
       : view === 'streak' ? tx('Tage in Folge mit gespielter Tages-Challenge.') : '';
 
@@ -258,7 +270,10 @@ const Board = (() => {
     box.querySelectorAll('[data-lb-diff]').forEach(b => b.onclick = pick(() => { sel.diff[g] = b.dataset.lbDiff; }));
     // Weitere Highscore-Optionen (mode, hmode, otcat …): Wert landet in sel[key]
     if (view === 'high') for (const [k] of HIGH[g].opts) if (k !== 'diff')
-      box.querySelectorAll('[data-lb-' + k + ']').forEach(b => b.onclick = pick(() => { sel[k] = b.getAttribute('data-lb-' + k); }));
+      box.querySelectorAll('[data-lb-' + k + ']').forEach(b => {
+        if (b.tagName === 'SELECT') b.onchange = pick(() => { sel[k] = b.value; });
+        else b.onclick = pick(() => { sel[k] = b.getAttribute('data-lb-' + k); });
+      });
     if ($('#lbJoin')) {
       // Ohne Namen geht es nicht: Knopf erst aktiv, wenn mindestens 2 Zeichen eingetragen sind
       const ready = () => { $('#lbJoin').disabled = joining || $('#lbName').value.trim().length < 2; };
@@ -271,7 +286,20 @@ const Board = (() => {
   }
 
   /* ---------- Fenster ---------- */
-  function open() { if (!sheet.open) sheet.showModal(); draw(); load(); }
+  /** preset (aus der Adresse, z. B. von Needle Drop): „spiel/wertung/kategorie.stufe“ */
+  function open(preset) {
+    const [game, view, cat] = String(preset || '').split('/');
+    if (VIEWS[view]?.games.includes(game)) {
+      sel.view = view; sel[view] = game;
+      if (view === 'high' && game === 'needle-drop' && cat) {
+        const [c, d] = cat.split('.'), o = Object.fromEntries(HIGH[game].opts);
+        if (o.ndcat[c]) sel.ndcat = c;
+        if (o.diff[d]) sel.diff[game] = d;
+      }
+      keep(); data = null;
+    }
+    if (!sheet.open) sheet.showModal(); draw(); load(true);
+  }
   sheet.addEventListener('click', e => { if (e.target === sheet || e.target.closest('[data-close]')) sheet.close(); });
 
   /** Von außen: Seite neu gezeichnet, Code verbunden/getrennt, zurück aus einem Spiel.

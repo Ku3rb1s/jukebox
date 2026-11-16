@@ -70,6 +70,11 @@ header{max-width:860px}
 .lb-top{padding:10px 16px 4px}
 .lb-seg{background:rgba(255,255,255,.07);margin-top:10px}
 .lb-seg button{flex-direction:row;font-size:.9rem;padding:.5em .3em;gap:.35em}
+/* Auswahlliste bei vielen Werten (Needle Drop: Kategorie) */
+.lb-pick{display:block;width:100%;margin-top:10px;padding:.62em 2.4em .62em .9em;border-radius:14px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.07) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right .9em center/16px;
+  color:inherit;font:inherit;font-size:16px;font-weight:700;-webkit-appearance:none;appearance:none}
+.lb-pick option{color:#000}
 .lb-views{margin-top:4px}
 .lb-views button{font-weight:800}
 .lb-vi{font-size:1rem}
