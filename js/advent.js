@@ -97,7 +97,7 @@ const AdventCal = (() => {
       return msg(k > 0 ? (k === 1 ? tx('Noch 1 Tag Geduld') : tx('Noch {n} Tage Geduld', { n: k })) : tx('Der Adventskalender ist vorbei.'));
     }
     const go = () => { location.href = withDate(OT + '?advent=' + n); };
-    music.stop();
+    music.stop(.6);   // passend zum Aufklappen (650 ms)
     if (reduced() || btn.classList.contains('played')) return go();
     btn.classList.add('opening');
     setTimeout(go, 650);
@@ -105,6 +105,7 @@ const AdventCal = (() => {
   /* ---------- Musik: ruhige Weihnachtslieder am Klavier (echte Aufnahmen, 30-s-Ausschnitte von Deezer wie in den Spielen) ----------
      Auswahl aus der Deezer-Playlist „Christmas Calm Piano“ (Deezer-Redaktion, 6777052164): nur bekannte Weihnachtslieder.
      Zufällige Reihenfolge (bei jedem Laden der Seite neu gemischt); jeder Ausschnitt wird weich ein- und ausgeblendet. Leise (VOL).
+     Kurz zu und wieder auf (bis RESUME Sekunden): dasselbe Stück läuft an derselben Stelle weiter.
      Läuft nur, solange der Kalender offen ist; Knopf oben links schaltet sie aus (gemerkt in hub.adventMusic, nur dieses Gerät).
      Ohne Tipp (zurück aus On Tour über #advent) darf der Browser noch keinen Ton spielen – dann startet sie beim ersten Tipp.
      Fehlt ein Stück bei Deezer, kommt einfach das nächste. */
@@ -136,14 +137,19 @@ const AdventCal = (() => {
       document.head.appendChild(s);
     });
     function nowLine(s) { const b = $('#advNow'); if (!b) return; b.textContent = s ? `♪ ${s[1]} · ${s[2]}` : ''; b.classList.toggle('hidden', !s); }
-    /* Zwei Spuren im Wechsel: Gegen Ende eines Ausschnitts setzt das nächste Stück auf der anderen Spur ein, beide werden
-       XF Sekunden lang überblendet – gleich laut (Sinus/Kosinus, kein Loch in der Mitte) und wie im Radio: Das alte Stück
-       wird beim Leiserwerden dumpfer (Tiefpass schließt), das neue öffnet sich von dumpf zu klar. Das nächste Stück wird
-       vorab geladen (prep), damit die Überblendung ohne Wartezeit beginnt. Gesamtlautstärke über master (Regler).
-       Ohne Web Audio: dieselben Lautstärke-Kurven über audio.volume (ohne Klangfilter). */
-    const XF = 6, FIRST = 4, OUT = 1.2;   // Überblenden / erstes Einblenden / Ausblenden beim Schließen (Sekunden)
+    /* Zwei Spuren im Wechsel. Übergang wie bei einer ruhigen Klavier-Playlist: Gegen Ende eines Ausschnitts klingt das alte
+       Stück FADE Sekunden lang aus und wird dabei dumpfer (Tiefpass schließt); erst wenn es schon leise ist, setzt das neue
+       ein und öffnet sich in IN Sekunden von dumpf zu klar. Die Stücke überlappen nur kurz (LAP) – zwei Klavierstücke in
+       verschiedenen Tonarten lange übereinander klingen schief. Das alte ist fertig ausgeblendet, kurz bevor der Ausschnitt
+       endet (Deezer schneidet hart ab). Das nächste Stück wird vorab geladen (prep), damit der Übergang pünktlich kommt.
+       Ein sanfter Kompressor gleicht unterschiedlich laut aufgenommene Stücke an. Gesamtlautstärke über master (Regler).
+       Ohne Web Audio: dieselben Lautstärke-Kurven über audio.volume (ohne Klangfilter und Kompressor). */
+    const FADE = 5, IN = 3.2, LAP = 1.8, TAIL = .4;   // Ausklingen / Einblenden / Überlappung / Rest bis zum Schnitt (s)
+    const FIRST = 4, OUT = 1.2;                         // erstes Einblenden / Ausblenden beim Schließen (s)
+    const RESUME = 90;                                  // so lange (s) nach dem Schließen geht das Stück beim Öffnen weiter
     const OPEN = 18000, DULL = 650;      // Tiefpass: offen / dumpf (Hz)
-    let ctx = null, master = null, P = [], cur = 0;
+    let ctx = null, master = null, P = [], cur = 0, closedAt = 0;
+    const wait = ms => new Promise(r => setTimeout(r, ms));
     function mk() {
       const el = new Audio(); el.crossOrigin = 'anonymous'; el.preload = 'auto';
       const p = { el, g: null, f: null, v: 0, iv: 0, out: false, ready: null };
@@ -153,7 +159,7 @@ const AdventCal = (() => {
         ctx.createMediaElementSource(el).connect(p.f).connect(p.g).connect(master);
       }
       const done = () => { if (playing && p === P[cur] && !p.out) { p.out = true; next(); } };
-      el.addEventListener('timeupdate', () => { if (el.duration && el.duration - el.currentTime < XF + .1) done(); });
+      el.addEventListener('timeupdate', () => { if (el.duration && el.duration - el.currentTime < FADE + TAIL + .25) done(); });
       el.addEventListener('ended', done);
       el.addEventListener('error', () => { if (el.src && p === P[cur]) done(); });
       return p;
@@ -161,7 +167,14 @@ const AdventCal = (() => {
     function setup() {
       if (P.length) return;
       // Web Audio: auf dem iPhone lässt sich audio.volume nicht ändern (die Vorschauen erlauben CORS)
-      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination); } catch { ctx = master = null; }
+      try {
+        ctx = new (window.AudioContext || window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = 0;
+        // sanfter Kompressor + etwas Ausgleich: laute Aufnahmen werden gezähmt, leise bleiben, wie sie sind
+        const comp = ctx.createDynamicsCompressor(), makeup = ctx.createGain();
+        comp.threshold.value = -26; comp.knee.value = 16; comp.ratio.value = 3; comp.attack.value = .08; comp.release.value = .8;
+        makeup.gain.value = 1.3;
+        master.connect(comp).connect(makeup).connect(ctx.destination);
+      } catch { ctx = master = null; }
       P = [mk(), mk()];
     }
     // Spur auf „to“ (0…1) blenden: hoch mit Sinus-, runter mit Kosinus-Kurve; dazu der Klang (hoch: öffnet, runter: wird dumpf)
@@ -202,16 +215,20 @@ const AdventCal = (() => {
     async function next() {
       const my = ++run, old = P[cur], nx = P[1 - cur], first = !old.el.src || old.el.paused;
       k = (k + 1) % order.length;
-      const s = order[k];
+      const s = order[k], t0 = performance.now();
+      // altes Stück sofort ausklingen lassen – auch wenn das neue noch lädt, endet es nie mit hartem Schnitt
+      if (!first) ramp(old, 0, FADE);
       try {
         if (nx.ready !== s[0]) { const t = await track(s[0]); if (my !== run || !playing) return; nx.el.src = t.preview; }
         nx.ready = null; nx.out = false; nx.el.currentTime = 0;
-        if (nx.g) { nx.g.gain.cancelScheduledValues(0); nx.g.gain.value = 0; nx.f.frequency.cancelScheduledValues(0); nx.f.frequency.value = first ? 2500 : 1200; } else nx.el.volume = 0;
-        nx.v = 0; cur = 1 - cur; nowLine(s);
+        if (nx.g) { nx.g.gain.cancelScheduledValues(0); nx.g.gain.value = 0; nx.f.frequency.cancelScheduledValues(0); nx.f.frequency.value = first ? 2500 : 900; } else nx.el.volume = 0;
+        nx.v = 0;
+        // das neue erst, wenn das alte schon leise ist (nur LAP Sekunden gemeinsam)
+        if (!first) { await wait(Math.max(0, (FADE - LAP) * 1000 - (performance.now() - t0))); if (my !== run || !playing) return; }
+        cur = 1 - cur; nowLine(s);
         await nx.el.play();
-        ramp(nx, 1, first ? FIRST : XF);
-        if (!first) ramp(old, 0, XF);
-        setTimeout(() => { if (my !== run || !playing) return; if (!first) old.el.pause(); prep(); }, (first ? 1 : XF) * 1000 + 300);
+        ramp(nx, 1, first ? FIRST : IN);
+        setTimeout(() => { if (my !== run || !playing) return; if (!first) old.el.pause(); prep(); }, (first ? 1 : LAP + .4) * 1000);
       } catch (e) {
         if (my !== run || !playing) return;
         if (e?.name === 'NotAllowedError') return;   // noch kein Tipp – unlock() startet beim ersten Tipp
@@ -223,14 +240,33 @@ const AdventCal = (() => {
       try { setup(); } catch { return; }
       ctx?.resume?.().catch(() => {});
       if (!order.length) order = LIST.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1]);   // zufällige Reihenfolge
+      // kurz zu gewesen (Türchen-Hinweis, App kurz im Hintergrund): dasselbe Stück an derselben Stelle weiter
+      const p = P[cur], left = p.el.duration - p.el.currentTime;
+      if (p.el.src && closedAt && Date.now() - closedAt < RESUME * 1000 && left > FADE + TAIL + 4) {
+        playing = true; run++; closedAt = 0; p.out = false; nowLine(order[k]);
+        if (master) { master.gain.cancelScheduledValues(0); master.gain.value = 0; }
+        p.el.play().then(() => { if (!master) ramp(p, 1, 2); setMaster(2.2); prep(); }).catch(() => {});
+        if (!master) { p.v = 0; p.el.volume = 0; }
+        return;
+      }
       playing = true; setMaster(1);
       next();   // beim Öffnen jeweils das nächste Stück der gemischten Liste
     }
-    function stop() {
+    // sec: Ausblendzeit (beim Türchen kürzer, passend zur Öffnen-Animation)
+    function stop(sec = OUT) {
       if (!playing) return;
       playing = false; run++; nowLine(null);
-      if (master) setMaster(OUT); else P.forEach(p => ramp(p, 0, OUT));
-      setTimeout(() => { if (playing) return; P.forEach(p => { p.el.pause(); p.out = false; p.ready = null; }); ctx?.suspend?.().catch(() => {}); }, OUT * 1000 + 150);
+      if (master) setMaster(sec); else P.forEach(p => ramp(p, 0, sec));
+      setTimeout(() => {
+        if (playing) return;
+        const p = P[cur];
+        P.forEach(q => { q.el.pause(); q.ready = null; if (q !== p) { q.out = false; q.el.removeAttribute('src'); } });
+        // das gerade hörbare Stück bleibt geladen (fürs Weiterhören); stand es schon im Übergang, beim nächsten Mal ein neues
+        closedAt = p.out ? 0 : Date.now();
+        if (p.out) { p.out = false; p.el.removeAttribute('src'); }
+        P.forEach(q => { if (q.g) { q.g.gain.cancelScheduledValues(0); q.g.gain.value = q === p && closedAt ? 1 : 0; q.f.frequency.cancelScheduledValues(0); q.f.frequency.value = OPEN; } q.v = q === p && closedAt ? 1 : 0; });
+        ctx?.suspend?.().catch(() => {});
+      }, sec * 1000 + 150);
     }
     // erster Tipp im Kalender: Ton freigeben, falls der Browser vorher nicht durfte
     function unlock() {
