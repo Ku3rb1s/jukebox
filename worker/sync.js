@@ -26,7 +26,7 @@
 // Begrenzung neuer Codes: gezählt wird pro Internetanschluss, aber ohne die IP-Adresse zu speichern – nur eine
 // Prüfsumme aus IP + geheimem Schlüssel (SALT) + Datum. Sie wechselt täglich und wird am nächsten Tag gelöscht.
 
-const ALLOWED = ['https://ku3rb1s.github.io', 'http://127.0.0.1:8890', 'http://127.0.0.1:8891', 'http://127.0.0.1:8892', 'http://127.0.0.1:8893', 'http://127.0.0.1:8894',
+const ALLOWED = ['https://ku3rb1s.github.io', 'https://jukeboxquiz.de', 'https://www.jukeboxquiz.de', 'http://127.0.0.1:8890', 'http://127.0.0.1:8891', 'http://127.0.0.1:8892', 'http://127.0.0.1:8893', 'http://127.0.0.1:8894',
   'http://localhost:8890', 'http://localhost:8891', 'http://localhost:8892', 'http://localhost:8893', 'http://localhost:8894'];
 const MAX = 300_000;                         // höchstens ~300 KB pro Code (normal sind 10–50 KB)
 const KEEP = 180 * 864e5;                    // 6 Monate ohne Benutzung → löschen

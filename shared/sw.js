@@ -33,7 +33,10 @@ async function page(r, u) {
     // die alte Seite (max-age=600). Unverändert → kurze 304-Antwort. (Navigations-Anfragen lassen sich nicht mit Optionen
     // kopieren, darum über die Adresse.)
     const res = await fetch(u.href, { cache: 'no-cache', credentials: 'same-origin' });
-    if (res.redirected) return Response.redirect(res.url, 302);               // z. B. /jukebox → /jukebox/ (Seitenaufrufe dürfen keine umgeleitete Antwort bekommen)
+    if (res.redirected) {
+      if (new URL(res.url).origin !== location.origin) return umzugSeite(res.url);   // Spiel ist auf eine andere Domain umgezogen
+      return Response.redirect(res.url, 302);               // z. B. /jukebox → /jukebox/ (Seitenaufrufe dürfen keine umgeleitete Antwort bekommen)
+    }
     if (keep(res)) { const c = res.clone(); caches.open(CACHE).then(ca => ca.put(key, c)).catch(() => {}); }
     return res;
   } catch (err) {
@@ -41,6 +44,41 @@ async function page(r, u) {
     if (hit) return hit;
     throw err;
   }
+}
+
+// Umzug auf eine neue Domain (ku3rb1s.github.io → jukeboxquiz.de): GitHub leitet die alte Adresse um. Statt einfach
+// weiterzuleiten, liefert der Service Worker eine kleine Seite auf der ALTEN Adresse aus. Die liest den alten Browser-Speicher
+// und gibt ihn einmalig im #umzug=… an die neue Adresse mit (dort übernimmt ihn js/umzug.js). Danach nur noch weiterleiten.
+// Größenbremse: höchstens ca. 1,5 MB Adresse (große Einträge zuerst weglassen) – so lang darf eine Adresse in allen Browsern sein.
+function umzugSeite(target) {
+  const js = `(async () => {
+  const T = ${JSON.stringify(target)};
+  let go = T + location.hash;
+  try {
+    if (!localStorage.getItem('jb.umzug') && localStorage.length) {
+      const all = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); all.push([k, localStorage.getItem(k)]); }
+      all.sort((a, b) => a[1].length - b[1].length);
+      const d = {}; let n = 0;
+      for (const [k, v] of all) { if (n + v.length > 3e6) break; d[k] = v; n += v.length + k.length; }
+      let b = new TextEncoder().encode(JSON.stringify(d)), z = 'u';
+      if (self.CompressionStream && self.DecompressionStream) {
+        b = new Uint8Array(await new Response(new Blob([b]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()); z = 'z';
+      }
+      let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+      const enc = btoa(s).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
+      if (enc.length < 1.5e6) {
+        go = T + '#umzug=' + z + enc + (location.hash ? '&h=' + encodeURIComponent(location.hash.slice(1)) : '');
+        localStorage.setItem('jb.umzug', String(Date.now()));
+      }
+    }
+  } catch {}
+  location.replace(go);
+})();`;
+  const html = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Jukebox</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0b12;color:#fff;font:600 1.1rem system-ui,sans-serif}a{color:#1ed760}</style>
+<body><a href="${target.replace(/"/g, '&quot;')}">🎵 jukeboxquiz.de</a><script>${js}</script></body>`;
+  return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
 }
 
 // Dateien mit Version: aus dem Speicher und im Hintergrund auffrischen; ältere Versionen derselben Datei fliegen raus
