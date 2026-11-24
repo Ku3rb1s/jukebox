@@ -51,10 +51,17 @@ const DAILY = {
     const dl = store.get('gr.dailyLog') || {}, t = dayOf();
     return { done: !!store.get('gr.daily.' + t), streak: streakOf(d => d in dl, t) };
   },
+  // Hit or Miss: Tageswechsel nach deutscher Zeit, Serie aus dailyLog. Schon begonnen (Eintrag ohne „done“) zählt als gespielt –
+  // nachholen am selben Tag geht dort nicht mehr (nur noch außer Wertung)
+  'hit-or-miss': () => {
+    const hl = store.get('hom.dailyLog') || {}, t = dayOf('Europe/Berlin');
+    return { done: !!store.get('hom.daily.' + t), streak: streakOf(d => d in hl, t) };
+  },
 };
 function dailyOf(id) { try { return DAILY[id]?.() || null; } catch { return null; } }
 const STATUS = {
   'needle-drop': () => { const d = dailyOf('needle-drop'); return d ? daily(d.done, d.streak) : ''; },
+  'hit-or-miss': () => { const d = dailyOf('hit-or-miss'); return d ? daily(d.done, d.streak) : ''; },
   'gold-record': () => {
     // Wie oft Diamant (15/15) – Startwert aus früheren Runden + alle Geräte (wie in Gold Record und der Bestenliste)
     const d = dailyOf('gold-record'), start = store.get('gr.diaStart') || {}, all = Sync.view('gr.diamonds', store.get('gr.diamonds')) || {};
@@ -334,7 +341,7 @@ Sync.onStatus(() => { if (!$('#syncInput') || document.activeElement !== $('#syn
 // Zurück aus einem Spiel (auch aus dem Zwischenspeicher des Browsers) oder anderer Tab: Stand neu zeigen
 addEventListener('pageshow', e => { if (e.persisted) render(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
-addEventListener('storage', e => { if (e.key && /^(mq|gr|oon|ot)\./.test(e.key)) render(); });
+addEventListener('storage', e => { if (e.key && /^(mq|gr|oon|ot|hom|pr)\./.test(e.key)) render(); });
 addEventListener('jukebox-sync', () => { render(); if ($('#advSheet').open) AdventCal.render(); renderProfile(); theme = store.get('hub.theme') || store.get('mq.theme') || theme; applyTheme(); });
 // Link aus dem QR-Code: …/jukebox/#code=K7QM-2XD9-HF4P → Code eintragen (und aus der Adresszeile entfernen)
 {
