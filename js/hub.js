@@ -32,7 +32,7 @@ function setTheme(t) {
   applyTheme();
 }
 
-/* ---------- Dein Stand je Spiel (aus dem Speicher der Spiele, gleiche Adresse ku3rb1s.github.io) ---------- */
+/* ---------- Dein Stand je Spiel (aus dem Speicher der Spiele, gleiche Adresse jukeboxquiz.de) ---------- */
 const dayOf = tz => new Date().toLocaleDateString('sv-SE', tz ? { timeZone: tz } : {});   // „2026-11-07“
 const prevDay = d => new Date(Date.parse(d) - 864e5).toISOString().slice(0, 10);
 function streakOf(has, d) { if (!has(d)) d = prevDay(d); let n = 0; while (has(d)) { n++; d = prevDay(d); } return n; }
@@ -158,7 +158,7 @@ $('#themeRow').onclick = e => { const b = e.target.closest('[data-theme-pick]');
 self.liveLang = () => { render(); applyTheme(); renderProfile(); renderSync(); if ($('#advSheet').open) AdventCal.render(); };
 
 /* ---------- Auf allen Geräten: persönlicher Code (js/sync.js) ---------- */
-const SYNC_LINK = c => 'https://ku3rb1s.github.io/jukebox/#code=' + c;
+const SYNC_LINK = c => 'https://jukeboxquiz.de/jukebox/#code=' + c;
 let syncPending = '', syncMsg = '';
 const ICON = n => `<svg class="ic"><use href="#i-${n}"/></svg>`;
 function syncAgo(t) {
@@ -308,7 +308,7 @@ async function saveCodeImage(code) {
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) x.fillRect(qx + (c + 2) * cell, qy + (r + 2) * cell, cell, cell);
   x.fillStyle = 'rgba(255,255,255,.85)'; fit(tx('Auf einem neuen Gerät scannen oder in der Jukebox eingeben:'), '600 #px Outfit, system-ui, sans-serif', 36, qy + qs + 100);
   x.fillStyle = '#fff'; x.font = '800 40px Outfit, system-ui, sans-serif';
-  x.fillText('ku3rb1s.github.io/jukebox', W / 2, qy + qs + 152);
+  x.fillText('jukeboxquiz.de/jukebox', W / 2, qy + qs + 152);
   x.fillStyle = 'rgba(255,255,255,.55)'; fit(tx('Halte den Code geheim – wer ihn hat, kann deine Spielstände lesen und ändern.'), '500 #px Outfit, system-ui, sans-serif', 30, H - 70);
   const blob = await new Promise(res => cv.toBlob(res, 'image/png'));
   const file = new File([blob], 'jukebox-code.png', { type: 'image/png' });

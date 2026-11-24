@@ -1,4 +1,4 @@
-/* Gemeinsames Spielerprofil für alle Spiele auf ku3rb1s.github.io (Jukebox, Needle Drop, Older or Newer, Gold Record).
+/* Gemeinsames Spielerprofil für alle Spiele auf jukeboxquiz.de (Jukebox, Needle Drop, Older or Newer, Gold Record).
    Nur lokal auf diesem Gerät: { name, emoji } unter „jb.profile“. Fehlt der Name, wird der zuletzt im Bingo benutzte genommen.
    Avatar: Profile.pick(fertig) öffnet ein Auswahl-Fenster mit allen Emojis (Gruppen Tiere, Winter & Weihnachten, Musik, Essen & Trinken, Sonstiges).
    Exklusive Avatare (SPECIAL) gibt es nur über den Adventskalender (On Tour, Tür 6, 12, 18, 24): freigeschaltet in „jb.avatars“

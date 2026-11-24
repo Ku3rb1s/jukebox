@@ -2,7 +2,7 @@
 // Alle Texte stehen im Code auf Deutsch. tx('Text') liefert die Übersetzung der gewählten Sprache (fehlt sie, bleibt es deutsch).
 // Platzhalter: tx('Song {a} / {b}', { a: 1, b: 10 }). Feste Texte in index.html übersetzt translatePage() beim Laden.
 //
-// Alle Spiele liegen unter ku3rb1s.github.io und teilen sich den Browser-Speicher. Die Sprache gilt darum für alle:
+// Alle Spiele liegen unter jukeboxquiz.de und teilen sich den Browser-Speicher. Die Sprache gilt darum für alle:
 // gespeichert wird sie unter mq.lang (Needle Drop und die neueren Spiele), hub.lang (Jukebox) und mb_lang (Musik-Bingo).
 //
 // Neue Sprache hinzufügen:

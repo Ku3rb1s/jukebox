@@ -262,7 +262,7 @@ window.countUp = (el, to, fmt = String) => {
 // Menü: zurück zur Jukebox oder direkt in ein anderes Spiel. Ein normaler Tipp aufs Logo bleibt wie bisher (Startseite).
 // Einmalig erscheint ein Hinweis darauf. Gilt in allen Spielen; in der Jukebox selbst nicht (dort ist man ja schon).
 (() => {
-  const HOME = 'https://ku3rb1s.github.io/';
+  const HOME = 'https://jukeboxquiz.de/';
   const GAMES = [
     ['Needle Drop', 'needle-drop/', 'icon-192.png?v=5'],
     ['Older or Newer', 'older-or-newer/', 'icon-192.png?v=4'],

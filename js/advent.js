@@ -1,6 +1,6 @@
 /* Jukebox – Adventskalender: Karte auf der Startseite (1.11.–6.1., vor dem 1.12. mit Countdown) und Kalender mit 24 Türchen.
    Gespielt wird in On Tour (on-tour/?advent=7, Code in On-Tour/js/advent.js); zurück kommt man hierher (#advent).
-   Stand aus dem Speicher von On Tour (gleiche Adresse ku3rb1s.github.io, abgeglichen über js/sync.js):
+   Stand aus dem Speicher von On Tour (gleiche Adresse jukeboxquiz.de, abgeglichen über js/sync.js):
      ot.advent { "<Jahr>.<Tür>": Sterne } (0 = geöffnet ohne Stern) · ot.adventDay { "<Jahr>.<Tür>": 1 } (am Tag selbst – Serie)
    Symbol, Thema und Cover je Türchen: on-tour/data/advent-doors.json (On-Tour/scripts/build-advent.js).
    Test-Datum nur lokal: ?date=2026-12-07. Konzept: Konzepte/Adventskalender.md */
