@@ -62,6 +62,7 @@
     "Wähle ein Spiel": "Velg et spill",
     "Musik raten, Bingo spielen – mit Freunden oder allein.": "Gjett musikk, spill bingo – med venner eller alene.",
     "Alle Spiele laufen direkt im Browser, ohne App und ohne Anmeldung. Nur wer Musik-Bingo leitet, braucht Spotify.": "Alle spillene kjører rett i nettleseren – uten app og uten innlogging. Bare den som leder Musik-Bingo, trenger Spotify.",
+    "Alle Spiele in einer App, ohne Anmeldung. Nur wer Musik-Bingo leitet, braucht Spotify.": "Alle spillene i én app – uten innlogging. Bare den som leder Musik-Bingo, trenger Spotify.",
     "Sprache und Design gelten für alle Spiele auf diesem Gerät.": "Språk og utseende gjelder for alle spillene på denne enheten.",
     "Fertig": "Ferdig",
     "Sprache": "Språk",

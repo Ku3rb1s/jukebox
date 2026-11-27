@@ -65,6 +65,7 @@ input:focus,select:focus{outline:2px solid var(--accent2);outline-offset:1px}
 code{background:rgba(0,0,0,.35);padding:.1em .45em;border-radius:6px;font-size:.88em;word-break:break-all;-webkit-user-select:all;user-select:all}
 a{color:var(--accent)}
 .hidden{display:none!important}
+html:not(.jb-app) .app-only,html.jb-app .web-only{display:none!important}
 .invisible{visibility:hidden}
 .muted{color:var(--muted)}
 .small{font-size:.85rem}

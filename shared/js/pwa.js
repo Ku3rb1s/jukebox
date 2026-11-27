@@ -1,5 +1,10 @@
 // App-Modus: Zwischenspeicher (sw.js) anmelden und „Als App installieren“ anbieten (Knopf #btnInstall in den Einstellungen).
 // Gleiche Datei in Musik-Bingo, Needle Drop und Jukebox.
+// In der iOS-App (Jukebox-App, Capacitor) hängt die App „JukeboxApp“ an den User-Agent. Dann ist <html> mit .jb-app markiert:
+// „Als App installieren“ fällt weg, Texte nur fürs Web (.web-only) oder nur für die App (.app-only) steuert base.css.
+const JB_APP = /JukeboxApp/.test(navigator.userAgent);
+if (JB_APP) document.documentElement.classList.add('jb-app');
+
 // Wie eine App: kein Hineinzoomen durch Spreizen mit zwei Fingern (gesturestart = iPhone/iPad).
 // Doppeltippen-Zoom verhindert touch-action:manipulation im CSS, ohne schnelle Doppel-Klicks auf Knöpfe zu verschlucken.
 (() => {
@@ -182,7 +187,7 @@ window.countUp = (el, to, fmt = String) => {
 // innerhalb der App. Dann rutscht die Kopfzeile unter die Statusleiste. Nur in diesem Fall einen Ersatzwert setzen.
 (() => {
   const ios = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if (!ios || !(navigator.standalone === true || matchMedia('(display-mode: standalone)').matches)) return;
+  if (!ios || !(JB_APP || navigator.standalone === true || matchMedia('(display-mode: standalone)').matches)) return;
   const probe = document.createElement('div');
   probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top)';
   const fix = () => {
@@ -217,7 +222,7 @@ window.countUp = (el, to, fmt = String) => {
   }
 
   const btn = document.getElementById('btnInstall'); if (!btn) return;
-  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const standalone = JB_APP || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   let prompt = null;   // Android/Chrome/Edge: Installations-Fenster des Browsers
   const show = on => btn.classList.toggle('hidden', standalone || !on);

@@ -62,6 +62,7 @@
     "Wähle ein Spiel": "Elige un juego",
     "Musik raten, Bingo spielen – mit Freunden oder allein.": "Adivina música, juega al bingo – con amigos o a solas.",
     "Alle Spiele laufen direkt im Browser, ohne App und ohne Anmeldung. Nur wer Musik-Bingo leitet, braucht Spotify.": "Todos los juegos funcionan en el navegador – sin app y sin registro. Solo quien dirige Musik-Bingo necesita Spotify.",
+    "Alle Spiele in einer App, ohne Anmeldung. Nur wer Musik-Bingo leitet, braucht Spotify.": "Todos los juegos en una app, sin registro. Solo quien dirige Musik-Bingo necesita Spotify.",
     "Sprache und Design gelten für alle Spiele auf diesem Gerät.": "El idioma y el diseño se aplican a todos los juegos de este dispositivo.",
     "Fertig": "Listo",
     "Sprache": "Idioma",
