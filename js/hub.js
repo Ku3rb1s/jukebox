@@ -254,21 +254,24 @@ function renderSync() {
   $('#syncRowTitle').textContent = s.connected ? tx('Dein Code') : tx('Auf anderen Geräten weiterspielen');
   $('#syncRowSub').textContent = unsaved ? '⚠️ ' + tx('Noch nicht gesichert') : s.connected ? '✓ ' + tx('Auf deinen Geräten abgeglichen') : tx('Mit einem Code – ohne E-Mail und Passwort');   // den Code selbst nur im Fenster „Dein Code“
   $('#syncRowIc').style.background = unsaved ? 'linear-gradient(135deg,#f59e0b,#ef4444)' : s.connected ? 'linear-gradient(135deg,#10b981,#0ea5e9)' : 'linear-gradient(135deg,#ff4f86,#fbbf24)';
-  $('#syncIntro').innerHTML = s.connected
-    ? tx('Mit diesem Code hast du auf allen verbundenen Geräten dieselben Rekorde, Serien und dasselbe Profil. Er ist auch dein Zugang zur Bestenliste.')
-    : `<b>${tx('Spiel auf Handy, Tablet und Computer mit denselben Rekorden weiter.')}</b>
+  // Meldung (nach einer Aktion) oben, damit man sie sieht
+  const msg = syncMsg ? `<div class="sync-msg-box" role="status">${esc(syncMsg)}</div>` : '';
+  $('#syncFoot').innerHTML = '';
+  $('#syncIntro').innerHTML = s.connected ? '' : `<b>${tx('Spiel auf Handy, Tablet und Computer mit denselben Rekorden weiter.')}</b>
       <ol><li>${tx('Hier einen Code erstellen.')}</li><li>${tx('Auf dem anderen Gerät die Jukebox öffnen und den Code eingeben – oder den QR-Code scannen.')}</li></ol>
       ${tx('Kein Konto, keine E-Mail, kein Passwort.')}`;
   if (!s.connected) {
-    box.innerHTML = (Passkey.ok ? `
-      <button class="cell tap" id="pkLogin"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span>
-        <span class="grow"><span class="lbl">${tx('Mit Passkey anmelden')}</span><span class="sub">${tx('Wenn du deinen Code schon mit einem Passkey gesichert hast')}</span></span>${ICON('chev')}</button>` : '') + `
-      <button class="cell tap" id="syncNew"><span class="cell-ic" style="background:linear-gradient(135deg,#ff4f86,#fbbf24)">${ICON('plus')}</span>
-        <span class="grow">${tx('Neuen Code erstellen')}<span class="sub">${tx('Wenn du noch keinen hast')}</span></span>${ICON('chev')}</button>
-      <div class="cell sync-join"><span class="cell-ic" style="background:#0ea5e9">${ICON('key')}</span>
-        <input id="syncInput" class="bare" placeholder="${tx('Code eingeben')}" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" enterkeyhint="go" value="${esc(syncPending)}">
-        <button class="sync-go" id="syncJoin">${tx('Verbinden')}</button></div>`;
-    $('#syncFoot').innerHTML = syncMsg ? `<b class="sync-msg">${esc(syncMsg)}</b>` : '';
+    box.innerHTML = msg + `
+      <div class="group icons"><button class="cell tap" id="syncNew"><span class="cell-ic" style="background:linear-gradient(135deg,#ff4f86,#fbbf24)">${ICON('plus')}</span>
+        <span class="grow">${tx('Neuen Code erstellen')}<span class="sub">${tx('Wenn du noch keinen hast')}</span></span>${ICON('chev')}</button></div>
+      <div class="group-h">${tx('Schon einen Code?')}</div>
+      <div class="group icons">${Passkey.ok ? `
+        <button class="cell tap" id="pkLogin"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span>
+          <span class="grow"><span class="lbl">${tx('Mit Passkey anmelden')}</span><span class="sub">${tx('Wenn du deinen Code schon mit einem Passkey gesichert hast')}</span></span>${ICON('chev')}</button>` : ''}
+        <div class="cell sync-join"><span class="cell-ic" style="background:#0ea5e9">${ICON('key')}</span>
+          <input id="syncInput" class="bare" placeholder="${tx('Code eingeben')}" aria-label="${tx('Code eingeben')}" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="16" enterkeyhint="go" value="${esc(syncPending)}">
+          <button class="sync-go" id="syncJoin">${tx('Verbinden')}</button></div></div>`;
+    syncMsg = '';
     $('#syncNew').onclick = async () => {
       $('#syncNew').disabled = true; syncMsg = '';
       try { await Sync.create(); syncMsg = tx('Dein Code ist fertig. Sichere ihn jetzt, z. B. als Bild – ohne ihn kommst du auf einem neuen Gerät nicht mehr an deine Daten.'); }
@@ -296,21 +299,35 @@ function renderSync() {
     $('#syncInput').onkeydown = e => { if (e.key === 'Enter') join(); };
     return;
   }
-  box.innerHTML = `
-    <div class="cell sync-code"><div class="grow"><span class="sub">${tx('Dein Code')}</span><div class="code${codeShown ? '' : ' masked'}" data-no-tx>${codeShown ? esc(s.code) : '••••-••••-••••'}</div>
-      <span class="sub" id="syncState">${esc(syncLine(s))}</span>
-      <button class="sync-go" id="syncReveal" aria-expanded="${codeShown}">${codeShown ? tx('Verbergen') : tx('Code anzeigen')}</button></div>
-      ${codeShown ? `<div class="sync-qr" id="syncQr" aria-label="${tx('QR-Code zum Scannen')}"></div>` : ''}</div>
-    ${unsaved ? `<div class="cell sync-warn"><span class="grow">⚠️ <b>${tx('Sichere deinen Code')}</b><span class="sub">${tx('Ohne ihn kommst du auf einem neuen Gerät nicht mehr an deine Daten. Wir können ihn nicht wiederherstellen.')}</span></span></div>` : ''}
-    ${Passkey.ok ? `<div class="hidden" id="pkList"></div><button class="cell tap" id="pkAdd"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span><span class="grow"><span class="lbl">${tx('Mit Passkey sichern')}</span><span class="sub">${tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden')}</span></span>${ICON('chev')}</button>` : ''}
-    <button class="cell tap" id="syncImg"><span class="cell-ic" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">${ICON('image')}</span><span class="grow"><span class="lbl">${tx('Als Bild speichern')}</span><span class="sub">${tx('Mit QR-Code – z. B. in deinen Fotos')}</span></span>${ICON('chev')}</button>
-    ${navigator.share ? `<button class="cell tap" id="syncShare"><span class="cell-ic" style="background:#0ea5e9">${ICON('share')}</span><span class="grow"><span class="lbl">${tx('An mich senden')}</span><span class="sub">${tx('Per Nachricht, Mail oder in den Passwort-Manager')}</span></span>${ICON('chev')}</button>` : ''}
-    <button class="cell tap" id="syncCopy"><span class="cell-ic" style="background:#6366f1">${ICON('copy')}</span><span class="grow lbl">${tx('Code kopieren')}</span></button>
-    <button class="cell tap" id="syncNowBtn"><span class="cell-ic" style="background:#10b981">${ICON('refresh')}</span><span class="grow lbl">${tx('Jetzt abgleichen')}</span></button>
-    <button class="cell tap" id="syncLeave"><span class="cell-ic" style="background:#6b7280">${ICON('unlink')}</span><span class="grow"><span class="lbl">${tx('Dieses Gerät trennen')}</span><span class="sub">${tx('Deine Daten bleiben hier und beim Code')}</span></span></button>
-    <button class="cell tap danger" id="syncWipe"><span class="cell-ic" style="background:#ef4444">${ICON('trash')}</span><span class="grow"><span class="lbl">${tx('Code löschen')}</span><span class="sub">${tx('Löscht die gespeicherten Daten beim Server – auf den Geräten bleibt alles')}</span></span></button>`;
-  $('#syncFoot').innerHTML = (syncMsg ? `<b class="sync-msg">${esc(syncMsg)}</b><br>` : '') +
-    tx('Weiteres Gerät verbinden: Dort die Jukebox öffnen und den QR-Code mit der Kamera scannen oder den Code eingeben. Deine Daten sind mit dem Code verschlüsselt – ohne ihn kann sie niemand lesen, auch wir nicht.');
+  const row = (id, ic, bg, lbl, sub = '', chev = true, cls = '') => `<button class="cell tap${cls}" id="${id}"><span class="cell-ic" style="background:${bg}">${ICON(ic)}</span>
+    <span class="grow"><span class="lbl">${lbl}</span>${sub ? `<span class="sub">${sub}</span>` : ''}</span>${chev ? ICON('chev') : ''}</button>`;
+  box.innerHTML = msg + `
+    <div class="group sync-card">
+      <div class="cell sync-code"><div class="grow"><span class="sub">${tx('Dein Code')}</span>
+        <div class="code${codeShown ? '' : ' masked'}" data-no-tx>${codeShown ? esc(s.code) : '••••-••••-••••'}</div>
+        <button class="sync-reveal" id="syncReveal" aria-expanded="${codeShown}">${ICON(codeShown ? 'eye-off' : 'eye')}${codeShown ? tx('Verbergen') : tx('Code anzeigen')}</button></div>
+        ${codeShown ? `<div class="sync-qr" id="syncQr" aria-label="${tx('QR-Code zum Scannen')}"></div>` : ''}</div>
+    </div>
+    <div class="group-f">${codeShown ? tx('Auf dem anderen Gerät die Jukebox öffnen und den Code eingeben – oder den QR-Code scannen.')
+      : tx('Mit diesem Code hast du auf allen verbundenen Geräten dieselben Rekorde, Serien und dasselbe Profil. Er ist auch dein Zugang zur Bestenliste.')}</div>
+    <div class="group-h${unsaved ? ' warn' : ''}">${unsaved ? '⚠️ ' + tx('Noch nicht gesichert') : tx('Sichern')}</div>
+    <div class="group icons">
+      ${Passkey.ok ? `<div class="hidden" id="pkList"></div>${row('pkAdd', 'key', 'linear-gradient(135deg,#10b981,#0ea5e9)', tx('Mit Passkey sichern'), tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden'))}` : ''}
+      ${row('syncImg', 'image', 'linear-gradient(135deg,#f59e0b,#ef4444)', tx('Als Bild speichern'), tx('Mit QR-Code – z. B. in deinen Fotos'))}
+      ${navigator.share ? row('syncShare', 'share', '#0ea5e9', tx('An mich senden'), tx('Per Nachricht, Mail oder in den Passwort-Manager')) : ''}
+      ${row('syncCopy', 'copy', '#6366f1', tx('Code kopieren'), '', false)}
+    </div>
+    ${unsaved ? `<div class="group-f">${tx('Ohne ihn kommst du auf einem neuen Gerät nicht mehr an deine Daten. Wir können ihn nicht wiederherstellen.')}</div>` : ''}
+    <div class="group-h">${tx('Dieses Gerät')}</div>
+    <div class="group icons">
+      <button class="cell tap" id="syncNowBtn"><span class="cell-ic" style="background:#10b981">${ICON('refresh')}</span>
+        <span class="grow"><span class="lbl">${tx('Jetzt abgleichen')}</span><span class="sub" id="syncState">${esc(syncLine(s))}</span></span></button>
+      ${row('syncLeave', 'unlink', '#6b7280', tx('Dieses Gerät trennen'), tx('Deine Daten bleiben hier und beim Code'), false)}
+    </div>
+    <div class="group icons" style="margin-top:22px">
+      ${row('syncWipe', 'trash', '#ef4444', tx('Code löschen'), tx('Löscht die gespeicherten Daten beim Server – auf den Geräten bleibt alles'), false, ' danger')}
+    </div>
+    <div class="group-f">${tx('Deine Daten sind mit dem Code verschlüsselt – ohne ihn kann sie niemand lesen, auch wir nicht.')}</div>`;
   syncMsg = '';
   $('#syncCopy').onclick = async () => {
     try { await navigator.clipboard.writeText(s.code); markSaved(s.code); $('#syncCopy .lbl').textContent = '✓ ' + tx('Kopiert'); } catch { $('#syncCopy .lbl').textContent = s.code; }
