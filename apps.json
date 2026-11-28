@@ -94,6 +94,7 @@
     },
     {
       "id": "piano-rain",
+      "hidden": true,
       "name": "Piano Rain",
       "url": "https://jukeboxquiz.de/piano-rain/",
       "icon": "https://jukeboxquiz.de/piano-rain/icon-192.png?v=1",

@@ -93,6 +93,7 @@ let DATA = null;
 async function load() {
   try { DATA = await (await fetch('apps.json?v=' + Date.now().toString(36).slice(0, 5))).json(); }
   catch { $('#apps').innerHTML = `<p class="hub-foot">${tx('Die Spieleliste konnte nicht geladen werden.')}</p>`; return; }
+  DATA.apps = DATA.apps.filter(a => !a.hidden);   // „hidden“: vorübergehend ausgeblendet (z. B. Piano Rain) – Web und App
   render();
 }
 function render() {
