@@ -94,7 +94,9 @@ Regeln:
 ## iOS-App (`Jukebox-App`, Capacitor + native Spiele)
 
 - Die App lädt jukeboxquiz.de (Jukebox als Startseite). Spiele mit nativer Version öffnet sie selbst (SwiftUI) –
-  zurzeit **Older or Newer** (Pilot). Details: `Jukebox-App/CLAUDE.md`.
+  zurzeit **Older or Newer** und **Needle Drop**. Details: `Jukebox-App/CLAUDE.md`.
+- **Needle Drop:** Regeln (Leitern, Punkte, Tipps, Kategorien in `CATS`, Erfolge), Speicher-Aufbau (`mq.*`) oder Format der
+  Tagesdatei geändert? Dann auch `Jukebox-App/ios/App/App/NeedleDrop/` anpassen (oder der Jukebox-Sitzung Bescheid geben).
 - Native Spiele nutzen **dieselben Daten** (data/*.json online) und **dieselben Speicher-Schlüssel** wie das Web-Spiel.
 - **Older or Newer:** Regeln (DIFF, Auswahl, Zeitlimit), Speicher-Aufbau (`oon.best2.*`, `oon.stats`) oder Datenformat
   (`songs.json`) geändert? Dann auch `Jukebox-App/ios/App/App/OlderOrNewer/OONGame.swift` anpassen (oder der Jukebox-Sitzung
