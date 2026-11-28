@@ -40,6 +40,9 @@ const Passkey = (() => {
     const buf = await crypto.subtle.digest('SHA-256', enc('jukebox-sync-id|' + code));
     return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
   }
+  // Feste Nutzerkennung je Code (aus der Prüfsumme): ein neuer Versuch ersetzt im Passwortmanager den alten Passkey,
+  // statt einen weiteren daneben zu legen – und der Passwortmanager kann aufräumen (signalAllAcceptedCredentials).
+  async function userOf(id) { return new Uint8Array(await crypto.subtle.digest('SHA-256', enc('jukebox-user|' + id))).slice(0, 16); }
   async function keyOf(prf) {
     const base = await crypto.subtle.importKey('raw', prf, 'HKDF', false, ['deriveKey']);
     return crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: enc('jukebox'), info: enc('code-wrap-v1') }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
@@ -82,14 +85,19 @@ const Passkey = (() => {
     get ok() { return supported; },
     ready,
     /** Passkeys dieses Codes: [{ cred, label, created, used, pending }] */
-    async list(code) { return (await post('list', { id: await idOf(code) })).keys || []; },
+    async list(code) {
+      const id = await idOf(code), keys = (await post('list', { id })).keys || [];
+      // Passwortmanager (Safari 26+, Chrome) entfernt Passkeys dieses Codes, die der Server nicht kennt (z. B. abgebrochenes Einrichten)
+      try { await PublicKeyCredential.signalAllAcceptedCredentials?.({ rpId: rpId(), userId: b64u(await userOf(id)), allAcceptedCredentialIds: keys.map(k => k.cred) }); } catch {}
+      return keys;
+    },
     async remove(code, cred) { await post('delete', { id: await idOf(code), cred }); },
     /** Neuen Passkey anlegen. → { pending: true, cred } wenn noch „Jetzt bestätigen“ (complete) nötig ist. */
     async register(code, profile = {}, existing = []) {
-      const id = await idOf(code), { challenge } = await post('options', { id });
+      const id = await idOf(code), userId = await userOf(id), { challenge } = await post('options', { id });
       const c = await webauthn(() => navigator.credentials.create({ publicKey: {
         rp: { id: rpId(), name: 'Jukebox' },
-        user: { id: crypto.getRandomValues(new Uint8Array(16)), name: profile.name || 'Jukebox', displayName: profile.name ? `${profile.emoji || ''} ${profile.name}`.trim() : 'Jukebox' },
+        user: { id: userId, name: profile.name || 'Jukebox', displayName: profile.name ? `${profile.emoji || ''} ${profile.name}`.trim() : 'Jukebox' },
         challenge: enc(challenge), timeout: 120000,
         pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
         authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
@@ -99,8 +107,10 @@ const Passkey = (() => {
       // Kein PRF: Passkey wäre nutzlos – gar nicht erst beim Server anlegen und dem Passwortmanager sagen, dass er weg kann
       if (!ext || (!ext.enabled && !ext.results)) { forget(cred); throw fail('prf'); }
       const prf = ext.results?.first;
-      const res = await post('register', { id, challenge, cred, clientData: b64u(c.response.clientDataJSON), authData: b64u(c.response.getAuthenticatorData()),
+      let res;
+      try { res = await post('register', { id, challenge, cred, clientData: b64u(c.response.clientDataJSON), authData: b64u(c.response.getAuthenticatorData()),
         publicKey: safe(() => b64(c.response.getPublicKey())), label: label(), ...(prf ? { wrapped: await wrap(prf, code, cred) } : {}) });   // Schlüssel liest der Server selbst aus authData (RSA: von hier)
+      } catch (e) { if (e.code !== 'offline' && e.code !== 'exists') forget(cred); throw e; }   // abgelehnt → Passkey im Passwortmanager wieder weg
       return { pending: !!res.pending, cred };
     },
     /** Ausstehenden Passkey fertig verbinden (zweiter Tipp) */

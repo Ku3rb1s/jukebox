@@ -347,6 +347,8 @@ async function passkey(action, body, env, json, origin, request) {
     const res = await env.DB.prepare('INSERT INTO passkey (cred, id, public_key, alg, wrapped, label, created, used) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(cred) DO NOTHING')
       .bind(cred, id, publicKey, alg, wrapped, label, now, now).run();
     if (res.meta.changes !== 1) return json({ error: 'exists' }, 409);
+    // Ältere unfertige Einträge dieses Codes weg: der Passwortmanager hat sie durch den neuen ersetzt (gleiche Nutzerkennung je Code)
+    await env.DB.prepare("DELETE FROM passkey WHERE id = ? AND wrapped = '' AND cred != ?").bind(id, cred).run();
     return json({ ok: true, pending: !wrapped });
   }
   if (action === 'complete') {
