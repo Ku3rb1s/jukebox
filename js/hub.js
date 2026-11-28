@@ -227,6 +227,8 @@ async function pkUnwrap(prf, b64) {
   return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.subarray(0, 12) }, await pkKey(prf), u.subarray(12)));
 }
 const pkLabel = () => { const u = navigator.userAgent; return /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) || (/Mac/.test(u) && navigator.maxTouchPoints > 1) ? 'iPad' : /Android/.test(u) ? 'Android' : /Mac/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows' : 'Passkey'; };
+let pkKeys = [];   // Passkeys dieses Codes (zuletzt geladen) – damit nicht derselbe Schlüsselbund einen zweiten bekommt
+const pkFromB64u = s => { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return Uint8Array.from(atob(s), c => c.charCodeAt(0)); };
 const pkUnsupported = () => Object.assign(new Error('prf'), { name: 'PrfError' });
 /** Code mit einem neuen Passkey sichern */
 async function pkRegister() {
@@ -237,6 +239,7 @@ async function pkRegister() {
     challenge: pkEnc(challenge), timeout: 120000,
     pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
     authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
+    excludeCredentials: pkKeys.map(k => ({ type: 'public-key', id: pkFromB64u(k.cred) })),   // hier schon einer → Browser meldet das
     extensions: { prf: { eval: { first: PK_SALT } } } } });
   const ext = cred.getClientExtensionResults().prf;
   if (!ext || (!ext.enabled && !ext.results)) throw pkUnsupported();
@@ -264,16 +267,26 @@ async function pkLogin() {
   await Sync.join(await pkUnwrap(out, wrapped));
   markSaved(Sync.status().code);
 }
-const pkError = e => e?.name === 'NotAllowedError' || e?.name === 'AbortError' ? '' : e?.name === 'PrfError' ? tx('Dein Browser kann das mit Passkeys leider noch nicht – nutze den Code.')
+const pkError = e => e?.name === 'InvalidStateError' ? tx('Auf diesem Gerät ist dein Code schon mit einem Passkey gesichert.') : e?.name === 'NotAllowedError' || e?.name === 'AbortError' ? '' : e?.name === 'PrfError' ? tx('Dein Browser kann das mit Passkeys leider noch nicht – nutze den Code.')
   : e?.message === 'unknown' ? tx('Zu diesem Passkey gibt es nichts mehr. Wurde er entfernt?') : e?.message === 'gone' ? tx('Zu diesem Passkey gibt es keinen Code mehr.')
   : e?.message === 'limit' ? tx('Mehr Passkeys gehen für diesen Code nicht.') : tx('Keine Verbindung – versuch es gleich nochmal.');
 async function pkFillList(s) {
   const box = $('#pkList'); if (!box) return;
   try {
     const { keys } = await pkPost('list', { id: await pkId(s.code) });
+    pkKeys = keys;
     if (!$('#pkList')) return;
-    box.innerHTML = keys.map(k => `<div class="cell"><span class="cell-ic" style="background:#334155">${ICON('key')}</span>
-      <span class="grow">${esc(k.label)}<span class="sub">${esc(new Date(k.created).toLocaleDateString(LANG))}</span></span>
+    if (keys.length && !codeSaved(s.code)) { markSaved(s.code); return renderSync(); }   // Passkey vorhanden = Code gesichert
+    // Schon gesichert: Haken statt Aufforderung; ein weiterer Passkey ist nur für Geräte außerhalb des Schlüsselbunds nötig (z. B. Android, Windows)
+    const add = $('#pkAdd');
+    if (add) {
+      add.classList.toggle('pk-done', keys.length > 0);
+      add.querySelector('.lbl').textContent = keys.length ? tx('Weiteren Passkey hinzufügen') : tx('Mit Passkey sichern');
+      add.querySelector('.sub').textContent = keys.length ? tx('Nur nötig für Geräte, die deine Passkeys nicht kennen (z. B. Android oder Windows)')
+        : tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden');
+    }
+    box.innerHTML = keys.map(k => `<div class="cell"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span>
+      <span class="grow">✓ ${tx('Mit Passkey gesichert')}<span class="sub">${esc(k.label)} · ${esc(new Date(k.created).toLocaleDateString(LANG))}</span></span>
       <button class="sync-go pk-del" data-cred="${esc(k.cred)}"><span class="lbl">${tx('Entfernen')}</span></button></div>`).join('');
     box.classList.toggle('hidden', !keys.length);
     box.querySelectorAll('.pk-del').forEach(b => arm(b, tx('Nochmal tippen'), async () => {
@@ -346,8 +359,7 @@ function renderSync() {
     <div class="cell sync-code"><div class="grow"><span class="sub">${tx('Dein Code')}</span><div class="code" data-no-tx>${esc(s.code)}</div>
       <span class="sub" id="syncState">${esc(syncLine(s))}</span></div><div class="sync-qr" id="syncQr" aria-label="${tx('QR-Code zum Scannen')}"></div></div>
     ${unsaved ? `<div class="cell sync-warn"><span class="grow">⚠️ <b>${tx('Sichere deinen Code')}</b><span class="sub">${tx('Ohne ihn kommst du auf einem neuen Gerät nicht mehr an deine Daten. Wir können ihn nicht wiederherstellen.')}</span></span></div>` : ''}
-    ${pkOk ? `<button class="cell tap" id="pkAdd"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span><span class="grow"><span class="lbl">${tx('Mit Passkey sichern')}</span><span class="sub">${tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden')}</span></span>${ICON('chev')}</button>
-    <div class="hidden" id="pkList"></div>` : ''}
+    ${pkOk ? `<div class="hidden" id="pkList"></div><button class="cell tap" id="pkAdd"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span><span class="grow"><span class="lbl">${tx('Mit Passkey sichern')}</span><span class="sub">${tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden')}</span></span>${ICON('chev')}</button>` : ''}
     <button class="cell tap" id="syncImg"><span class="cell-ic" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">${ICON('image')}</span><span class="grow"><span class="lbl">${tx('Als Bild speichern')}</span><span class="sub">${tx('Mit QR-Code – z. B. in deinen Fotos')}</span></span>${ICON('chev')}</button>
     ${navigator.share ? `<button class="cell tap" id="syncShare"><span class="cell-ic" style="background:#0ea5e9">${ICON('share')}</span><span class="grow"><span class="lbl">${tx('An mich senden')}</span><span class="sub">${tx('Per Nachricht, Mail oder in den Passwort-Manager')}</span></span>${ICON('chev')}</button>` : ''}
     <button class="cell tap" id="syncCopy"><span class="cell-ic" style="background:#6366f1">${ICON('copy')}</span><span class="grow lbl">${tx('Code kopieren')}</span></button>

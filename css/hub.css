@@ -296,3 +296,8 @@ header{max-width:860px}
 .pod-where{font-size:.7rem;line-height:1.25;color:var(--muted);max-width:100%;text-align:center;margin-top:2px;opacity:.85;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .lb-name small.lb-where{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Passkey schon da: „Weiteren hinzufügen“ zurückhaltend statt als Aufforderung */
+#pkAdd.pk-done .cell-ic{background:rgba(255,255,255,.12)!important}
+#pkAdd.pk-done .lbl{color:var(--muted)}
+.pk-del{background:rgba(255,255,255,.1)!important;color:var(--muted)!important;font-weight:600!important}
