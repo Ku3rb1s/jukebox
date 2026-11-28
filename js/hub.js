@@ -243,17 +243,27 @@ async function pkRegister() {
     extensions: { prf: { eval: { first: PK_SALT } } } } });
   const ext = cred.getClientExtensionResults().prf;
   if (!ext || (!ext.enabled && !ext.results)) throw pkUnsupported();
-  let out = ext.results?.first;
-  if (!out) {   // manche Geräte liefern das Geheimnis erst bei der ersten Anmeldung
+  pkPending = { id, challenge, code: s.code, rawId: cred.rawId, clientData: pkB64u(cred.response.clientDataJSON),
+    authData: pkB64u(cred.response.getAuthenticatorData()), publicKey: pkB64(cred.response.getPublicKey()), alg: cred.response.getPublicKeyAlgorithm() };
+  // Safari (iPhone) liefert das Geheimnis erst bei der ersten Anmeldung – und die braucht einen eigenen Tipp (sonst bricht Safari still ab).
+  // Darum dann ein zweiter, sichtbarer Schritt „Jetzt bestätigen“ (pkFinish).
+  if (!ext.results?.first) return false;
+  await pkFinish(ext.results.first);
+  return true;
+}
+let pkPending = null;   // angelegter, aber noch nicht fertig verbundener Passkey (wartet auf „Jetzt bestätigen“)
+async function pkFinish(out) {
+  const p = pkPending; if (!p) return;
+  if (!out) {
     const a = await navigator.credentials.get({ publicKey: { rpId: pkRp(), challenge: crypto.getRandomValues(new Uint8Array(32)), userVerification: 'required',
-      allowCredentials: [{ type: 'public-key', id: cred.rawId }], extensions: { prf: { eval: { first: PK_SALT } } } } });
+      allowCredentials: [{ type: 'public-key', id: p.rawId }], extensions: { prf: { eval: { first: PK_SALT } } } } });
     out = a.getClientExtensionResults().prf?.results?.first;
+    if (!out) throw pkUnsupported();
   }
-  if (!out) throw pkUnsupported();
-  await pkPost('register', { id, challenge, cred: pkB64u(cred.rawId), clientData: pkB64u(cred.response.clientDataJSON),
-    authData: pkB64u(cred.response.getAuthenticatorData()), publicKey: pkB64(cred.response.getPublicKey()), alg: cred.response.getPublicKeyAlgorithm(),
-    wrapped: await pkWrap(out, s.code), label: pkLabel() });
-  markSaved(s.code);
+  await pkPost('register', { id: p.id, challenge: p.challenge, cred: pkB64u(p.rawId), clientData: p.clientData, authData: p.authData,
+    publicKey: p.publicKey, alg: p.alg, wrapped: await pkWrap(out, p.code), label: pkLabel() });
+  pkPending = null;
+  markSaved(p.code);
 }
 /** Mit Passkey anmelden: Code holen, entschlüsseln, verbinden */
 async function pkLogin() {
@@ -261,14 +271,20 @@ async function pkLogin() {
   const a = await navigator.credentials.get({ publicKey: { rpId: pkRp(), challenge: pkEnc(challenge), userVerification: 'required', timeout: 120000,
     extensions: { prf: { eval: { first: PK_SALT } } } } });
   const out = a.getClientExtensionResults().prf?.results?.first;
-  if (!out) throw pkUnsupported();
-  const { wrapped } = await pkPost('login', { challenge, cred: pkB64u(a.rawId), clientData: pkB64u(a.response.clientDataJSON),
-    authData: pkB64u(a.response.authenticatorData), signature: pkB64u(a.response.signature) });
+  if (!out) throw a.authenticatorAttachment === 'cross-platform' ? Object.assign(new Error('hybrid'), { name: 'PrfError', hybrid: true }) : pkUnsupported();
+  let wrapped;
+  try { ({ wrapped } = await pkPost('login', { challenge, cred: pkB64u(a.rawId), clientData: pkB64u(a.response.clientDataJSON),
+    authData: pkB64u(a.response.authenticatorData), signature: pkB64u(a.response.signature) })); }
+  catch (e) {
+    // Passkey ohne Code beim Server (z. B. Einrichten abgebrochen): dem Passwortmanager sagen, dass er ihn löschen kann
+    if (e.message === 'unknown') try { await PublicKeyCredential.signalUnknownCredential?.({ rpId: pkRp(), credentialId: pkB64u(a.rawId) }); } catch {}
+    throw e;
+  }
   await Sync.join(await pkUnwrap(out, wrapped));
   markSaved(Sync.status().code);
 }
-const pkError = e => e?.name === 'InvalidStateError' ? tx('Auf diesem Gerät ist dein Code schon mit einem Passkey gesichert.') : e?.name === 'NotAllowedError' || e?.name === 'AbortError' ? '' : e?.name === 'PrfError' ? tx('Dein Browser kann das mit Passkeys leider noch nicht – nutze den Code.')
-  : e?.message === 'unknown' ? tx('Zu diesem Passkey gibt es nichts mehr. Wurde er entfernt?') : e?.message === 'gone' ? tx('Zu diesem Passkey gibt es keinen Code mehr.')
+const pkError = e => e?.name === 'InvalidStateError' ? tx('Auf diesem Gerät ist dein Code schon mit einem Passkey gesichert.') : e?.name === 'NotAllowedError' || e?.name === 'AbortError' ? '' : e?.name === 'PrfError' ? (e.hybrid ? tx('Mit einem Passkey von einem anderen Gerät (per QR-Code) geht das hier leider noch nicht – gib den Code ein.') : tx('Dein Browser kann das mit Passkeys leider noch nicht – nutze den Code.'))
+  : e?.message === 'unknown' ? tx('Dieser Passkey ist mit keinem Code verbunden (das Einrichten wurde nicht abgeschlossen). Du kannst ihn in deinen Passwörtern löschen.') : e?.message === 'gone' ? tx('Zu diesem Passkey gibt es keinen Code mehr.')
   : e?.message === 'limit' ? tx('Mehr Passkeys gehen für diesen Code nicht.') : tx('Keine Verbindung – versuch es gleich nochmal.');
 async function pkFillList(s) {
   const box = $('#pkList'); if (!box) return;
@@ -278,7 +294,7 @@ async function pkFillList(s) {
     if (!$('#pkList')) return;
     if (keys.length && !codeSaved(s.code)) { markSaved(s.code); return renderSync(); }   // Passkey vorhanden = Code gesichert
     // Schon gesichert: Haken statt Aufforderung; ein weiterer Passkey ist nur für Geräte außerhalb des Schlüsselbunds nötig (z. B. Android, Windows)
-    const add = $('#pkAdd');
+    const add = pkPending ? null : $('#pkAdd');
     if (add) {
       add.classList.toggle('pk-done', keys.length > 0);
       add.querySelector('.lbl').textContent = keys.length ? tx('Weiteren Passkey hinzufügen') : tx('Mit Passkey sichern');
@@ -388,10 +404,22 @@ function renderSync() {
   if ($('#pkAdd')) {
     $('#pkAdd').onclick = async () => {
       $('#pkAdd').disabled = true;
-      try { await pkRegister(); syncMsg = tx('Mit Passkey gesichert. Auf einem neuen Gerät: „Dein Code“ → „Mit Passkey anmelden“.'); }
+      try { syncMsg = await pkRegister() ? tx('Mit Passkey gesichert. Auf einem neuen Gerät: „Dein Code“ → „Mit Passkey anmelden“.')
+          : tx('Fast fertig: Tippe auf „Jetzt bestätigen“, damit dein Passkey den Code aufschließen kann.'); }
       catch (e) { syncMsg = pkError(e); }
       renderSync();
     };
+    if (pkPending) {   // zweiter Schritt (Safari): sichtbarer Knopf, damit Face ID nach einem Tipp kommt
+      const add = $('#pkAdd'); add.id = 'pkConfirm'; add.classList.remove('pk-done');
+      add.querySelector('.lbl').textContent = tx('Jetzt bestätigen');
+      add.querySelector('.sub').textContent = tx('Noch einmal mit Face ID oder Fingerabdruck – dann ist dein Code mit dem Passkey gesichert');
+      add.onclick = async () => {
+        add.disabled = true;
+        try { await pkFinish(); syncMsg = tx('Mit Passkey gesichert. Auf einem neuen Gerät: „Dein Code“ → „Mit Passkey anmelden“.'); }
+        catch (e) { syncMsg = pkError(e) || tx('Abgebrochen – tippe nochmal auf „Jetzt bestätigen“.'); }
+        renderSync();
+      };
+    }
     pkFillList(s);
   }
   $('#syncNowBtn').onclick = async () => { $('#syncState').textContent = tx('Gleiche ab …'); await Sync.syncNow(); renderSync(); };
