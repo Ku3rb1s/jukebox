@@ -1,6 +1,6 @@
 # Plan: Passkey statt Code (Abgleich und Bestenliste)
 
-Stand: 28.11.2026 · noch nicht gebaut
+Stand: 28.11.2026 · Website gebaut (siehe „Wie es gebaut ist“), App folgt mit dem bezahlten Apple-Account
 
 ## Kurz
 
@@ -57,7 +57,23 @@ Verworfene Alternative: den Code direkt im Passkey speichern (WebAuthn „largeB
   „Mit Passkey anmelden“ auch direkt beim ersten App-Start.
 - Bis dahin: In der App bleibt es beim Code (alles andere funktioniert wie heute).
 
-## Was gebaut werden muss
+## Wie es gebaut ist (Website)
+
+- Logik: `js/passkey.js` (Objekt `Passkey`), Anzeige im Fenster „Dein Code“ in `js/hub.js`. Server: `/pk/` in `worker/sync.js`.
+- **Anlegen in zwei Schritten, aber nie verwaist:** `register` legt den Passkey sofort an. Liefert der Browser das PRF-Geheimnis
+  schon beim Anlegen (Chrome), wird der verschlüsselte Code gleich mitgeschickt. Sonst (Safari) ist er „ausstehend“ und steht so in der
+  Liste – „Jetzt bestätigen“ (eigener Tipp, sonst bricht Safari ab) macht eine Anmeldung, und `complete` speichert den Code. Das geht
+  auch nach Neuladen. Ausstehende Passkeys, die nie bestätigt werden, löscht der Server nach 30 Tagen.
+- **Herausforderungen** sind signiert, 5 Minuten gültig und nur **einmal** verwendbar (Tabelle `pk_challenge`) – keine Wiederholung
+  einer mitgeschnittenen Anmeldung.
+- **Bremsen** pro Anschluss und Tag: 300 Herausforderungen, 30 fehlgeschlagene Anmeldungen (Tabelle `limits`).
+- Beim Anlegen muss die Passkey-Kennung in den Daten des Authentifikators stehen; Anmeldung nur mit Face ID / Fingerabdruck (UV).
+- Verschlüsselter Block = Versionsbyte (1) + IV + AES-GCM, an die Passkey-Kennung gebunden.
+- Ohne PRF wird nichts angelegt (und der Passkey dem Passwortmanager als unbekannt gemeldet). Jeder Fehler zeigt eine Meldung.
+- Code und QR-Code im Fenster „Dein Code“ erst nach Tipp auf „Code anzeigen“ (Website und App).
+- Test: `worker/test-passkey.mjs` gegen `wrangler dev --local` (Anleitung im Kopf der Datei).
+
+## Was gebaut werden muss (ursprünglicher Plan)
 
 **Server (Worker `jukebox-sync`, Bereich `/pk/`)**
 - Neue Tabelle `passkey (cred_id, id, public_key, sign_count, wrapped_code, label, created, used)`.

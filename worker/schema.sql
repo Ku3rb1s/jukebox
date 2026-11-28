@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS lb_streak (
 
 -- Passkeys (freiwillig): schließen den Code auf. wrapped = der Code, im Browser mit dem PRF-Geheimnis des Passkeys verschlüsselt –
 -- ohne den Passkey wertlos. public_key = öffentlicher Schlüssel des Passkeys (SPKI, Base64) zum Prüfen der Anmeldung.
--- id = Prüfsumme des Codes wie in sync (für Liste/Löschen und zum Aufräumen).
+-- id = Prüfsumme des Codes wie in sync (für Liste/Löschen und zum Aufräumen). wrapped = '' → ausstehend (Einrichten noch nicht
+-- bestätigt; nach 30 Tagen gelöscht).
 CREATE TABLE IF NOT EXISTS passkey (
   cred TEXT PRIMARY KEY,
   id TEXT NOT NULL,
@@ -68,3 +69,9 @@ CREATE TABLE IF NOT EXISTS passkey (
   used INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS passkey_id ON passkey(id);
+
+-- Ausgestellte Passkey-Herausforderungen: jede gilt nur einmal (c = Zufallsteil), abgelaufene löscht der Zeitplan.
+CREATE TABLE IF NOT EXISTS pk_challenge (
+  c TEXT PRIMARY KEY,
+  exp INTEGER NOT NULL
+);

@@ -190,126 +190,48 @@ function arm(btn, label, fn) {
     setTimeout(() => { if (btn.isConnected && btn.dataset.armed) { delete btn.dataset.armed; btn.querySelector('.lbl').textContent = old; } }, 4000);
   };
 }
-/* ---------- Passkeys (freiwillig): ein Passkey schließt den Code auf – Face ID / Fingerabdruck statt Code eintippen ----------
-   Der Code bleibt der Schlüssel zu den Daten. Der Passkey liefert über die WebAuthn-Erweiterung PRF ein Geheimnis, mit dem der Code
-   hier im Browser verschlüsselt wird; beim Server (worker/sync.js, /pk/) liegt nur dieser Block. Plan: docs/passkey-plan.md.
-   In der iOS-App (noch) nicht: dafür braucht die App die Domain-Verknüpfung (bezahlter Apple-Account). */
-const PK_API = (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && store.get('hub.pkApi')) || 'https://jukebox-sync.ku3rb1s.workers.dev/pk/';
-const pkEnc = s => new TextEncoder().encode(s);
-const pkB64u = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-const pkB64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
-const pkRp = () => location.hostname.replace(/^www\./, '');
-const PK_SALT = pkEnc('jukebox-code-wrap-v1');
-const inApp = !!window.webkit?.messageHandlers?.jbNative;
-let pkOk = !inApp && !!window.PublicKeyCredential && window.isSecureContext;
-// Kann der Browser PRF? (neuere Browser sagen es vorher; sonst merken wir es beim Versuch)
-if (pkOk && PublicKeyCredential.getClientCapabilities) PublicKeyCredential.getClientCapabilities().then(c => { if (c && c['extension:prf'] === false) { pkOk = false; renderSync(); } }).catch(() => {});
-async function pkPost(path, body) {
-  const r = await fetch(PK_API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), cache: 'no-store' });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.error || 'http');
-  return j;
-}
-async function pkId(code) {
-  const buf = await crypto.subtle.digest('SHA-256', pkEnc('jukebox-sync-id|' + code));
-  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
-}
-async function pkKey(prf) {
-  const base = await crypto.subtle.importKey('raw', prf, 'HKDF', false, ['deriveKey']);
-  return crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: pkEnc('jukebox'), info: pkEnc('code-wrap-v1') }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
-}
-async function pkWrap(prf, code) {
-  const iv = crypto.getRandomValues(new Uint8Array(12)), ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await pkKey(prf), pkEnc(code)));
-  return pkB64([...iv, ...ct]);
-}
-async function pkUnwrap(prf, b64) {
-  const u = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.subarray(0, 12) }, await pkKey(prf), u.subarray(12)));
-}
-const pkLabel = () => { const u = navigator.userAgent; return /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) || (/Mac/.test(u) && navigator.maxTouchPoints > 1) ? 'iPad' : /Android/.test(u) ? 'Android' : /Mac/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows' : 'Passkey'; };
-let pkKeys = [];   // Passkeys dieses Codes (zuletzt geladen) – damit nicht derselbe Schlüsselbund einen zweiten bekommt
-const pkFromB64u = s => { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return Uint8Array.from(atob(s), c => c.charCodeAt(0)); };
-const pkUnsupported = () => Object.assign(new Error('prf'), { name: 'PrfError' });
-/** Code mit einem neuen Passkey sichern */
-async function pkRegister() {
-  const s = Sync.status(), id = await pkId(s.code), { challenge } = await pkPost('options', { id }), p = Profile.get();
-  const cred = await navigator.credentials.create({ publicKey: {
-    rp: { id: pkRp(), name: 'Jukebox' },
-    user: { id: crypto.getRandomValues(new Uint8Array(16)), name: p.name || 'Jukebox', displayName: p.name ? `${p.emoji} ${p.name}` : 'Jukebox' },
-    challenge: pkEnc(challenge), timeout: 120000,
-    pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-    authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
-    excludeCredentials: pkKeys.map(k => ({ type: 'public-key', id: pkFromB64u(k.cred) })),   // hier schon einer → Browser meldet das
-    extensions: { prf: { eval: { first: PK_SALT } } } } });
-  const ext = cred.getClientExtensionResults().prf;
-  if (!ext || (!ext.enabled && !ext.results)) throw pkUnsupported();
-  pkPending = { id, challenge, code: s.code, rawId: cred.rawId, clientData: pkB64u(cred.response.clientDataJSON),
-    authData: pkB64u(cred.response.getAuthenticatorData()), publicKey: pkB64(cred.response.getPublicKey()), alg: cred.response.getPublicKeyAlgorithm() };
-  // Safari (iPhone) liefert das Geheimnis erst bei der ersten Anmeldung – und die braucht einen eigenen Tipp (sonst bricht Safari still ab).
-  // Darum dann ein zweiter, sichtbarer Schritt „Jetzt bestätigen“ (pkFinish).
-  if (!ext.results?.first) return false;
-  await pkFinish(ext.results.first);
-  return true;
-}
-let pkPending = null;   // angelegter, aber noch nicht fertig verbundener Passkey (wartet auf „Jetzt bestätigen“)
-async function pkFinish(out) {
-  const p = pkPending; if (!p) return;
-  if (!out) {
-    const a = await navigator.credentials.get({ publicKey: { rpId: pkRp(), challenge: crypto.getRandomValues(new Uint8Array(32)), userVerification: 'required',
-      allowCredentials: [{ type: 'public-key', id: p.rawId }], extensions: { prf: { eval: { first: PK_SALT } } } } });
-    out = a.getClientExtensionResults().prf?.results?.first;
-    if (!out) throw pkUnsupported();
-  }
-  await pkPost('register', { id: p.id, challenge: p.challenge, cred: pkB64u(p.rawId), clientData: p.clientData, authData: p.authData,
-    publicKey: p.publicKey, alg: p.alg, wrapped: await pkWrap(out, p.code), label: pkLabel() });
-  pkPending = null;
-  markSaved(p.code);
-}
-/** Mit Passkey anmelden: Code holen, entschlüsseln, verbinden */
-async function pkLogin() {
-  const { challenge } = await pkPost('options', {});
-  const a = await navigator.credentials.get({ publicKey: { rpId: pkRp(), challenge: pkEnc(challenge), userVerification: 'required', timeout: 120000,
-    extensions: { prf: { eval: { first: PK_SALT } } } } });
-  const out = a.getClientExtensionResults().prf?.results?.first;
-  if (!out) throw a.authenticatorAttachment === 'cross-platform' ? Object.assign(new Error('hybrid'), { name: 'PrfError', hybrid: true }) : pkUnsupported();
-  let wrapped;
-  try { ({ wrapped } = await pkPost('login', { challenge, cred: pkB64u(a.rawId), clientData: pkB64u(a.response.clientDataJSON),
-    authData: pkB64u(a.response.authenticatorData), signature: pkB64u(a.response.signature) })); }
-  catch (e) {
-    // Passkey ohne Code beim Server (z. B. Einrichten abgebrochen): dem Passwortmanager sagen, dass er ihn löschen kann
-    if (e.message === 'unknown') try { await PublicKeyCredential.signalUnknownCredential?.({ rpId: pkRp(), credentialId: pkB64u(a.rawId) }); } catch {}
-    throw e;
-  }
-  await Sync.join(await pkUnwrap(out, wrapped));
-  markSaved(Sync.status().code);
-}
-const pkError = e => e?.name === 'InvalidStateError' ? tx('Auf diesem Gerät ist dein Code schon mit einem Passkey gesichert.') : e?.name === 'NotAllowedError' || e?.name === 'AbortError' ? '' : e?.name === 'PrfError' ? (e.hybrid ? tx('Mit einem Passkey von einem anderen Gerät (per QR-Code) geht das hier leider noch nicht – gib den Code ein.') : tx('Dein Browser kann das mit Passkeys leider noch nicht – nutze den Code.'))
-  : e?.message === 'unknown' ? tx('Dieser Passkey ist mit keinem Code verbunden (das Einrichten wurde nicht abgeschlossen). Du kannst ihn in deinen Passwörtern löschen.') : e?.message === 'gone' ? tx('Zu diesem Passkey gibt es keinen Code mehr.')
-  : e?.message === 'limit' ? tx('Mehr Passkeys gehen für diesen Code nicht.') : tx('Keine Verbindung – versuch es gleich nochmal.');
+/* ---------- Passkeys (freiwillig): Logik in js/passkey.js, hier nur die Anzeige im Fenster „Dein Code“ ---------- */
+let pkKeys = [];      // Passkeys dieses Codes (zuletzt geladen) – damit derselbe Schlüsselbund keinen zweiten bekommt
+let codeShown = false; // Code und QR-Code nur nach Tipp zeigen (jeder, der aufs Display schaut, könnte ihn sonst abfotografieren)
+Passkey.ready.then(() => { if (!Passkey.ok) renderSync(); });
+const PK_DONE = () => tx('Mit Passkey gesichert. Auf einem neuen Gerät: „Dein Code“ → „Mit Passkey anmelden“.');
 async function pkFillList(s) {
   const box = $('#pkList'); if (!box) return;
-  try {
-    const { keys } = await pkPost('list', { id: await pkId(s.code) });
-    pkKeys = keys;
-    if (!$('#pkList')) return;
-    if (keys.length && !codeSaved(s.code)) { markSaved(s.code); return renderSync(); }   // Passkey vorhanden = Code gesichert
-    // Schon gesichert: Haken statt Aufforderung; ein weiterer Passkey ist nur für Geräte außerhalb des Schlüsselbunds nötig (z. B. Android, Windows)
-    const add = pkPending ? null : $('#pkAdd');
-    if (add) {
-      add.classList.toggle('pk-done', keys.length > 0);
-      add.querySelector('.lbl').textContent = keys.length ? tx('Weiteren Passkey hinzufügen') : tx('Mit Passkey sichern');
-      add.querySelector('.sub').textContent = keys.length ? tx('Nur nötig für Geräte, die deine Passkeys nicht kennen (z. B. Android oder Windows)')
-        : tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden');
-    }
-    box.innerHTML = keys.map(k => `<div class="cell"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span>
-      <span class="grow">✓ ${tx('Mit Passkey gesichert')}<span class="sub">${esc(k.label)} · ${esc(new Date(k.created).toLocaleDateString(LANG))}</span></span>
+  let keys;
+  try { keys = await Passkey.list(s.code); } catch { box.classList.add('hidden'); return; }
+  pkKeys = keys;
+  if (!$('#pkList') || Sync.status().code !== s.code) return;
+  const done = keys.filter(k => !k.pending);
+  if (done.length && !codeSaved(s.code)) { markSaved(s.code); return renderSync(); }   // Passkey vorhanden = Code gesichert
+  // Schon gesichert: Haken statt Aufforderung; ein weiterer Passkey ist nur für Geräte außerhalb des Schlüsselbunds nötig (z. B. Android, Windows)
+  const add = $('#pkAdd');
+  if (add) {
+    add.classList.toggle('pk-done', done.length > 0);
+    add.querySelector('.lbl').textContent = done.length ? tx('Weiteren Passkey hinzufügen') : tx('Mit Passkey sichern');
+    add.querySelector('.sub').textContent = done.length ? tx('Nur nötig für Geräte, die deine Passkeys nicht kennen (z. B. Android oder Windows)')
+      : tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden');
+  }
+  const date = k => esc(new Date(k.created).toLocaleDateString(LANG));
+  // Ausstehend (Einrichten nicht bestätigt, z. B. Safari oder neu geladen): „Jetzt bestätigen“ – geht auch später noch
+  box.innerHTML = keys.map(k => k.pending
+    ? `<div class="cell pk-pending"><span class="cell-ic" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">${ICON('key')}</span>
+      <span class="grow">${tx('Noch einmal mit Face ID oder Fingerabdruck – dann ist dein Code mit dem Passkey gesichert')}<span class="sub">${esc(k.label)} · ${date(k)}</span></span>
+      <span class="pk-acts"><button class="sync-go pk-confirm" data-cred="${esc(k.cred)}">${tx('Jetzt bestätigen')}</button>
+      <button class="sync-go pk-del" data-cred="${esc(k.cred)}"><span class="lbl">${tx('Entfernen')}</span></button></span></div>`
+    : `<div class="cell"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span>
+      <span class="grow">✓ ${tx('Mit Passkey gesichert')}<span class="sub">${esc(k.label)} · ${date(k)}</span></span>
       <button class="sync-go pk-del" data-cred="${esc(k.cred)}"><span class="lbl">${tx('Entfernen')}</span></button></div>`).join('');
-    box.classList.toggle('hidden', !keys.length);
-    box.querySelectorAll('.pk-del').forEach(b => arm(b, tx('Nochmal tippen'), async () => {
-      try { await pkPost('delete', { id: await pkId(s.code), cred: b.dataset.cred }); } catch {}
-      pkFillList(s);
-    }));
-  } catch { box.classList.add('hidden'); }
+  box.classList.toggle('hidden', !keys.length);
+  box.querySelectorAll('.pk-confirm').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { await Passkey.complete(s.code, b.dataset.cred); markSaved(s.code); syncMsg = PK_DONE(); }
+    catch (e) { syncMsg = e.code === 'cancelled' ? tx('Abgebrochen – tippe nochmal auf „Jetzt bestätigen“.') : Passkey.message(e); }
+    renderSync();
+  });
+  box.querySelectorAll('.pk-del').forEach(b => arm(b, tx('Nochmal tippen'), async () => {
+    try { await Passkey.remove(s.code, b.dataset.cred); } catch (e) { syncMsg = Passkey.message(e); return renderSync(); }
+    pkFillList(s);
+  }));
 }
 
 function renderSync() {
@@ -338,7 +260,7 @@ function renderSync() {
       <ol><li>${tx('Hier einen Code erstellen.')}</li><li>${tx('Auf dem anderen Gerät die Jukebox öffnen und den Code eingeben – oder den QR-Code scannen.')}</li></ol>
       ${tx('Kein Konto, keine E-Mail, kein Passwort.')}`;
   if (!s.connected) {
-    box.innerHTML = (pkOk ? `
+    box.innerHTML = (Passkey.ok ? `
       <button class="cell tap" id="pkLogin"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span>
         <span class="grow"><span class="lbl">${tx('Mit Passkey anmelden')}</span><span class="sub">${tx('Wenn du deinen Code schon mit einem Passkey gesichert hast')}</span></span>${ICON('chev')}</button>` : '') + `
       <button class="cell tap" id="syncNew"><span class="cell-ic" style="background:linear-gradient(135deg,#ff4f86,#fbbf24)">${ICON('plus')}</span>
@@ -364,18 +286,23 @@ function renderSync() {
     $('#syncJoin').onclick = join;
     if ($('#pkLogin')) $('#pkLogin').onclick = async () => {
       $('#pkLogin').disabled = true; syncMsg = '';
-      try { await pkLogin(); syncMsg = tx('Mit Passkey angemeldet.'); renderProfile(); applyTheme(); }
-      catch (e) { syncMsg = pkError(e); }
+      try {
+        const code = await Passkey.login();
+        try { await Sync.join(code); } catch (e) { throw e.message === 'unknown' ? Object.assign(new Error('gone'), { code: 'gone' }) : e; }
+        markSaved(Sync.status().code); syncMsg = tx('Mit Passkey angemeldet.'); renderProfile(); applyTheme();
+      } catch (e) { syncMsg = Passkey.message(e); }
       renderSync();
     };
     $('#syncInput').onkeydown = e => { if (e.key === 'Enter') join(); };
     return;
   }
   box.innerHTML = `
-    <div class="cell sync-code"><div class="grow"><span class="sub">${tx('Dein Code')}</span><div class="code" data-no-tx>${esc(s.code)}</div>
-      <span class="sub" id="syncState">${esc(syncLine(s))}</span></div><div class="sync-qr" id="syncQr" aria-label="${tx('QR-Code zum Scannen')}"></div></div>
+    <div class="cell sync-code"><div class="grow"><span class="sub">${tx('Dein Code')}</span><div class="code${codeShown ? '' : ' masked'}" data-no-tx>${codeShown ? esc(s.code) : '••••-••••-••••'}</div>
+      <span class="sub" id="syncState">${esc(syncLine(s))}</span>
+      <button class="sync-go" id="syncReveal" aria-expanded="${codeShown}">${codeShown ? tx('Verbergen') : tx('Code anzeigen')}</button></div>
+      ${codeShown ? `<div class="sync-qr" id="syncQr" aria-label="${tx('QR-Code zum Scannen')}"></div>` : ''}</div>
     ${unsaved ? `<div class="cell sync-warn"><span class="grow">⚠️ <b>${tx('Sichere deinen Code')}</b><span class="sub">${tx('Ohne ihn kommst du auf einem neuen Gerät nicht mehr an deine Daten. Wir können ihn nicht wiederherstellen.')}</span></span></div>` : ''}
-    ${pkOk ? `<div class="hidden" id="pkList"></div><button class="cell tap" id="pkAdd"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span><span class="grow"><span class="lbl">${tx('Mit Passkey sichern')}</span><span class="sub">${tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden')}</span></span>${ICON('chev')}</button>` : ''}
+    ${Passkey.ok ? `<div class="hidden" id="pkList"></div><button class="cell tap" id="pkAdd"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span><span class="grow"><span class="lbl">${tx('Mit Passkey sichern')}</span><span class="sub">${tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden')}</span></span>${ICON('chev')}</button>` : ''}
     <button class="cell tap" id="syncImg"><span class="cell-ic" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">${ICON('image')}</span><span class="grow"><span class="lbl">${tx('Als Bild speichern')}</span><span class="sub">${tx('Mit QR-Code – z. B. in deinen Fotos')}</span></span>${ICON('chev')}</button>
     ${navigator.share ? `<button class="cell tap" id="syncShare"><span class="cell-ic" style="background:#0ea5e9">${ICON('share')}</span><span class="grow"><span class="lbl">${tx('An mich senden')}</span><span class="sub">${tx('Per Nachricht, Mail oder in den Passwort-Manager')}</span></span>${ICON('chev')}</button>` : ''}
     <button class="cell tap" id="syncCopy"><span class="cell-ic" style="background:#6366f1">${ICON('copy')}</span><span class="grow lbl">${tx('Code kopieren')}</span></button>
@@ -401,25 +328,17 @@ function renderSync() {
       markSaved(s.code); renderSync();
     } catch {}   // abgebrochen
   };
+  $('#syncReveal').onclick = () => { codeShown = !codeShown; renderSync(); };
   if ($('#pkAdd')) {
     $('#pkAdd').onclick = async () => {
       $('#pkAdd').disabled = true;
-      try { syncMsg = await pkRegister() ? tx('Mit Passkey gesichert. Auf einem neuen Gerät: „Dein Code“ → „Mit Passkey anmelden“.')
-          : tx('Fast fertig: Tippe auf „Jetzt bestätigen“, damit dein Passkey den Code aufschließen kann.'); }
-      catch (e) { syncMsg = pkError(e); }
+      try {
+        const r = await Passkey.register(s.code, Profile.get(), pkKeys.filter(k => !k.pending));
+        if (r.pending) syncMsg = tx('Fast fertig: Tippe auf „Jetzt bestätigen“, damit dein Passkey den Code aufschließen kann.');
+        else { markSaved(s.code); syncMsg = PK_DONE(); }
+      } catch (e) { syncMsg = Passkey.message(e); }
       renderSync();
     };
-    if (pkPending) {   // zweiter Schritt (Safari): sichtbarer Knopf, damit Face ID nach einem Tipp kommt
-      const add = $('#pkAdd'); add.id = 'pkConfirm'; add.classList.remove('pk-done');
-      add.querySelector('.lbl').textContent = tx('Jetzt bestätigen');
-      add.querySelector('.sub').textContent = tx('Noch einmal mit Face ID oder Fingerabdruck – dann ist dein Code mit dem Passkey gesichert');
-      add.onclick = async () => {
-        add.disabled = true;
-        try { await pkFinish(); syncMsg = tx('Mit Passkey gesichert. Auf einem neuen Gerät: „Dein Code“ → „Mit Passkey anmelden“.'); }
-        catch (e) { syncMsg = pkError(e) || tx('Abgebrochen – tippe nochmal auf „Jetzt bestätigen“.'); }
-        renderSync();
-      };
-    }
     pkFillList(s);
   }
   $('#syncNowBtn').onclick = async () => { $('#syncState').textContent = tx('Gleiche ab …'); await Sync.syncNow(); renderSync(); };
@@ -428,8 +347,8 @@ function renderSync() {
     try { await Sync.wipe(); syncMsg = tx('Code gelöscht. Die Daten auf diesem Gerät bleiben.'); } catch { syncMsg = tx('Keine Verbindung – versuch es gleich nochmal.'); }
     renderSync();
   });
-  // QR-Code mit Link: öffnet die Jukebox auf dem anderen Gerät mit eingetragenem Code
-  loadQr().then(qrcode => {
+  // QR-Code mit Link (nur wenn der Code gezeigt wird): öffnet die Jukebox auf dem anderen Gerät mit eingetragenem Code
+  if (codeShown) loadQr().then(qrcode => {
     const q = qrcode(0, 'M'); q.addData(SYNC_LINK(s.code)); q.make();
     if ($('#syncQr')) $('#syncQr').innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
   }).catch(() => { if ($('#syncQr')) $('#syncQr').remove(); });
@@ -492,7 +411,7 @@ function loadQr() {
 const openSheet = () => { $('#langSel').innerHTML = langOptions(); applyTheme(); renderProfile(); renderPrefs(); renderSync(); sheet.showModal(); };
 // Fenster „Dein Code“: vom Knopf unten auf der Startseite, aus den Einstellungen, aus der Bestenliste und über Links (#sync, #code=…)
 const syncSheet = $('#syncSheet');
-const openSync = () => { renderSync(); if (!syncSheet.open) syncSheet.showModal(); };
+const openSync = () => { if (!syncSheet.open) codeShown = false; renderSync(); if (!syncSheet.open) syncSheet.showModal(); };
 syncSheet.addEventListener('click', e => { if (e.target === syncSheet || e.target.closest('[data-close]')) syncSheet.close(); });
 $('#syncCta').onclick = openSync;
 $('#syncRow').onclick = openSync;

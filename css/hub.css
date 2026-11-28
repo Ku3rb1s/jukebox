@@ -301,3 +301,10 @@ header{max-width:860px}
 #pkAdd.pk-done .cell-ic{background:rgba(255,255,255,.12)!important}
 #pkAdd.pk-done .lbl{color:var(--muted)}
 .pk-del{background:rgba(255,255,255,.1)!important;color:var(--muted)!important;font-weight:600!important}
+.sync-code .code.masked{letter-spacing:.14em;color:var(--muted);-webkit-user-select:none;user-select:none}
+.sync-code #syncReveal{align-self:flex-start;margin-top:8px;background:rgba(255,255,255,.1);color:var(--text)}
+.pk-pending{flex-wrap:wrap}
+.pk-pending .grow{flex:1 1 calc(100% - 60px)}
+.pk-acts .sync-go{flex:none;width:auto;margin:0}
+.pk-acts{display:flex;gap:8px;flex-wrap:wrap;width:100%;padding-left:44px;box-sizing:border-box}
+@media (max-width:400px){.pk-acts{padding-left:0}}
