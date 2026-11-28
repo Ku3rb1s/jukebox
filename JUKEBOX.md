@@ -91,6 +91,19 @@ Regeln:
 - **Neues Spiel oder neue Wertung?** In `js/leaderboard.js` (`DAILY_RESULTS`, `HIGH`, `VIEWS`) und im Worker (`LB_GAMES`, `LB_HIGH`, `LB_STREAK`)
   eintragen, neue Tabellen in `worker/schema.sql`, dann `npx wrangler d1 execute jukebox-sync --remote --file schema.sql` und `npx wrangler deploy`.
 
+## Tages-Challenge als Datei (Needle Drop, Gold Record, Hit or Miss)
+
+- Die Fragen/Songs jedes Tages liegen fertig berechnet in `data/daily/JJJJ-MM-TT.json` des Spiels
+  (`{ v: 1, game, day, no, items: [...] }`). Website und iOS-App lesen dieselbe Datei → überall dieselbe Challenge.
+- `items` ist fertig aufgelöst (Deezer-ID, Titel, Interpret, Antworten in fester Reihenfolge, richtige Antwort,
+  Ersatzfragen) und sprachneutral (Art + Werte, übersetzt wird im Client mit `tx()`).
+- Erzeugt von `scripts/build-daily.js` des Spiels aus der vorhandenen Spiel-Logik (heute − 30 bis + 14 Tage),
+  täglich per GitHub-Workflow. Eine veröffentlichte Datei wird nie überschrieben (nur mit `--force`).
+  `--check` prüft, dass Datei und Spiel-Logik dasselbe ergeben.
+- Fehlt die Datei (oder offline), berechnet das Spiel die Challenge wie früher selbst.
+- **Auswahl-Logik der Tages-Challenge geändert?** Dann ändern sich nur noch nicht veröffentlichte Tage – das ist gewollt.
+  Den Aufbau von `items` nur abwärtskompatibel ändern, sonst `v` erhöhen (die App liest ihn mit).
+
 ## Adventskalender (1.–24. Dezember)
 
 - Karte auf der Startseite (25.11.–6.1.) und Kalender (`#advent`) in der Jukebox: `js/advent.js`. Gespielt wird in On Tour (`on-tour/?advent=7`, `On-Tour/js/advent.js`).
