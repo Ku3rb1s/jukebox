@@ -94,7 +94,7 @@ Regeln:
 ## iOS-App (`Jukebox-App`, Capacitor + native Spiele)
 
 - Die App lädt jukeboxquiz.de (Jukebox als Startseite). Spiele mit nativer Version öffnet sie selbst (SwiftUI) –
-  zurzeit **Older or Newer**, **Needle Drop**, **Musik-Bingo** und **Gold Record**. Details: `Jukebox-App/CLAUDE.md`.
+  zurzeit **Older or Newer**, **Needle Drop**, **Musik-Bingo**, **Gold Record** und **Hit or Miss**. Details: `Jukebox-App/CLAUDE.md`.
 - **Needle Drop:** Regeln (Leitern, Punkte, Tipps, Kategorien in `CATS`, Erfolge), Speicher-Aufbau (`mq.*`) oder Format der
   Tagesdatei geändert? Dann auch `Jukebox-App/ios/App/App/NeedleDrop/` anpassen (oder der Jukebox-Sitzung Bescheid geben).
 - Native Spiele nutzen **dieselben Daten** (data/*.json online) und **dieselben Speicher-Schlüssel** wie das Web-Spiel.
@@ -103,6 +103,8 @@ Regeln:
   keine feste Kopfzeile, ruhig statt verspielt. Bausteine und Regeln: `Jukebox-App/CLAUDE.md` (Gestaltungsregeln).
 - **Gold Record:** Regeln (Stufen, Joker, Fragearten), Speicher-Aufbau (`gr.*`), Songdateien/`DATA_V` oder Format der Tagesdatei geändert?
   Dann auch `Jukebox-App/ios/App/App/GoldRecord/` anpassen (oder der Jukebox-Sitzung Bescheid geben).
+- **Hit or Miss:** Regeln für Behauptungen (`js/claims.js`), Modi/Punkte (`js/game.js`), Speicher-Aufbau (`hom.*`) oder Format von
+  `tracks.json`/Tagesdatei geändert? Dann auch `Jukebox-App/ios/App/App/HitOrMiss/` anpassen (oder der Jukebox-Sitzung Bescheid geben).
 - **Older or Newer:** Regeln (DIFF, Auswahl, Zeitlimit), Speicher-Aufbau (`oon.best2.*`, `oon.stats`) oder Datenformat
   (`songs.json`) geändert? Dann auch `Jukebox-App/ios/App/App/OlderOrNewer/OONGame.swift` anpassen (oder der Jukebox-Sitzung
   Bescheid geben). Neue Texte: in `js/lang/*.js` übersetzen, dann in Jukebox-App `node scripts/build-strings.js`.
