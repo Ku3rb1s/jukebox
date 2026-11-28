@@ -98,6 +98,9 @@ Regeln:
 - **Needle Drop:** Regeln (Leitern, Punkte, Tipps, Kategorien in `CATS`, Erfolge), Speicher-Aufbau (`mq.*`) oder Format der
   Tagesdatei geändert? Dann auch `Jukebox-App/ios/App/App/NeedleDrop/` anpassen (oder der Jukebox-Sitzung Bescheid geben).
 - Native Spiele nutzen **dieselben Daten** (data/*.json online) und **dieselben Speicher-Schlüssel** wie das Web-Spiel.
+- **Alle nativen Spiele sehen gleich aus und bedienen sich gleich** (Wunsch des Nutzers, gilt für jedes neue Spiel):
+  Liquid Glass nur für Bedienelemente, Inhalt als ruhige Fläche, nur die gewählte Option farbig, Rückfragen in der Mitte,
+  keine feste Kopfzeile, ruhig statt verspielt. Bausteine und Regeln: `Jukebox-App/CLAUDE.md` (Gestaltungsregeln).
 - **Older or Newer:** Regeln (DIFF, Auswahl, Zeitlimit), Speicher-Aufbau (`oon.best2.*`, `oon.stats`) oder Datenformat
   (`songs.json`) geändert? Dann auch `Jukebox-App/ios/App/App/OlderOrNewer/OONGame.swift` anpassen (oder der Jukebox-Sitzung
   Bescheid geben). Neue Texte: in `js/lang/*.js` übersetzen, dann in Jukebox-App `node scripts/build-strings.js`.
