@@ -32,7 +32,7 @@ const Passkey = (() => {
     try { r = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), cache: 'no-store' }); }
     catch { throw fail('offline'); }
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw fail(j.error || 'offline');
+    if (!r.ok) throw fail(j.error || 'offline', { why: j.why });
     return j;
   }
   // Prüfsumme des Codes wie in shared/js/sync.js
@@ -62,9 +62,10 @@ const Passkey = (() => {
     catch (e) {
       if (e?.name === 'InvalidStateError') throw fail('exists');
       if (e?.name === 'NotAllowedError' || e?.name === 'AbortError') throw fail('cancelled');
-      throw fail('browser');
+      throw fail('browser', { detail: e?.name || 'Error' });
     }
   }
+  const safe = f => { try { return f() || undefined; } catch { return undefined; } };
   const forget = cred => { try { PublicKeyCredential.signalUnknownCredential?.({ rpId: rpId(), credentialId: cred }); } catch {} };
   const label = () => { const u = navigator.userAgent; return /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) || (/Mac/.test(u) && navigator.maxTouchPoints > 1) ? 'iPad' : /Android/.test(u) ? 'Android' : /Mac/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows' : 'Passkey'; };
   // Anmeldung mit PRF; cred = nur diesen Passkey erlauben
@@ -99,7 +100,7 @@ const Passkey = (() => {
       if (!ext || (!ext.enabled && !ext.results)) { forget(cred); throw fail('prf'); }
       const prf = ext.results?.first;
       const res = await post('register', { id, challenge, cred, clientData: b64u(c.response.clientDataJSON), authData: b64u(c.response.getAuthenticatorData()),
-        publicKey: b64(c.response.getPublicKey()), alg: c.response.getPublicKeyAlgorithm(), label: label(), ...(prf ? { wrapped: await wrap(prf, code, cred) } : {}) });
+        publicKey: safe(() => b64(c.response.getPublicKey())), label: label(), ...(prf ? { wrapped: await wrap(prf, code, cred) } : {}) });   // Schlüssel liest der Server selbst aus authData (RSA: von hier)
       return { pending: !!res.pending, cred };
     },
     /** Ausstehenden Passkey fertig verbinden (zweiter Tipp) */
@@ -132,7 +133,8 @@ const Passkey = (() => {
         case 'limit': return tx('Gerade zu viele Versuche – bitte später nochmal.');
         case 'max': return tx('Mehr Passkeys gehen für diesen Code nicht.');
         case 'format': case 'signature': case 'challenge': case 'client': case 'key': case 'wrapped': case 'browser':
-          return tx('Das hat nicht geklappt – versuch es nochmal oder nutze den Code.');
+          // kurzer Grund dahinter (z. B. „client · rp“), damit man den Fehler melden kann
+          return tx('Das hat nicht geklappt – versuch es nochmal oder nutze den Code.') + ` (${[e.code, e.why || e.detail].filter(Boolean).join(' · ')})`;
         default: return tx('Keine Verbindung – versuch es gleich nochmal.');
       }
     },

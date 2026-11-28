@@ -28,7 +28,10 @@ const rpHash = crypto.createHash('sha256').update('localhost').digest();
 const credBytes = crypto.randomBytes(32), cred = b64u(credBytes);
 const authGet = (flags = 5) => Buffer.concat([rpHash, Buffer.from([flags]), Buffer.from([0, 0, 0, 1])]);
 // beim Anlegen: + AAGUID (16) + Länge der Kennung (2) + Kennung (+ öffentlicher Schlüssel als COSE – wird hier nicht gelesen)
-const authCreate = (credId = credBytes, flags = 0x45) => Buffer.concat([authGet(flags), Buffer.alloc(16), Buffer.from([credId.length >> 8, credId.length & 255]), credId, Buffer.from([0xa0])]);
+const jwk = publicKey.export({ format: 'jwk' });
+// COSE-Schlüssel (EC2, ES256, P-256) als CBOR: {1: 2, 3: -7, -1: 1, -2: x, -3: y}
+const cose = Buffer.concat([Buffer.from([0xa5, 0x01, 0x02, 0x03, 0x26, 0x20, 0x01, 0x21, 0x58, 0x20]), Buffer.from(jwk.x, 'base64url'), Buffer.from([0x22, 0x58, 0x20]), Buffer.from(jwk.y, 'base64url')]);
+const authCreate = (credId = credBytes, flags = 0x45) => Buffer.concat([authGet(flags), Buffer.alloc(16), Buffer.from([credId.length >> 8, credId.length & 255]), credId, cose]);
 const clientData = (type, ch, origin = ORIGIN) => Buffer.from(JSON.stringify({ type, challenge: b64u(Buffer.from(ch)), origin }));
 const wrapped = Buffer.concat([Buffer.from([1]), crypto.randomBytes(40)]).toString('base64');
 const options = async (body = {}) => (await post('/pk/options', body))[1].challenge;
@@ -36,6 +39,11 @@ const register = async (over = {}) => {
   const ch = over.challenge || await options({ id });
   return post('/pk/register', { id, challenge: ch, cred, clientData: b64u(clientData('webauthn.create', ch)), authData: b64u(authCreate()),
     publicKey: spki, alg: -7, label: 'Test', ...over });
+};
+// Schlüssel kommt aus authenticatorData – auch ohne getPublicKey() des Browsers (Safari) und nicht vom Browser austauschbar
+const keyCheck = async () => {
+  const other = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' }).publicKey.export({ type: 'spki', format: 'der' }).toString('base64');
+  return register({ publicKey: other });
 };
 const assertion = (ch, { flags = 5, key = privateKey, origin = ORIGIN } = {}) => {
   const ad = authGet(flags), cd = clientData('webauthn.get', ch, origin);
@@ -52,12 +60,14 @@ const ch0 = await options({});   // nicht an den Code gebunden
 [s, o] = await register({ challenge: ch0 });
 check('Anlegen mit Herausforderung ohne Code abgelehnt', s === 400, o);
 const chReg = await options({ id });
-[s, o] = await register({ challenge: chReg });
-check('Anlegen ohne Geheimnis → ausstehend', s === 200 && o.pending === true, o);
+[s, o] = await register({ challenge: chReg, publicKey: undefined });
+check('Anlegen ohne Geheimnis und ohne Schlüssel vom Browser → ausstehend', s === 200 && o.pending === true, o);
 [s, o] = await register({ challenge: chReg });
 check('Herausforderung nur einmal verwendbar', s === 400 && o.error === 'challenge', o);
-[s, o] = await register();
-check('Gleichen Passkey nicht doppelt anlegen', s === 409 && o.error === 'exists', o);
+[s, o] = await keyCheck();
+check('Gleichen Passkey nicht doppelt anlegen (auch mit anderem Schlüssel)', s === 409 && o.error === 'exists', o);
+[s, o] = await register({ authData: b64u(Buffer.concat([authGet(0x45), Buffer.alloc(16), Buffer.from([0, 32]), credBytes, Buffer.from([0xa0])])) });
+check('Anlegen ohne gültigen Schlüssel abgelehnt (Grund cose)', s === 400 && o.why === 'cose', o);
 
 [s, o] = await post('/pk/list', { id });
 check('Liste zeigt ausstehenden Passkey', s === 200 && o.keys.length === 1 && o.keys[0].pending === true, o);

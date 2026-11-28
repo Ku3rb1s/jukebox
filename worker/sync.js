@@ -225,23 +225,60 @@ async function useChallenge(env, ch, id = '') {
   const row = await env.DB.prepare('DELETE FROM pk_challenge WHERE c = ? AND exp > ? RETURNING c').bind(r, Date.now()).first();
   return !!row;
 }
-// Gemeinsame Prüfung von clientDataJSON und authenticatorData (Art, Herausforderung, Herkunft, Domain, Nutzer bestätigt)
+// Gemeinsame Prüfung von clientDataJSON und authenticatorData (Art, Herausforderung, Herkunft, Domain, Nutzer bestätigt).
+// → { clientData, authData } oder { why } (Grund der Ablehnung – wird gezählt, damit Probleme einzelner Browser auffallen)
 async function checkClient(clientDataB64, authDataB64, type, challenge, origin) {
   let cd, clientData, authData;
-  try { clientData = unb64u(clientDataB64); authData = unb64u(authDataB64); cd = JSON.parse(new TextDecoder().decode(clientData)); } catch { return null; }
-  if (cd.type !== type || cd.challenge !== b64u(enc8(challenge)) || !ALLOWED.includes(cd.origin) || cd.origin !== origin) return null;
-  if (authData.length < 37) return null;
+  try { clientData = unb64u(clientDataB64); authData = unb64u(authDataB64); cd = JSON.parse(new TextDecoder().decode(clientData)); } catch { return { why: 'parse' }; }
+  if (cd.type !== type) return { why: 'type' };
+  if (cd.challenge !== b64u(enc8(challenge))) return { why: 'challenge' };
+  if (!ALLOWED.includes(cd.origin) || cd.origin !== origin) return { why: 'origin' };
+  if (authData.length < 37) return { why: 'short' };
   const rpHash = new Uint8Array(await crypto.subtle.digest('SHA-256', enc8(new URL(cd.origin).hostname.replace(/^www\./, ''))));
-  if (!eqBytes(authData.subarray(0, 32), rpHash)) return null;
+  if (!eqBytes(authData.subarray(0, 32), rpHash)) return { why: 'rp' };
   const flags = authData[32];
-  if (!(flags & 1) || !(flags & 4)) return null;              // UP (anwesend) und UV (Face ID / Fingerabdruck / Gerätecode)
+  if (!(flags & 1)) return { why: 'up' };                       // UP: Nutzer anwesend
+  if (!(flags & 4)) return { why: 'uv' };                       // UV: Face ID / Fingerabdruck / Gerätecode
   return { clientData, authData };
 }
-// Beim Anlegen: Die Passkey-Kennung steht in authenticatorData (attested credential data) und muss zur gemeldeten passen
-function credInAuthData(authData, cred) {
-  if (!(authData[32] & 0x40) || authData.length < 55) return false;
+// Kleiner CBOR-Leser (nur was ein COSE-Schlüssel braucht)
+function cbor(u8, pos = 0) {
+  const head = () => {
+    const b = u8[pos++], mt = b >> 5, ai = b & 31;
+    let v = ai;
+    if (ai === 24) v = u8[pos++];
+    else if (ai === 25) { v = (u8[pos] << 8) | u8[pos + 1]; pos += 2; }
+    else if (ai === 26) { v = ((u8[pos] << 24) >>> 0) + (u8[pos + 1] << 16) + (u8[pos + 2] << 8) + u8[pos + 3]; pos += 4; }
+    else if (ai > 26) throw new Error('cbor');
+    return [mt, v];
+  };
+  const item = () => {
+    const [mt, v] = head();
+    if (mt === 0) return v;
+    if (mt === 1) return -1 - v;
+    if (mt === 2) { const out = u8.slice(pos, pos + v); pos += v; return out; }
+    if (mt === 3) { const out = new TextDecoder().decode(u8.slice(pos, pos + v)); pos += v; return out; }
+    if (mt === 4) { const a = []; for (let i = 0; i < v; i++) a.push(item()); return a; }
+    if (mt === 5) { const m = new Map(); for (let i = 0; i < v; i++) { const k = item(); m.set(k, item()); } return m; }
+    throw new Error('cbor');
+  };
+  return item();
+}
+// Beim Anlegen: Kennung und öffentlicher Schlüssel stehen in authenticatorData (attested credential data).
+// Die Kennung muss zur gemeldeten passen; den Schlüssel (P-256) nehmen wir von dort statt vom Browser (getPublicKey fehlt manchmal).
+const P256_SPKI = [0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03, 0x42, 0x00, 0x04];
+function attested(authData, cred) {
+  if (!(authData[32] & 0x40) || authData.length < 55) return { why: 'no-at' };
   const len = (authData[53] << 8) | authData[54];
-  return authData.length >= 55 + len && b64u(authData.subarray(55, 55 + len)) === cred;
+  if (authData.length < 55 + len) return { why: 'at-short' };
+  if (b64u(authData.subarray(55, 55 + len)) !== cred) return { why: 'cred' };
+  try {
+    const k = cbor(authData, 55 + len);
+    if (k.get(1) === 2 && k.get(3) === -7 && k.get(-1) === 1 && k.get(-2)?.length === 32 && k.get(-3)?.length === 32)
+      return { alg: -7, publicKey: btoa(String.fromCharCode(...P256_SPKI, ...k.get(-2), ...k.get(-3))) };
+    if (k.get(1) === 3 && k.get(3) === -257) return { alg: -257 };   // RSA (Windows Hello): Schlüssel als SPKI vom Browser
+    return { why: 'cose' };
+  } catch { return { why: 'cbor' }; }
 }
 // ECDSA-Signaturen kommen als DER, WebCrypto erwartet r||s (je 32 Byte)
 function derToRaw(der) {
@@ -268,13 +305,14 @@ async function verifySig(row, authData, clientData, sigB64) {
 async function checkAssertion(env, body, origin, challengeId, ip) {
   const fails = 'pkf|' + ip;
   if (await count(env, fails) >= PK_FAILS_PER_DAY) return { error: 'limit', status: 429 };
-  const fail = async (error, status) => { await bump(env, fails); return { error, status }; };
+  const fail = async (error, status, why = error) => { await bump(env, fails); await bump(env, `pkw|get-${why}|${ip.slice(0, 8)}`); return { error, status, why }; };
   const cred = typeof body.cred === 'string' && /^[A-Za-z0-9_-]{16,700}$/.test(body.cred) ? body.cred : null;
   if (!cred || !await useChallenge(env, body.challenge, challengeId)) return fail('challenge', 400);
   const row = await env.DB.prepare('SELECT * FROM passkey WHERE cred = ?').bind(cred).first();
   if (!row) return fail('unknown', 404);
   const c = await checkClient(body.clientData, body.authData, 'webauthn.get', body.challenge, origin);
-  if (!c || !await verifySig(row, c.authData, c.clientData, body.signature)) return fail('signature', 401);
+  if (c.why) return fail('client', 401, c.why);
+  if (!await verifySig(row, c.authData, c.clientData, body.signature)) return fail('signature', 401);
   return { row };
 }
 // Ablauf: options → register (Passkey angelegt; „wrapped“ gleich mit, wenn der Browser das Geheimnis schon beim Anlegen liefert)
@@ -291,18 +329,23 @@ async function passkey(action, body, env, json, origin, request) {
   }
   if (action === 'register') {
     if (!id || !cred || !await known()) return json({ error: 'unknown' }, 404);
-    if (!await useChallenge(env, body.challenge, id)) return json({ error: 'challenge' }, 400);
+    // Abgelehnt: Grund zählen (Tabelle limits, ohne Personenbezug), damit Probleme einzelner Browser auffallen
+    const reject = async (error, why) => { await bump(env, `pkw|reg-${why}|${ip.slice(0, 8)}`); return json({ error, why }, 400); };
+    if (!await useChallenge(env, body.challenge, id)) return reject('challenge', 'challenge');
     const c = await checkClient(body.clientData, body.authData, 'webauthn.create', body.challenge, origin);
-    if (!c || !credInAuthData(c.authData, cred)) return json({ error: 'client' }, 400);
-    if (![-7, -257].includes(body.alg) || typeof body.publicKey !== 'string' || !/^[A-Za-z0-9+/=]{40,800}$/.test(body.publicKey)) return json({ error: 'key' }, 400);
+    if (c.why) return reject('client', c.why);
+    const at = attested(c.authData, cred);
+    if (at.why) return reject('client', at.why);
+    const alg = at.alg, publicKey = at.publicKey || body.publicKey;
+    if (typeof publicKey !== 'string' || !/^[A-Za-z0-9+/=]{40,800}$/.test(publicKey)) return reject('key', 'key');
     const wrapped = body.wrapped == null ? '' : body.wrapped;
-    if (wrapped && (typeof wrapped !== 'string' || !WRAPPED_RE.test(wrapped))) return json({ error: 'wrapped' }, 400);
+    if (wrapped && (typeof wrapped !== 'string' || !WRAPPED_RE.test(wrapped))) return reject('wrapped', 'wrapped');
     const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM passkey WHERE id = ?').bind(id).first();
     if ((n?.n || 0) >= PK_MAX) return json({ error: 'max' }, 409);
     const label = String(body.label || '').replace(/[\u0000-\u001f<>]/g, '').slice(0, 40) || 'Passkey';
     const now = Date.now();
     const res = await env.DB.prepare('INSERT INTO passkey (cred, id, public_key, alg, wrapped, label, created, used) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(cred) DO NOTHING')
-      .bind(cred, id, body.publicKey, body.alg, wrapped, label, now, now).run();
+      .bind(cred, id, publicKey, alg, wrapped, label, now, now).run();
     if (res.meta.changes !== 1) return json({ error: 'exists' }, 409);
     return json({ ok: true, pending: !wrapped });
   }
@@ -310,7 +353,7 @@ async function passkey(action, body, env, json, origin, request) {
     if (!id || !await known()) return json({ error: 'unknown' }, 404);
     if (typeof body.wrapped !== 'string' || !WRAPPED_RE.test(body.wrapped)) return json({ error: 'wrapped' }, 400);
     const a = await checkAssertion(env, body, origin, id, ip);
-    if (a.error) return json({ error: a.error }, a.status);
+    if (a.error) return json({ error: a.error, why: a.why }, a.status);
     if (a.row.id !== id) return json({ error: 'unknown' }, 404);
     if (a.row.wrapped) return json({ ok: true });                // schon fertig (z. B. doppelt getippt)
     await env.DB.prepare("UPDATE passkey SET wrapped = ?, used = ? WHERE cred = ? AND wrapped = ''").bind(body.wrapped, Date.now(), a.row.cred).run();
@@ -318,7 +361,7 @@ async function passkey(action, body, env, json, origin, request) {
   }
   if (action === 'login') {
     const a = await checkAssertion(env, body, origin, '', ip);
-    if (a.error) return json({ error: a.error }, a.status);
+    if (a.error) return json({ error: a.error, why: a.why }, a.status);
     if (!a.row.wrapped) return json({ error: 'pending' }, 409);
     if (!await env.DB.prepare('SELECT 1 FROM sync WHERE id = ?').bind(a.row.id).first()) return json({ error: 'gone' }, 410);
     await env.DB.prepare('UPDATE passkey SET used = ? WHERE cred = ?').bind(Date.now(), a.row.cred).run();
