@@ -100,7 +100,7 @@ Regeln:
 ## iOS-App (`Jukebox-App`, Capacitor + native Spiele)
 
 - Die App lädt jukeboxquiz.de (Jukebox als Startseite). Spiele mit nativer Version öffnet sie selbst (SwiftUI) –
-  zurzeit **Older or Newer**, **Needle Drop**, **Musik-Bingo**, **Gold Record** und **Hit or Miss**. Details: `Jukebox-App/CLAUDE.md`.
+  zurzeit **Older or Newer**, **Needle Drop**, **Musik-Bingo**, **Gold Record**, **Hit or Miss** und **On Tour** (ohne Adventskalender). Details: `Jukebox-App/CLAUDE.md`.
 - **Needle Drop:** Regeln (Leitern, Punkte, Tipps, Kategorien in `CATS`, Erfolge), Speicher-Aufbau (`mq.*`) oder Format der
   Tagesdatei geändert? Dann auch `Jukebox-App/ios/App/App/NeedleDrop/` anpassen (oder der Jukebox-Sitzung Bescheid geben).
 - Native Spiele nutzen **dieselben Daten** (data/*.json online) und **dieselben Speicher-Schlüssel** wie das Web-Spiel.
@@ -111,6 +111,9 @@ Regeln:
   Dann auch `Jukebox-App/ios/App/App/GoldRecord/` anpassen (oder der Jukebox-Sitzung Bescheid geben).
 - **Hit or Miss:** Regeln für Behauptungen (`js/claims.js`), Modi/Punkte (`js/game.js`), Speicher-Aufbau (`hom.*`) oder Format von
   `tracks.json`/Tagesdatei geändert? Dann auch `Jukebox-App/ios/App/App/HitOrMiss/` anpassen (oder der Jukebox-Sitzung Bescheid geben).
+- **On Tour:** Regeln (Sterne, Auswahl der Aufgaben, Freischalten), Aufgabenarten, Speicher-Aufbau (`ot.*`) oder Format von `data/tour.json`
+  geändert? Dann auch `Jukebox-App/ios/App/App/OnTour/` anpassen (oder der Jukebox-Sitzung Bescheid geben). Neue Stationen in `js/stations.js` liest die App selbst
+  (Zeilenformat `{ id: '…', city: '…', year: …, theme: '…', icon: '…', y: [a, b], …, game: '…'` beibehalten).
 - **Older or Newer:** Regeln (DIFF, Auswahl, Zeitlimit), Speicher-Aufbau (`oon.best2.*`, `oon.stats`) oder Datenformat
   (`songs.json`) geändert? Dann auch `Jukebox-App/ios/App/App/OlderOrNewer/OONGame.swift` anpassen (oder der Jukebox-Sitzung
   Bescheid geben). Neue Texte: in `js/lang/*.js` übersetzen, dann in Jukebox-App `node scripts/build-strings.js`.
