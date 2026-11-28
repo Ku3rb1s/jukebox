@@ -4,7 +4,7 @@
   flag: '🇪🇸',
   dict: {
     "Bester Highscore (alle Kategorien)": "Mejor puntuación (todas las categorías)",
-    "Dein höchster Rekord aus allen Kategorien und Stufen – mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Tu récord más alto de todas las categorías y niveles – con 10 canciones, escala «Clásica», respuesta «Buscar» y modo «Estándar».",
+    "Dein höchster Rekord aus allen Kategorien und Stufen – mit 5 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Tu récord más alto de todas las categorías y niveles – con 5 canciones, escala «Clásica», respuesta «Buscar» y modo «Estándar».",
     "70er": "Años 70",
     "80er": "Años 80",
     "90er": "Años 90",
@@ -21,7 +21,7 @@
     "Film & Serien": "Cine y series",
     "Eurovision": "Eurovisión",
     "Latin": "Latino",
-    "Gewertet wird dein Rekord mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Cuenta tu récord con 10 canciones, escala «Clásica», respuesta «Buscar» y modo «Estándar».",
+    "Gewertet wird dein Rekord mit 5 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Cuenta tu récord con 5 canciones, escala «Clásica», respuesta «Buscar» y modo «Estándar».",
     "Heute wurden über diesen Internetanschluss schon 3 Codes erstellt. Morgen geht es wieder – oder verbinde dich mit einem vorhandenen Code.": "Hoy ya se han creado 3 códigos desde esta conexión a internet. Vuelve a intentarlo mañana o conéctate con un código existente.",
     "noch nicht abgeglichen": "aún sin sincronizar",
     "gerade eben abgeglichen": "sincronizado ahora mismo",

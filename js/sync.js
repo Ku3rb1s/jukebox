@@ -337,7 +337,7 @@ const Sync = (() => {
       out.push({ game: 'on-tour', cat: 'main', score: otMain }, { game: 'on-tour', cat: 'all', score: otMain + sum(ls.get('ot.astars', null)) });
       for (const m of ['60s', 'sd']) for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'hit-or-miss', cat: `${m}.${d}`, score: ls.get(`hom.best.${m}.${d}`, 0) });   // Punkte (60 s) bzw. richtig in Folge
       // Needle Drop: Rekord je Kategorie und Stufe – nur vergleichbare Regeln (10 Songs, Klassisch, Suchen, Standard)
-      for (const c of ND_CATS) for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'needle-drop', cat: `${c}.${d}`, score: ls.get(`mq.best2.${c}.${d}.10.classic.search`, 0) });
+      for (const c of ND_CATS) for (const d of ['easy', 'normal', 'hard']) out.push({ game: 'needle-drop', cat: `${c}.${d}.5`, score: ls.get(`mq.best2.${c}.${d}.5.classic.search`, 0) });   // 5 Songs (seit 28.11.2026; Bestenliste neu, alte 10-Song-Kategorien ohne „.5“)
       return out.filter(x => Number.isInteger(x.score) && x.score > 0);
     },
     // Laufende Serie der Tages-Challenge

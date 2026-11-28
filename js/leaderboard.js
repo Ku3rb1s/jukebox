@@ -59,13 +59,13 @@ const Board = (() => {
         rnb: 'R&B', rock: 'Rock', edm: 'EDM', latin: 'Latin', derap: 'Deutschrap', depop: 'Deutsch-Pop', schlager: 'Schlager & Party',
         ndw: 'Neue Deutsche Welle', now: 'Aktuelle Hits', billion: 'Billionärs Club', tiktok: 'TikTok-Hits', film: 'Film & Serien', disney: 'Disney', esc: 'Eurovision' }],
         ['diff', { easy: 'Leicht', normal: 'Normal', hard: 'Schwer' }]],
-      cat: c => c.ndcat === 'best' ? 'best' : `${c.ndcat}.${c.diff}`, def: { ndcat: 'best' },
+      cat: c => c.ndcat === 'best' ? 'best' : `${c.ndcat}.${c.diff}.5`, def: { ndcat: 'best' },   // „.5“ = 5 Songs (Bestenliste seit 28.11.2026 neu)
       // „Bester Highscore“: Stufe spielt keine Rolle (Leiste ausblenden), dafür steht dabei, wo er geholt wurde
       only: (k, c) => k !== 'diff' || c.ndcat !== 'best',
       where: cat => { const [c, d] = cat.split('.'), o = Object.fromEntries(HIGH['needle-drop'].opts); return o.ndcat[c] ? tx(o.ndcat[c]) + ' · ' + tx(o.diff[d] || d) : ''; },
-      hintFor: c => c.ndcat === 'best' ? 'Dein höchster Rekord aus allen Kategorien und Stufen – mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.' : null,
+      hintFor: c => c.ndcat === 'best' ? 'Dein höchster Rekord aus allen Kategorien und Stufen – mit 5 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.' : null,
       fmt: n => n.toLocaleString(LANG) + ' ' + tx('Pkt.'),
-      hint: 'Gewertet wird dein Rekord mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.',
+      hint: 'Gewertet wird dein Rekord mit 5 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.',
     },
     'hit-or-miss': {
       opts: [['diff', { easy: 'Leicht', normal: 'Normal', hard: 'Schwer' }], ['hmode', { '60s': '60 Sekunden', sd: 'Sudden Death' }]],

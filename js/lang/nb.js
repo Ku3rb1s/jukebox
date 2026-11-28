@@ -4,7 +4,7 @@
   flag: '🇳🇴',
   dict: {
     "Bester Highscore (alle Kategorien)": "Beste poengsum (alle kategorier)",
-    "Dein höchster Rekord aus allen Kategorien und Stufen – mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Din høyeste rekord på tvers av alle kategorier og nivåer – med 10 sanger, stigen «Klassisk», svar «Søk» og modus «Standard».",
+    "Dein höchster Rekord aus allen Kategorien und Stufen – mit 5 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Din høyeste rekord på tvers av alle kategorier og nivåer – med 5 sanger, stigen «Klassisk», svar «Søk» og modus «Standard».",
     "70er": "70-tallet",
     "80er": "80-tallet",
     "90er": "90-tallet",
@@ -21,7 +21,7 @@
     "Film & Serien": "Film og serier",
     "Eurovision": "Eurovision",
     "Latin": "Latin",
-    "Gewertet wird dein Rekord mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Rekorden din teller med 10 sanger, stigen «Klassisk», svar «Søk» og modus «Standard».",
+    "Gewertet wird dein Rekord mit 5 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Rekorden din teller med 5 sanger, stigen «Klassisk», svar «Søk» og modus «Standard».",
     "Heute wurden über diesen Internetanschluss schon 3 Codes erstellt. Morgen geht es wieder – oder verbinde dich mit einem vorhandenen Code.": "Det er allerede laget 3 koder fra denne internettilkoblingen i dag. Prøv igjen i morgen – eller koble til med en eksisterende kode.",
     "noch nicht abgeglichen": "ikke synkronisert ennå",
     "gerade eben abgeglichen": "synkronisert akkurat nå",

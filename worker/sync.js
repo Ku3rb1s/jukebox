@@ -48,7 +48,8 @@ const LB_HIGH = {
   'hit-or-miss': { cat: /^(60s|sd)\.(easy|normal|hard)$/, ok: v => v >= 1 && v <= 8000 },                                 // Punkte (60 s) bzw. richtig in Folge (Sudden Death)
   'on-tour': { cat: /^(main|all)$/, ok: v => v >= 1 && v <= 3000 },   // Sterne: Haupt-Tour mit Bonus-Stationen bzw. alle Touren zusammen (mit Luft nach oben)
   // Needle Drop: Punkte je Kategorie und Stufe (10 Songs × höchstens 600) – Kategorien wie ND_CATS in shared/js/sync.js
-  'needle-drop': { cat: /^(70s|80s|90s|00s|10s|20s|pop|rap|rnb|rock|edm|latin|derap|depop|schlager|ndw|now|billion|tiktok|film|disney|esc)\.(easy|normal|hard)$/, ok: v => v >= 1 && v <= 6000, best: true },
+  // 5 Songs × höchstens 600 (seit 28.11.2026 – vorher 10 Songs ohne „.5“; alte Einträge bleiben in der Tabelle, werden aber nicht mehr gezeigt)
+  'needle-drop': { cat: /^(70s|80s|90s|00s|10s|20s|pop|rap|rnb|rock|edm|latin|derap|depop|schlager|ndw|now|billion|tiktok|film|disney|esc)\.(easy|normal|hard)\.5$/, ok: v => v >= 1 && v <= 3000, best: '%.5' },
 };
 // Serien der Tages-Challenge: aktuelle Serie in Tagen. Sie kann auch sinken (verpasster Tag), darum immer übernommen.
 // Gezeigt wird sie nur, wenn sie zuletzt gestern oder heute gemeldet wurde – sonst ist sie wahrscheinlich gerissen.
@@ -147,10 +148,10 @@ async function leaderboard(action, body, env, json) {
     if (!H || typeof body.cat !== 'string' || !(best || H.cat.test(body.cat))) return json({ error: 'game' }, 400);
     const src = best
       ? 'SELECT id, name, emoji, score, at, cat FROM (SELECT h.id, p.name, p.emoji, h.score, h.at, h.cat, ROW_NUMBER() OVER (PARTITION BY h.id ORDER BY h.score DESC, h.at ASC) AS n'
-        + ' FROM lb_high h JOIN lb_player p ON p.id = h.id WHERE h.game = ?1) WHERE n = 1'
+        + ' FROM lb_high h JOIN lb_player p ON p.id = h.id WHERE h.game = ?1 AND h.cat LIKE ?2) WHERE n = 1'   // best = Muster der gültigen Kategorien
       : 'SELECT h.id, p.name, p.emoji, h.score, h.at, NULL AS cat FROM lb_high h JOIN lb_player p ON p.id = h.id WHERE h.game = ?1 AND h.cat = ?2';
     const { results } = await env.DB.prepare('WITH r AS (' + src + ')'
-      + ' SELECT id, name, emoji, score, at, cat, (SELECT COUNT(*) FROM r r2 WHERE r2.score > r.score) + 1 AS rank FROM r ORDER BY score DESC, at ASC').bind(...(best ? [body.game] : [body.game, body.cat])).all();
+      + ' SELECT id, name, emoji, score, at, cat, (SELECT COUNT(*) FROM r r2 WHERE r2.score > r.score) + 1 AS rank FROM r ORDER BY score DESC, at ASC').bind(...(best ? [body.game, typeof H.best === 'string' ? H.best : '%'] : [body.game, body.cat])).all();
     const pub = x => ({ rank: x.rank, name: x.name, emoji: x.emoji, score: x.score, ...(x.cat ? { cat: x.cat } : {}), me: !!id && x.id === id });
     const mine = id ? results.findIndex(x => x.id === id) : -1;
     return json({ joined: await player(), n: results.length, top: results.slice(0, LB_TOP).map(pub), me: mine >= LB_TOP ? pub(results[mine]) : null });

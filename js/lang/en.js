@@ -4,7 +4,7 @@
   flag: '🇬🇧',
   dict: {
     "Bester Highscore (alle Kategorien)": "Best high score (all categories)",
-    "Dein höchster Rekord aus allen Kategorien und Stufen – mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Your highest record across all categories and levels – with 10 songs, “Classic” ladder, “Search” answers and “Standard” mode.",
+    "Dein höchster Rekord aus allen Kategorien und Stufen – mit 5 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Your highest record across all categories and levels – with 5 songs, “Classic” ladder, “Search” answers and “Standard” mode.",
     "70er": "70s",
     "80er": "80s",
     "90er": "90s",
@@ -21,7 +21,7 @@
     "Film & Serien": "Film & TV",
     "Eurovision": "Eurovision",
     "Latin": "Latin",
-    "Gewertet wird dein Rekord mit 10 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Your record counts with 10 songs, “Classic” ladder, “Search” answers and “Standard” mode.",
+    "Gewertet wird dein Rekord mit 5 Songs, Leiter „Klassisch“, Antwort „Suchen“ und Modus „Standard“.": "Your record counts with 5 songs, “Classic” ladder, “Search” answers and “Standard” mode.",
     "Heute wurden über diesen Internetanschluss schon 3 Codes erstellt. Morgen geht es wieder – oder verbinde dich mit einem vorhandenen Code.": "Three codes have already been created from this internet connection today. Try again tomorrow – or connect with an existing code.",
     "noch nicht abgeglichen": "not synced yet",
     "gerade eben abgeglichen": "synced just now",
