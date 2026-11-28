@@ -18,6 +18,14 @@
 //   POST /lb/streak ← { id, scores: [{ game, score }] }            aktuelle Serie der Tages-Challenge
 //   POST /lb/list   ← { id?, game, kind?, cat?, range? }  kind 'high' (cat) oder 'streak', sonst Tages-Challenge: range 'day' (heute) oder 'week' (seit Montag) → { joined, n, top, me }
 //
+// Passkeys (freiwillig, Website): ein Passkey schließt den Code auf, ohne dass der Server ihn sieht.
+// Der Browser verschlüsselt den Code mit dem PRF-Geheimnis des Passkeys; hier liegen nur dieser Block und der öffentliche Schlüssel.
+//   POST /pk/options  ← { id? }                    → { challenge }  (signiert, 5 Minuten gültig, bei id an den Code gebunden)
+//   POST /pk/register ← { id, challenge, cred, clientData, authData, publicKey, alg, wrapped, label }  Passkey zum Code anlegen
+//   POST /pk/login    ← { challenge, cred, clientData, authData, signature } → { wrapped }  Anmeldung prüfen, verschlüsselten Code geben
+//   POST /pk/list     ← { id }                     → { keys: [{ cred, label, created, used }] }
+//   POST /pk/delete   ← { id, cred }               Passkey entfernen
+//
 // Aufräumen (täglicher Zeitplan):
 //   - Codes, die 6 Monate nicht benutzt wurden
 //   - Codes, die nach dem Erstellen nie wieder abgeglichen wurden (rev 1), nach 14 Tagen
@@ -177,6 +185,102 @@ async function ipKey(request, env) {
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
 }
 
+/* ---------- Passkeys (WebAuthn, ohne Bibliothek: Prüfen mit WebCrypto) ---------- */
+const PK_MAX = 10;                            // Passkeys pro Code
+const PK_TTL = 5 * 60e3;                      // Gültigkeit einer Herausforderung
+const enc8 = s => new TextEncoder().encode(s);
+const b64u = u8 => btoa(String.fromCharCode(...u8)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64u = s => { s = String(s || '').replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return Uint8Array.from(atob(s), c => c.charCodeAt(0)); };
+const eqBytes = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+async function hmac(env, msg) {
+  const k = await crypto.subtle.importKey('raw', enc8('pk|' + (env.SALT || 'jukebox')), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', k, enc8(msg)));
+}
+// Herausforderung ohne Speicher: Zufall + Zeit + (optional) Code-Prüfsumme, mit HMAC signiert
+async function newChallenge(env, id = '') {
+  const r = b64u(crypto.getRandomValues(new Uint8Array(18))), t = Date.now().toString(36);
+  return `${r}.${t}.${b64u(await hmac(env, `${r}.${t}.${id}`))}`;
+}
+async function checkChallenge(env, ch, id = '') {
+  const [r, t, sig] = String(ch || '').split('.');
+  if (!r || !t || !sig || Date.now() - parseInt(t, 36) > PK_TTL) return false;
+  return b64u(await hmac(env, `${r}.${t}.${id}`)) === sig;
+}
+// Gemeinsame Prüfung von clientDataJSON und authenticatorData (Art, Herausforderung, Herkunft, Domain, Nutzer bestätigt)
+async function checkClient(clientDataB64, authDataB64, type, challenge, origin) {
+  let cd; const clientData = unb64u(clientDataB64), authData = unb64u(authDataB64);
+  try { cd = JSON.parse(new TextDecoder().decode(clientData)); } catch { return null; }
+  if (cd.type !== type || cd.challenge !== b64u(enc8(challenge)) || !ALLOWED.includes(cd.origin) || cd.origin !== origin) return null;
+  if (authData.length < 37) return null;
+  const rpHash = new Uint8Array(await crypto.subtle.digest('SHA-256', enc8(new URL(cd.origin).hostname.replace(/^www\./, ''))));
+  if (!eqBytes(authData.subarray(0, 32), rpHash)) return null;
+  const flags = authData[32];
+  if (!(flags & 1) || !(flags & 4)) return null;              // UP (anwesend) und UV (Face ID / Fingerabdruck / Gerätecode)
+  return { clientData, authData };
+}
+// ECDSA-Signaturen kommen als DER, WebCrypto erwartet r||s (je 32 Byte)
+function derToRaw(der) {
+  let i = 2; if (der[1] & 0x80) i += der[1] & 0x7f;
+  const read = () => { i++; let len = der[i++]; let v = der.subarray(i, i + len); i += len; while (v.length > 32 && v[0] === 0) v = v.subarray(1); const out = new Uint8Array(32); out.set(v, 32 - v.length); return out; };
+  const r = read(), s = read(), raw = new Uint8Array(64); raw.set(r); raw.set(s, 32); return raw;
+}
+async function verifySig(row, authData, clientData, sigB64) {
+  const data = new Uint8Array([...authData, ...new Uint8Array(await crypto.subtle.digest('SHA-256', clientData))]);
+  const spki = unb64u(row.public_key), sig = unb64u(sigB64);
+  try {
+    if (row.alg === -7) {
+      const k = await crypto.subtle.importKey('spki', spki, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+      return await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, k, derToRaw(sig), data);
+    }
+    if (row.alg === -257) {
+      const k = await crypto.subtle.importKey('spki', spki, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+      return await crypto.subtle.verify('RSASSA-PKCS1-v1_5', k, sig, data);
+    }
+  } catch {}
+  return false;
+}
+async function passkey(action, body, env, json, origin) {
+  const id = typeof body.id === 'string' && /^[0-9a-f]{32}$/.test(body.id) ? body.id : null;
+  const cred = typeof body.cred === 'string' && /^[A-Za-z0-9_-]{16,700}$/.test(body.cred) ? body.cred : null;
+  const known = async () => !!id && !!await env.DB.prepare('SELECT 1 FROM sync WHERE id = ?').bind(id).first();
+  if (action === 'options') return json({ challenge: await newChallenge(env, id || '') });
+  if (action === 'register') {
+    if (!id || !cred || !await known()) return json({ error: 'unknown' }, 404);
+    if (!await checkChallenge(env, body.challenge, id)) return json({ error: 'challenge' }, 400);
+    if (!await checkClient(body.clientData, body.authData, 'webauthn.create', body.challenge, origin)) return json({ error: 'client' }, 400);
+    if (![-7, -257].includes(body.alg) || typeof body.publicKey !== 'string' || body.publicKey.length > 800) return json({ error: 'key' }, 400);
+    if (typeof body.wrapped !== 'string' || !/^[A-Za-z0-9+/=]{20,200}$/.test(body.wrapped)) return json({ error: 'wrapped' }, 400);
+    const n = await env.DB.prepare('SELECT COUNT(*) AS n FROM passkey WHERE id = ?').bind(id).first();
+    if ((n?.n || 0) >= PK_MAX) return json({ error: 'limit' }, 429);
+    const label = String(body.label || '').replace(/[\u0000-\u001f]/g, '').slice(0, 40) || 'Passkey';
+    const now = Date.now();
+    await env.DB.prepare('INSERT INTO passkey (cred, id, public_key, alg, wrapped, label, created, used) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(cred) DO NOTHING')
+      .bind(cred, id, body.publicKey, body.alg, body.wrapped, label, now, now).run();
+    return json({ ok: true });
+  }
+  if (action === 'login') {
+    if (!cred || !await checkChallenge(env, body.challenge, '')) return json({ error: 'challenge' }, 400);
+    const row = await env.DB.prepare('SELECT * FROM passkey WHERE cred = ?').bind(cred).first();
+    if (!row) return json({ error: 'unknown' }, 404);
+    const c = await checkClient(body.clientData, body.authData, 'webauthn.get', body.challenge, origin);
+    if (!c || !await verifySig(row, c.authData, c.clientData, body.signature)) return json({ error: 'signature' }, 401);
+    if (!await env.DB.prepare('SELECT 1 FROM sync WHERE id = ?').bind(row.id).first()) return json({ error: 'gone' }, 410);
+    await env.DB.prepare('UPDATE passkey SET used = ? WHERE cred = ?').bind(Date.now(), cred).run();
+    return json({ wrapped: row.wrapped });
+  }
+  if (action === 'list') {
+    if (!id) return json({ error: 'unknown' }, 404);
+    const { results } = await env.DB.prepare('SELECT cred, label, created, used FROM passkey WHERE id = ? ORDER BY created').bind(id).all();
+    return json({ keys: results });
+  }
+  if (action === 'delete') {
+    if (!id || !cred) return json({ error: 'unknown' }, 404);
+    await env.DB.prepare('DELETE FROM passkey WHERE id = ? AND cred = ?').bind(id, cred).run();
+    return json({ ok: true });
+  }
+  return json({ error: 'not found' }, 404);
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get('Origin') || '';
@@ -199,6 +303,14 @@ export default {
       let body; try { body = JSON.parse(text); } catch { return json({ error: 'bad json' }, 400); }
       return leaderboard(lb[1], body && typeof body === 'object' ? body : {}, env, json);
     }
+    const pk = path.match(/^\/pk\/(options|register|login|list|delete)$/);
+    if (pk) {
+      if (request.method !== 'POST') return json({ error: 'method' }, 405);
+      const text = await request.text();
+      if (text.length > 12000) return json({ error: 'too large' }, 413);
+      let body; try { body = JSON.parse(text); } catch { return json({ error: 'bad json' }, 400); }
+      return passkey(pk[1], body && typeof body === 'object' ? body : {}, env, json, origin);
+    }
     const m = path.match(/^\/sync\/([0-9a-f]{32})$/);
     if (!m) return json({ error: 'not found' }, 404);
     const id = m[1];
@@ -210,7 +322,7 @@ export default {
     if (request.method === 'DELETE') {
       await env.DB.batch([env.DB.prepare('DELETE FROM sync WHERE id = ?').bind(id),
         env.DB.prepare('DELETE FROM lb_score WHERE id = ?').bind(id), env.DB.prepare('DELETE FROM lb_high WHERE id = ?').bind(id), env.DB.prepare('DELETE FROM lb_streak WHERE id = ?').bind(id),
-        env.DB.prepare('DELETE FROM lb_player WHERE id = ?').bind(id)]);
+        env.DB.prepare('DELETE FROM lb_player WHERE id = ?').bind(id), env.DB.prepare('DELETE FROM passkey WHERE id = ?').bind(id)]);
       return json({ ok: true });
     }
     if (request.method === 'PUT') {
@@ -256,6 +368,7 @@ export default {
       env.DB.prepare('DELETE FROM lb_score WHERE id NOT IN (SELECT id FROM lb_player)'),
       env.DB.prepare('DELETE FROM lb_high WHERE id NOT IN (SELECT id FROM lb_player)'),
       env.DB.prepare('DELETE FROM lb_streak WHERE id NOT IN (SELECT id FROM lb_player)'),
+      env.DB.prepare('DELETE FROM passkey WHERE id NOT IN (SELECT id FROM sync)'),
     ]);
   },
 };

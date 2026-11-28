@@ -53,3 +53,18 @@ CREATE TABLE IF NOT EXISTS lb_streak (
   at INTEGER NOT NULL,
   PRIMARY KEY (id, game)
 );
+
+-- Passkeys (freiwillig): schließen den Code auf. wrapped = der Code, im Browser mit dem PRF-Geheimnis des Passkeys verschlüsselt –
+-- ohne den Passkey wertlos. public_key = öffentlicher Schlüssel des Passkeys (SPKI, Base64) zum Prüfen der Anmeldung.
+-- id = Prüfsumme des Codes wie in sync (für Liste/Löschen und zum Aufräumen).
+CREATE TABLE IF NOT EXISTS passkey (
+  cred TEXT PRIMARY KEY,
+  id TEXT NOT NULL,
+  public_key TEXT NOT NULL,
+  alg INTEGER NOT NULL,
+  wrapped TEXT NOT NULL,
+  label TEXT NOT NULL,
+  created INTEGER NOT NULL,
+  used INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS passkey_id ON passkey(id);

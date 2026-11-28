@@ -73,6 +73,9 @@ eigene Kürzel und ruft `Sync.leave()` auf.
 - **Neuer Rekord-/Statistik-Schlüssel in einem Spiel?** In `RULES` (und ggf. `COMBINE`) eintragen, sonst wird er nicht abgeglichen.
 - Rekorde/Statistik löschen soll auf allen Geräten gelten: nach dem lokalen Löschen `Sync.reset('präfix')` aufrufen.
 - Spiele hören auf `addEventListener('jukebox-sync', …)` und zeichnen dann Startseite/Einstellungen neu.
+- **Passkeys (freiwillig, Website):** „Mit Passkey sichern/anmelden“ im Fenster „Dein Code“. Der Passkey schließt den Code auf
+  (WebAuthn-PRF, Code im Browser verschlüsselt; Server `/pk/` speichert nur den Block). Der Code bleibt Schlüssel und Rückfall.
+  In der App erst mit Domain-Verknüpfung (bezahlter Apple-Account). Plan und Browser-Unterstützung: `docs/passkey-plan.md`.
 
 ## Bestenliste (`js/leaderboard.js` in der Jukebox + Worker, Bereich `/lb/`)
 

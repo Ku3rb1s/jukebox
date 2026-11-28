@@ -190,6 +190,99 @@ function arm(btn, label, fn) {
     setTimeout(() => { if (btn.isConnected && btn.dataset.armed) { delete btn.dataset.armed; btn.querySelector('.lbl').textContent = old; } }, 4000);
   };
 }
+/* ---------- Passkeys (freiwillig): ein Passkey schließt den Code auf – Face ID / Fingerabdruck statt Code eintippen ----------
+   Der Code bleibt der Schlüssel zu den Daten. Der Passkey liefert über die WebAuthn-Erweiterung PRF ein Geheimnis, mit dem der Code
+   hier im Browser verschlüsselt wird; beim Server (worker/sync.js, /pk/) liegt nur dieser Block. Plan: docs/passkey-plan.md.
+   In der iOS-App (noch) nicht: dafür braucht die App die Domain-Verknüpfung (bezahlter Apple-Account). */
+const PK_API = (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && store.get('hub.pkApi')) || 'https://jukebox-sync.ku3rb1s.workers.dev/pk/';
+const pkEnc = s => new TextEncoder().encode(s);
+const pkB64u = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const pkB64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+const pkRp = () => location.hostname.replace(/^www\./, '');
+const PK_SALT = pkEnc('jukebox-code-wrap-v1');
+const inApp = !!window.webkit?.messageHandlers?.jbNative;
+let pkOk = !inApp && !!window.PublicKeyCredential && window.isSecureContext;
+// Kann der Browser PRF? (neuere Browser sagen es vorher; sonst merken wir es beim Versuch)
+if (pkOk && PublicKeyCredential.getClientCapabilities) PublicKeyCredential.getClientCapabilities().then(c => { if (c && c['extension:prf'] === false) { pkOk = false; renderSync(); } }).catch(() => {});
+async function pkPost(path, body) {
+  const r = await fetch(PK_API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), cache: 'no-store' });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'http');
+  return j;
+}
+async function pkId(code) {
+  const buf = await crypto.subtle.digest('SHA-256', pkEnc('jukebox-sync-id|' + code));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+}
+async function pkKey(prf) {
+  const base = await crypto.subtle.importKey('raw', prf, 'HKDF', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: pkEnc('jukebox'), info: pkEnc('code-wrap-v1') }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function pkWrap(prf, code) {
+  const iv = crypto.getRandomValues(new Uint8Array(12)), ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await pkKey(prf), pkEnc(code)));
+  return pkB64([...iv, ...ct]);
+}
+async function pkUnwrap(prf, b64) {
+  const u = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: u.subarray(0, 12) }, await pkKey(prf), u.subarray(12)));
+}
+const pkLabel = () => { const u = navigator.userAgent; return /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) || (/Mac/.test(u) && navigator.maxTouchPoints > 1) ? 'iPad' : /Android/.test(u) ? 'Android' : /Mac/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows' : 'Passkey'; };
+const pkUnsupported = () => Object.assign(new Error('prf'), { name: 'PrfError' });
+/** Code mit einem neuen Passkey sichern */
+async function pkRegister() {
+  const s = Sync.status(), id = await pkId(s.code), { challenge } = await pkPost('options', { id }), p = Profile.get();
+  const cred = await navigator.credentials.create({ publicKey: {
+    rp: { id: pkRp(), name: 'Jukebox' },
+    user: { id: crypto.getRandomValues(new Uint8Array(16)), name: p.name || 'Jukebox', displayName: p.name ? `${p.emoji} ${p.name}` : 'Jukebox' },
+    challenge: pkEnc(challenge), timeout: 120000,
+    pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+    authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
+    extensions: { prf: { eval: { first: PK_SALT } } } } });
+  const ext = cred.getClientExtensionResults().prf;
+  if (!ext || (!ext.enabled && !ext.results)) throw pkUnsupported();
+  let out = ext.results?.first;
+  if (!out) {   // manche Geräte liefern das Geheimnis erst bei der ersten Anmeldung
+    const a = await navigator.credentials.get({ publicKey: { rpId: pkRp(), challenge: crypto.getRandomValues(new Uint8Array(32)), userVerification: 'required',
+      allowCredentials: [{ type: 'public-key', id: cred.rawId }], extensions: { prf: { eval: { first: PK_SALT } } } } });
+    out = a.getClientExtensionResults().prf?.results?.first;
+  }
+  if (!out) throw pkUnsupported();
+  await pkPost('register', { id, challenge, cred: pkB64u(cred.rawId), clientData: pkB64u(cred.response.clientDataJSON),
+    authData: pkB64u(cred.response.getAuthenticatorData()), publicKey: pkB64(cred.response.getPublicKey()), alg: cred.response.getPublicKeyAlgorithm(),
+    wrapped: await pkWrap(out, s.code), label: pkLabel() });
+  markSaved(s.code);
+}
+/** Mit Passkey anmelden: Code holen, entschlüsseln, verbinden */
+async function pkLogin() {
+  const { challenge } = await pkPost('options', {});
+  const a = await navigator.credentials.get({ publicKey: { rpId: pkRp(), challenge: pkEnc(challenge), userVerification: 'required', timeout: 120000,
+    extensions: { prf: { eval: { first: PK_SALT } } } } });
+  const out = a.getClientExtensionResults().prf?.results?.first;
+  if (!out) throw pkUnsupported();
+  const { wrapped } = await pkPost('login', { challenge, cred: pkB64u(a.rawId), clientData: pkB64u(a.response.clientDataJSON),
+    authData: pkB64u(a.response.authenticatorData), signature: pkB64u(a.response.signature) });
+  await Sync.join(await pkUnwrap(out, wrapped));
+  markSaved(Sync.status().code);
+}
+const pkError = e => e?.name === 'NotAllowedError' || e?.name === 'AbortError' ? '' : e?.name === 'PrfError' ? tx('Dein Browser kann das mit Passkeys leider noch nicht – nutze den Code.')
+  : e?.message === 'unknown' ? tx('Zu diesem Passkey gibt es nichts mehr. Wurde er entfernt?') : e?.message === 'gone' ? tx('Zu diesem Passkey gibt es keinen Code mehr.')
+  : e?.message === 'limit' ? tx('Mehr Passkeys gehen für diesen Code nicht.') : tx('Keine Verbindung – versuch es gleich nochmal.');
+async function pkFillList(s) {
+  const box = $('#pkList'); if (!box) return;
+  try {
+    const { keys } = await pkPost('list', { id: await pkId(s.code) });
+    if (!$('#pkList')) return;
+    box.innerHTML = keys.map(k => `<div class="cell"><span class="cell-ic" style="background:#334155">${ICON('key')}</span>
+      <span class="grow">${esc(k.label)}<span class="sub">${esc(new Date(k.created).toLocaleDateString(LANG))}</span></span>
+      <button class="sync-go pk-del" data-cred="${esc(k.cred)}"><span class="lbl">${tx('Entfernen')}</span></button></div>`).join('');
+    box.classList.toggle('hidden', !keys.length);
+    box.querySelectorAll('.pk-del').forEach(b => arm(b, tx('Nochmal tippen'), async () => {
+      try { await pkPost('delete', { id: await pkId(s.code), cred: b.dataset.cred }); } catch {}
+      pkFillList(s);
+    }));
+  } catch { box.classList.add('hidden'); }
+}
+
 function renderSync() {
   const s = Sync.status(), box = $('#syncBox');
   const unsaved = s.connected && !codeSaved(s.code);
@@ -216,7 +309,9 @@ function renderSync() {
       <ol><li>${tx('Hier einen Code erstellen.')}</li><li>${tx('Auf dem anderen Gerät die Jukebox öffnen und den Code eingeben – oder den QR-Code scannen.')}</li></ol>
       ${tx('Kein Konto, keine E-Mail, kein Passwort.')}`;
   if (!s.connected) {
-    box.innerHTML = `
+    box.innerHTML = (pkOk ? `
+      <button class="cell tap" id="pkLogin"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span>
+        <span class="grow"><span class="lbl">${tx('Mit Passkey anmelden')}</span><span class="sub">${tx('Wenn du deinen Code schon mit einem Passkey gesichert hast')}</span></span>${ICON('chev')}</button>` : '') + `
       <button class="cell tap" id="syncNew"><span class="cell-ic" style="background:linear-gradient(135deg,#ff4f86,#fbbf24)">${ICON('plus')}</span>
         <span class="grow">${tx('Neuen Code erstellen')}<span class="sub">${tx('Wenn du noch keinen hast')}</span></span>${ICON('chev')}</button>
       <div class="cell sync-join"><span class="cell-ic" style="background:#0ea5e9">${ICON('key')}</span>
@@ -238,6 +333,12 @@ function renderSync() {
       renderSync();
     };
     $('#syncJoin').onclick = join;
+    if ($('#pkLogin')) $('#pkLogin').onclick = async () => {
+      $('#pkLogin').disabled = true; syncMsg = '';
+      try { await pkLogin(); syncMsg = tx('Mit Passkey angemeldet.'); renderProfile(); applyTheme(); }
+      catch (e) { syncMsg = pkError(e); }
+      renderSync();
+    };
     $('#syncInput').onkeydown = e => { if (e.key === 'Enter') join(); };
     return;
   }
@@ -245,6 +346,8 @@ function renderSync() {
     <div class="cell sync-code"><div class="grow"><span class="sub">${tx('Dein Code')}</span><div class="code" data-no-tx>${esc(s.code)}</div>
       <span class="sub" id="syncState">${esc(syncLine(s))}</span></div><div class="sync-qr" id="syncQr" aria-label="${tx('QR-Code zum Scannen')}"></div></div>
     ${unsaved ? `<div class="cell sync-warn"><span class="grow">⚠️ <b>${tx('Sichere deinen Code')}</b><span class="sub">${tx('Ohne ihn kommst du auf einem neuen Gerät nicht mehr an deine Daten. Wir können ihn nicht wiederherstellen.')}</span></span></div>` : ''}
+    ${pkOk ? `<button class="cell tap" id="pkAdd"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span><span class="grow"><span class="lbl">${tx('Mit Passkey sichern')}</span><span class="sub">${tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden')}</span></span>${ICON('chev')}</button>
+    <div class="hidden" id="pkList"></div>` : ''}
     <button class="cell tap" id="syncImg"><span class="cell-ic" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">${ICON('image')}</span><span class="grow"><span class="lbl">${tx('Als Bild speichern')}</span><span class="sub">${tx('Mit QR-Code – z. B. in deinen Fotos')}</span></span>${ICON('chev')}</button>
     ${navigator.share ? `<button class="cell tap" id="syncShare"><span class="cell-ic" style="background:#0ea5e9">${ICON('share')}</span><span class="grow"><span class="lbl">${tx('An mich senden')}</span><span class="sub">${tx('Per Nachricht, Mail oder in den Passwort-Manager')}</span></span>${ICON('chev')}</button>` : ''}
     <button class="cell tap" id="syncCopy"><span class="cell-ic" style="background:#6366f1">${ICON('copy')}</span><span class="grow lbl">${tx('Code kopieren')}</span></button>
@@ -270,6 +373,15 @@ function renderSync() {
       markSaved(s.code); renderSync();
     } catch {}   // abgebrochen
   };
+  if ($('#pkAdd')) {
+    $('#pkAdd').onclick = async () => {
+      $('#pkAdd').disabled = true;
+      try { await pkRegister(); syncMsg = tx('Mit Passkey gesichert. Auf einem neuen Gerät: „Dein Code“ → „Mit Passkey anmelden“.'); }
+      catch (e) { syncMsg = pkError(e); }
+      renderSync();
+    };
+    pkFillList(s);
+  }
   $('#syncNowBtn').onclick = async () => { $('#syncState').textContent = tx('Gleiche ab …'); await Sync.syncNow(); renderSync(); };
   arm($('#syncLeave'), tx('Nochmal tippen zum Trennen'), () => { Sync.leave(); renderSync(); });
   arm($('#syncWipe'), tx('Nochmal tippen zum Löschen'), async () => {
