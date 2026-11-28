@@ -77,7 +77,7 @@ Drei Wertungen:
 - **Tages-Challenge** (Needle Drop, Gold Record, Hit or Miss): heute bzw. Summe der Woche. Aus `mq.daily`, `gr.daily.<Tag>` und `hom.daily.<Tag>`,
   nachgespielte Tage zählen nicht, pro Spiel und Tag zählt das erste Ergebnis (Tabelle `lb_score`).
 - **Highscores** (Older or Newer, Gold Record, Hit or Miss): Allzeit-Rekord, nur Songauswahl „Alle“, je Stufe (und bei Older or Newer / Hit or Miss je Modus),
-  damit die Werte vergleichbar sind. Aus `oon.best2.all.<stufe>.<modus>`, `gr.best.all.<stufe>` und `hom.best.<60s|sd>.<stufe>`. Nur höhere Werte werden übernommen (`lb_high`).
+  damit die Werte vergleichbar sind. Aus `oon.best2.all.<stufe>.<modus>`, bei Gold Record die Zahl der Diamanten je Stufe (`gr.diamonds` + `gr.diaStart`) und `hom.best.<60s|sd>.<stufe>`. Nur höhere Werte werden übernommen (`lb_high`).
 - **Serien** (Needle Drop, Gold Record, Hit or Miss): laufende Serie der Tages-Challenge. Gezeigt nur, wenn zuletzt gestern oder heute gemeldet (`lb_streak`).
 
 Regeln:
@@ -94,13 +94,15 @@ Regeln:
 ## iOS-App (`Jukebox-App`, Capacitor + native Spiele)
 
 - Die App lädt jukeboxquiz.de (Jukebox als Startseite). Spiele mit nativer Version öffnet sie selbst (SwiftUI) –
-  zurzeit **Older or Newer** und **Needle Drop**. Details: `Jukebox-App/CLAUDE.md`.
+  zurzeit **Older or Newer**, **Needle Drop**, **Musik-Bingo** und **Gold Record**. Details: `Jukebox-App/CLAUDE.md`.
 - **Needle Drop:** Regeln (Leitern, Punkte, Tipps, Kategorien in `CATS`, Erfolge), Speicher-Aufbau (`mq.*`) oder Format der
   Tagesdatei geändert? Dann auch `Jukebox-App/ios/App/App/NeedleDrop/` anpassen (oder der Jukebox-Sitzung Bescheid geben).
 - Native Spiele nutzen **dieselben Daten** (data/*.json online) und **dieselben Speicher-Schlüssel** wie das Web-Spiel.
 - **Alle nativen Spiele sehen gleich aus und bedienen sich gleich** (Wunsch des Nutzers, gilt für jedes neue Spiel):
   Liquid Glass nur für Bedienelemente, Inhalt als ruhige Fläche, nur die gewählte Option farbig, Rückfragen in der Mitte,
   keine feste Kopfzeile, ruhig statt verspielt. Bausteine und Regeln: `Jukebox-App/CLAUDE.md` (Gestaltungsregeln).
+- **Gold Record:** Regeln (Stufen, Joker, Fragearten), Speicher-Aufbau (`gr.*`), Songdateien/`DATA_V` oder Format der Tagesdatei geändert?
+  Dann auch `Jukebox-App/ios/App/App/GoldRecord/` anpassen (oder der Jukebox-Sitzung Bescheid geben).
 - **Older or Newer:** Regeln (DIFF, Auswahl, Zeitlimit), Speicher-Aufbau (`oon.best2.*`, `oon.stats`) oder Datenformat
   (`songs.json`) geändert? Dann auch `Jukebox-App/ios/App/App/OlderOrNewer/OONGame.swift` anpassen (oder der Jukebox-Sitzung
   Bescheid geben). Neue Texte: in `js/lang/*.js` übersetzen, dann in Jukebox-App `node scripts/build-strings.js`.
