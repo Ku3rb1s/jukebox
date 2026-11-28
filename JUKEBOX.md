@@ -91,6 +91,15 @@ Regeln:
 - **Neues Spiel oder neue Wertung?** In `js/leaderboard.js` (`DAILY_RESULTS`, `HIGH`, `VIEWS`) und im Worker (`LB_GAMES`, `LB_HIGH`, `LB_STREAK`)
   eintragen, neue Tabellen in `worker/schema.sql`, dann `npx wrangler d1 execute jukebox-sync --remote --file schema.sql` und `npx wrangler deploy`.
 
+## iOS-App (`Jukebox-App`, Capacitor + native Spiele)
+
+- Die App lädt jukeboxquiz.de (Jukebox als Startseite). Spiele mit nativer Version öffnet sie selbst (SwiftUI) –
+  zurzeit **Older or Newer** (Pilot). Details: `Jukebox-App/CLAUDE.md`.
+- Native Spiele nutzen **dieselben Daten** (data/*.json online) und **dieselben Speicher-Schlüssel** wie das Web-Spiel.
+- **Older or Newer:** Regeln (DIFF, Auswahl, Zeitlimit), Speicher-Aufbau (`oon.best2.*`, `oon.stats`) oder Datenformat
+  (`songs.json`) geändert? Dann auch `Jukebox-App/ios/App/App/OlderOrNewer/OONGame.swift` anpassen (oder der Jukebox-Sitzung
+  Bescheid geben). Neue Texte: in `js/lang/*.js` übersetzen, dann in Jukebox-App `node scripts/build-strings.js`.
+
 ## Tages-Challenge als Datei (Needle Drop, Gold Record, Hit or Miss)
 
 - Die Fragen/Songs jedes Tages liegen fertig berechnet in `data/daily/JJJJ-MM-TT.json` des Spiels
