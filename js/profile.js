@@ -67,3 +67,13 @@ const Profile = (() => {
   }
   return { get, set, tag, nextEmoji, pick, EMOJIS, SPECIAL, isUnlocked, unlock };
 })();
+
+/* Töne und Vibration gelten für alle Spiele – eingestellt in der Jukebox (Einstellungen), nicht im einzelnen Spiel.
+   Schlüssel „jb.sfx“ und „jb.vib“ (true/false, fehlt = an). Nur auf diesem Gerät, wird nicht abgeglichen (wie Design und Sprache).
+   In den Spielen: Prefs.sfx / Prefs.vib lesen (z. B. Object.defineProperty(opt, 'sfx', { get: () => Prefs.sfx })).
+   Die iOS-App liest dieselben Schlüssel für ihre nativen Spiele. */
+const Prefs = (() => {
+  const read = k => { try { return JSON.parse(localStorage.getItem('jb.' + k)) !== false; } catch { return true; } };
+  const set = (k, v) => { try { localStorage.setItem('jb.' + k, JSON.stringify(!!v)); } catch {} };
+  return { get sfx() { return read('sfx'); }, get vib() { return read('vib'); }, set };
+})();

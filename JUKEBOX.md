@@ -52,6 +52,9 @@ Wurde eine Kopie in einem Spiel geändert (z. B. von einer Spiel-Sitzung)? Erst 
 - **Sprache:** `mq.lang`, `hub.lang`, `mb_lang` – `setLang()` setzt alle drei.
 - **Design:** `mq.theme` (neuere Spiele), `hub.theme`, `mb_settings.theme` (Bingo). Themen: graphit, ozean, wald, abend, lila, oled.
 - **Profil:** `jb.profile` = `{ name, emoji }`. Bingo schlägt den Namen beim Beitreten vor.
+- **Töne & Vibration:** `jb.sfx`, `jb.vib` (fehlt = an) – nur in den Jukebox-Einstellungen umschaltbar, **nicht pro Spiel**.
+  Spiele lesen `Prefs.sfx` / `Prefs.vib` (`js/profile.js`; Bingo liest `jb.vib` direkt), die native App `JBPrefs` / `JBHaptic`.
+  Spielbezogene Ton-Optionen (z. B. „Spannungs-Sounds“, „Töne beim Countdown“) bleiben im Spiel. Neue allgemeine Einstellungen gehören in die Jukebox.
 - **Abgleich:** `jb.sync` (Code und Stand), `jb.syncOthers` (Statistik der anderen Geräte).
 
 Jedes Spiel speichert seine eigenen Daten nur unter seinem Kürzel (Tabelle oben). „Alles löschen“ löscht nur das

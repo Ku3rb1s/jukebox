@@ -37,6 +37,8 @@
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></symbol>
   <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
+  <symbol id="i-vibrate" viewBox="0 0 24 24"><rect x="8" y="4" width="8" height="16" rx="2"/><path d="M4.5 9v6M19.5 9v6M2 11v2M22 11v2"/></symbol>
 </svg>
 
 <header>
@@ -140,6 +142,20 @@
         <select id="langSel" aria-label="Sprache"></select>
       </label>
     </div>
+    <div class="group-h">Töne &amp; Vibration</div>
+    <div class="group icons">
+      <label class="cell">
+        <span class="cell-ic" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"><svg class="ic"><use href="#i-sound"/></svg></span>
+        <span class="grow">Töne &amp; Konfetti<span class="sub">Kurze Töne bei richtig und falsch, Konfetti bei Rekorden</span></span>
+        <span class="switch"><input type="checkbox" id="setSfx"><span></span></span>
+      </label>
+      <label class="cell" id="rowVib">
+        <span class="cell-ic" style="background:linear-gradient(135deg,#a855f7,#ec4899)"><svg class="ic"><use href="#i-vibrate"/></svg></span>
+        <span class="grow">Vibration<span class="sub">Kurzes Brummen bei Fehlern und wichtigen Momenten (nur auf Handys, die das können)</span></span>
+        <span class="switch"><input type="checkbox" id="setVib"><span></span></span>
+      </label>
+    </div>
+    <div class="group-f">Gilt für alle Spiele der Jukebox</div>
     <div class="group-h">Design</div>
     <div class="theme-row" id="themeRow"></div>
     <div class="group icons" style="margin-top:22px">
@@ -153,15 +169,15 @@
 </dialog>
 
 <script src="js/umzug.js?v=3"></script>
-<script src="js/lang/en.js?v=21"></script>
-<script src="js/lang/fr.js?v=21"></script>
-<script src="js/lang/es.js?v=21"></script>
-<script src="js/lang/nb.js?v=21"></script>
-<script src="js/profile.js?v=6"></script>
+<script src="js/lang/en.js?v=22"></script>
+<script src="js/lang/fr.js?v=22"></script>
+<script src="js/lang/es.js?v=22"></script>
+<script src="js/lang/nb.js?v=22"></script>
+<script src="js/profile.js?v=7"></script>
 <script src="js/i18n.js?v=3"></script>
 <script src="js/sync.js?v=14"></script>
 <script src="js/advent.js?v=13"></script>
-<script src="js/hub.js?v=23"></script>
+<script src="js/hub.js?v=24"></script>
 <script src="js/leaderboard.js?v=14"></script>
 <script src="js/pwa.js?v=18"></script>
 </body>

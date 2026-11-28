@@ -155,6 +155,13 @@ $('#btnBoard').onclick = () => board()?.open();
 sheet.addEventListener('click', e => { if (e.target === sheet || e.target.closest('[data-close]')) sheet.close(); });
 $('#langSel').onchange = e => setLang(e.target.value);
 $('#themeRow').onclick = e => { const b = e.target.closest('[data-theme-pick]'); if (b) setTheme(b.dataset.themePick); };
+// Töne und Vibration gelten für alle Spiele (Prefs in js/profile.js, Schlüssel jb.sfx / jb.vib) – die Spiele haben dafür keine eigenen Schalter mehr
+function renderPrefs() {
+  $('#setSfx').checked = Prefs.sfx; $('#setVib').checked = Prefs.vib;
+  $('#rowVib').classList.toggle('hidden', !('vibrate' in navigator));   // iPhone-Safari kann nicht vibrieren (die iOS-App schon)
+}
+$('#setSfx').onchange = e => Prefs.set('sfx', e.target.checked);
+$('#setVib').onchange = e => { Prefs.set('vib', e.target.checked); if (e.target.checked) try { navigator.vibrate?.(60); } catch {} };
 self.liveLang = () => { render(); applyTheme(); renderProfile(); renderSync(); if ($('#advSheet').open) AdventCal.render(); };
 
 /* ---------- Auf allen Geräten: persönlicher Code (js/sync.js) ---------- */
@@ -330,7 +337,7 @@ function loadQr() {
     document.head.appendChild(s);
   });
 }
-const openSheet = () => { $('#langSel').innerHTML = langOptions(); applyTheme(); renderProfile(); renderSync(); sheet.showModal(); };
+const openSheet = () => { $('#langSel').innerHTML = langOptions(); applyTheme(); renderProfile(); renderPrefs(); renderSync(); sheet.showModal(); };
 // Fenster „Dein Code“: vom Knopf unten auf der Startseite, aus den Einstellungen, aus der Bestenliste und über Links (#sync, #code=…)
 const syncSheet = $('#syncSheet');
 const openSync = () => { renderSync(); if (!syncSheet.open) syncSheet.showModal(); };
