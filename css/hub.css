@@ -311,3 +311,11 @@ header{max-width:860px}
 .sync-reveal .ic{width:17px;height:17px}
 .sync-msg-box{margin:14px 0 0;padding:12px 14px;border-radius:14px;background:rgba(251,191,36,.12);color:#fde68a;font-weight:600;font-size:.92rem;line-height:1.4}
 .group-h.warn{color:#fbbf24}
+/* „Weitere Optionen“ – selten Gebrauchtes zugeklappt */
+.sync-more{margin-top:22px}
+.sync-more>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;color:var(--muted);font-weight:600;font-size:.92rem}
+.sync-more>summary::-webkit-details-marker{display:none}
+.sync-more>summary::after{content:'';width:7px;height:7px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg) translateY(-2px);transition:transform .2s}
+.sync-more[open]>summary::after{transform:rotate(-135deg) translateY(-1px)}
+.sync-more .group{margin-top:6px}
+.sync-card #syncState{margin-top:2px}

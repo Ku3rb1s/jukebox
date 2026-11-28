@@ -191,47 +191,18 @@ function arm(btn, label, fn) {
   };
 }
 /* ---------- Passkeys (freiwillig): Logik in js/passkey.js, hier nur die Anzeige im Fenster „Dein Code“ ---------- */
-let pkKeys = [];      // Passkeys dieses Codes (zuletzt geladen) – damit derselbe Schlüsselbund keinen zweiten bekommt
+let pkKeys = [];       // Passkeys dieses Codes (zuletzt geladen) – damit derselbe Schlüsselbund keinen zweiten bekommt
+let pkFor = null;      // für welchen Code pkKeys geladen sind (null = beim nächsten Zeichnen laden)
 let codeShown = false; // Code und QR-Code nur nach Tipp zeigen (jeder, der aufs Display schaut, könnte ihn sonst abfotografieren)
+let moreOpen = false;  // „Weitere Optionen“ aufgeklappt
 Passkey.ready.then(() => { if (!Passkey.ok) renderSync(); });
 const PK_DONE = () => tx('Mit Passkey gesichert. Auf einem neuen Gerät: „Dein Code“ → „Mit Passkey anmelden“.');
-async function pkFillList(s) {
-  const box = $('#pkList'); if (!box) return;
-  let keys;
-  try { keys = await Passkey.list(s.code); } catch { box.classList.add('hidden'); return; }
-  pkKeys = keys;
-  if (!$('#pkList') || Sync.status().code !== s.code) return;
-  const done = keys.filter(k => !k.pending);
-  if (done.length && !codeSaved(s.code)) { markSaved(s.code); return renderSync(); }   // Passkey vorhanden = Code gesichert
-  // Schon gesichert: Haken statt Aufforderung; ein weiterer Passkey ist nur für Geräte außerhalb des Schlüsselbunds nötig (z. B. Android, Windows)
-  const add = $('#pkAdd');
-  if (add) {
-    add.classList.toggle('pk-done', done.length > 0);
-    add.querySelector('.lbl').textContent = done.length ? tx('Weiteren Passkey hinzufügen') : tx('Mit Passkey sichern');
-    add.querySelector('.sub').textContent = done.length ? tx('Nur nötig für Geräte, die deine Passkeys nicht kennen (z. B. Android oder Windows)')
-      : tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden');
-  }
-  const date = k => esc(new Date(k.created).toLocaleDateString(LANG));
-  // Ausstehend (Einrichten nicht bestätigt, z. B. Safari oder neu geladen): „Jetzt bestätigen“ – geht auch später noch
-  box.innerHTML = keys.map(k => k.pending
-    ? `<div class="cell pk-pending"><span class="cell-ic" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">${ICON('key')}</span>
-      <span class="grow">${tx('Noch einmal mit Face ID oder Fingerabdruck – dann ist dein Code mit dem Passkey gesichert')}<span class="sub">${esc(k.label)} · ${date(k)}</span></span>
-      <span class="pk-acts"><button class="sync-go pk-confirm" data-cred="${esc(k.cred)}">${tx('Jetzt bestätigen')}</button>
-      <button class="sync-go pk-del" data-cred="${esc(k.cred)}"><span class="lbl">${tx('Entfernen')}</span></button></span></div>`
-    : `<div class="cell"><span class="cell-ic" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">${ICON('key')}</span>
-      <span class="grow">✓ ${tx('Mit Passkey gesichert')}<span class="sub">${esc(k.label)} · ${date(k)}</span></span>
-      <button class="sync-go pk-del" data-cred="${esc(k.cred)}"><span class="lbl">${tx('Entfernen')}</span></button></div>`).join('');
-  box.classList.toggle('hidden', !keys.length);
-  box.querySelectorAll('.pk-confirm').forEach(b => b.onclick = async () => {
-    b.disabled = true;
-    try { await Passkey.complete(s.code, b.dataset.cred); markSaved(s.code); syncMsg = PK_DONE(); }
-    catch (e) { syncMsg = e.code === 'cancelled' ? tx('Abgebrochen – tippe nochmal auf „Jetzt bestätigen“.') : Passkey.message(e); }
-    renderSync();
-  });
-  box.querySelectorAll('.pk-del').forEach(b => arm(b, tx('Nochmal tippen'), async () => {
-    try { await Passkey.remove(s.code, b.dataset.cred); } catch (e) { syncMsg = Passkey.message(e); return renderSync(); }
-    pkFillList(s);
-  }));
+async function pkLoad(code) {
+  pkFor = code;
+  try { pkKeys = await Passkey.list(code); } catch { pkKeys = []; return; }
+  if (Sync.status().code !== code) return;
+  if (pkKeys.some(k => !k.pending) && !codeSaved(code)) markSaved(code);   // Passkey vorhanden = Code gesichert
+  if (syncSheet.open) renderSync();
 }
 
 function renderSync() {
@@ -257,9 +228,7 @@ function renderSync() {
   // Meldung (nach einer Aktion) oben, damit man sie sieht
   const msg = syncMsg ? `<div class="sync-msg-box" role="status">${esc(syncMsg)}</div>` : '';
   $('#syncFoot').innerHTML = '';
-  $('#syncIntro').innerHTML = s.connected ? '' : `<b>${tx('Spiel auf Handy, Tablet und Computer mit denselben Rekorden weiter.')}</b>
-      <ol><li>${tx('Hier einen Code erstellen.')}</li><li>${tx('Auf dem anderen Gerät die Jukebox öffnen und den Code eingeben – oder den QR-Code scannen.')}</li></ol>
-      ${tx('Kein Konto, keine E-Mail, kein Passwort.')}`;
+  $('#syncIntro').innerHTML = s.connected ? '' : `<b>${tx('Spiel auf Handy, Tablet und Computer mit denselben Rekorden weiter.')}</b>${tx('Kein Konto, keine E-Mail, kein Passwort.')}`;
   if (!s.connected) {
     box.innerHTML = msg + `
       <div class="group icons"><button class="cell tap" id="syncNew"><span class="cell-ic" style="background:linear-gradient(135deg,#ff4f86,#fbbf24)">${ICON('plus')}</span>
@@ -299,36 +268,47 @@ function renderSync() {
     $('#syncInput').onkeydown = e => { if (e.key === 'Enter') join(); };
     return;
   }
-  const row = (id, ic, bg, lbl, sub = '', chev = true, cls = '') => `<button class="cell tap${cls}" id="${id}"><span class="cell-ic" style="background:${bg}">${ICON(ic)}</span>
+  const row = (id, ic, bg, lbl, sub = '', chev = true, cls = '', attrs = '') => `<button class="cell tap${cls}" id="${id}" ${attrs}><span class="cell-ic" style="background:${bg}">${ICON(ic)}</span>
     <span class="grow"><span class="lbl">${lbl}</span>${sub ? `<span class="sub">${sub}</span>` : ''}</span>${chev ? ICON('chev') : ''}</button>`;
+  const PK_BG = 'linear-gradient(135deg,#10b981,#0ea5e9)';
+  if (Passkey.ok && pkFor !== s.code) pkLoad(s.code);
+  const keys = Passkey.ok && pkFor === s.code ? pkKeys : [], done = keys.filter(k => !k.pending), pending = keys.find(k => k.pending);
+  // Passkey-Zeile: sichern → (Safari) jetzt bestätigen → gesichert
+  const pkRow = !Passkey.ok ? ''
+    : pending ? row('pkConfirm', 'key', 'linear-gradient(135deg,#f59e0b,#ef4444)', tx('Jetzt bestätigen'), tx('Noch einmal mit Face ID oder Fingerabdruck – dann ist dein Code mit dem Passkey gesichert'), true, '', `data-cred="${esc(pending.cred)}"`)
+    : done.length ? `<div class="cell"><span class="cell-ic" style="background:${PK_BG}">${ICON('key')}</span><span class="grow">✓ ${tx('Mit Passkey gesichert')}<span class="sub">${esc([...new Set(done.map(k => k.label))].join(', '))}</span></span></div>`
+    : row('pkAdd', 'key', PK_BG, tx('Mit Passkey sichern'), tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden'));
   box.innerHTML = msg + `
     <div class="group sync-card">
       <div class="cell sync-code"><div class="grow"><span class="sub">${tx('Dein Code')}</span>
         <div class="code${codeShown ? '' : ' masked'}" data-no-tx>${codeShown ? esc(s.code) : '••••-••••-••••'}</div>
+        <span class="sub" id="syncState">${esc(syncLine(s))}</span>
         <button class="sync-reveal" id="syncReveal" aria-expanded="${codeShown}">${ICON(codeShown ? 'eye-off' : 'eye')}${codeShown ? tx('Verbergen') : tx('Code anzeigen')}</button></div>
         ${codeShown ? `<div class="sync-qr" id="syncQr" aria-label="${tx('QR-Code zum Scannen')}"></div>` : ''}</div>
     </div>
-    <div class="group-f">${codeShown ? tx('Auf dem anderen Gerät die Jukebox öffnen und den Code eingeben – oder den QR-Code scannen.')
-      : tx('Mit diesem Code hast du auf allen verbundenen Geräten dieselben Rekorde, Serien und dasselbe Profil. Er ist auch dein Zugang zur Bestenliste.')}</div>
+    ${codeShown ? `<div class="group-f">${tx('Auf dem anderen Gerät die Jukebox öffnen und den Code eingeben – oder den QR-Code scannen.')}</div>` : ''}
     <div class="group-h${unsaved ? ' warn' : ''}">${unsaved ? '⚠️ ' + tx('Noch nicht gesichert') : tx('Sichern')}</div>
     <div class="group icons">
-      ${Passkey.ok ? `<div class="hidden" id="pkList"></div>${row('pkAdd', 'key', 'linear-gradient(135deg,#10b981,#0ea5e9)', tx('Mit Passkey sichern'), tx('Mit Face ID oder Fingerabdruck – auf neuen Geräten einfach anmelden'))}` : ''}
-      ${row('syncImg', 'image', 'linear-gradient(135deg,#f59e0b,#ef4444)', tx('Als Bild speichern'), tx('Mit QR-Code – z. B. in deinen Fotos'))}
-      ${navigator.share ? row('syncShare', 'share', '#0ea5e9', tx('An mich senden'), tx('Per Nachricht, Mail oder in den Passwort-Manager')) : ''}
+      ${pkRow}
+      ${row('syncImg', 'image', 'linear-gradient(135deg,#f59e0b,#ef4444)', tx('Als Bild speichern'), '', false)}
       ${row('syncCopy', 'copy', '#6366f1', tx('Code kopieren'), '', false)}
     </div>
     ${unsaved ? `<div class="group-f">${tx('Ohne ihn kommst du auf einem neuen Gerät nicht mehr an deine Daten. Wir können ihn nicht wiederherstellen.')}</div>` : ''}
-    <div class="group-h">${tx('Dieses Gerät')}</div>
-    <div class="group icons">
-      <button class="cell tap" id="syncNowBtn"><span class="cell-ic" style="background:#10b981">${ICON('refresh')}</span>
-        <span class="grow"><span class="lbl">${tx('Jetzt abgleichen')}</span><span class="sub" id="syncState">${esc(syncLine(s))}</span></span></button>
-      ${row('syncLeave', 'unlink', '#6b7280', tx('Dieses Gerät trennen'), tx('Deine Daten bleiben hier und beim Code'), false)}
-    </div>
-    <div class="group icons" style="margin-top:22px">
-      ${row('syncWipe', 'trash', '#ef4444', tx('Code löschen'), tx('Löscht die gespeicherten Daten beim Server – auf den Geräten bleibt alles'), false, ' danger')}
-    </div>
-    <div class="group-f">${tx('Deine Daten sind mit dem Code verschlüsselt – ohne ihn kann sie niemand lesen, auch wir nicht.')}</div>`;
+    <details class="sync-more" id="syncMore"${moreOpen ? ' open' : ''}><summary>${tx('Weitere Optionen')}</summary>
+      <div class="group icons">
+        ${row('syncNowBtn', 'refresh', '#10b981', tx('Jetzt abgleichen'), '', false)}
+        ${navigator.share ? row('syncShare', 'share', '#0ea5e9', tx('An mich senden'), '', false) : ''}
+        ${done.length ? row('pkAdd', 'key', PK_BG, tx('Weiteren Passkey hinzufügen'), tx('Nur nötig für Geräte, die deine Passkeys nicht kennen (z. B. Android oder Windows)'), false) : ''}
+        ${done.map(k => `<div class="cell"><span class="cell-ic" style="background:rgba(255,255,255,.12)">${ICON('key')}</span>
+          <span class="grow">${tx('Passkey')} · ${esc(k.label)}<span class="sub">${esc(new Date(k.created).toLocaleDateString(LANG))}</span></span>
+          <button class="sync-go pk-del" data-cred="${esc(k.cred)}"><span class="lbl">${tx('Entfernen')}</span></button></div>`).join('')}
+        ${row('syncLeave', 'unlink', '#6b7280', tx('Dieses Gerät trennen'), tx('Deine Daten bleiben hier und beim Code'), false)}
+        ${row('syncWipe', 'trash', '#ef4444', tx('Code löschen'), tx('Löscht die gespeicherten Daten beim Server – auf den Geräten bleibt alles'), false, ' danger')}
+      </div>
+      <div class="group-f">${tx('Deine Daten sind mit dem Code verschlüsselt – ohne ihn kann sie niemand lesen, auch wir nicht.')}</div>
+    </details>`;
   syncMsg = '';
+  $('#syncMore').ontoggle = () => { moreOpen = $('#syncMore').open; };
   $('#syncCopy').onclick = async () => {
     try { await navigator.clipboard.writeText(s.code); markSaved(s.code); $('#syncCopy .lbl').textContent = '✓ ' + tx('Kopiert'); } catch { $('#syncCopy .lbl').textContent = s.code; }
   };
@@ -346,18 +326,25 @@ function renderSync() {
     } catch {}   // abgebrochen
   };
   $('#syncReveal').onclick = () => { codeShown = !codeShown; renderSync(); };
-  if ($('#pkAdd')) {
-    $('#pkAdd').onclick = async () => {
-      $('#pkAdd').disabled = true;
-      try {
-        const r = await Passkey.register(s.code, Profile.get(), pkKeys.filter(k => !k.pending));
-        if (r.pending) syncMsg = tx('Fast fertig: Tippe auf „Jetzt bestätigen“, damit dein Passkey den Code aufschließen kann.');
-        else { markSaved(s.code); syncMsg = PK_DONE(); }
-      } catch (e) { syncMsg = Passkey.message(e); }
-      renderSync();
-    };
-    pkFillList(s);
-  }
+  if ($('#pkAdd')) $('#pkAdd').onclick = async () => {
+    $('#pkAdd').disabled = true;
+    try {
+      const r = await Passkey.register(s.code, Profile.get(), done);
+      if (r.pending) syncMsg = tx('Fast fertig: Tippe auf „Jetzt bestätigen“, damit dein Passkey den Code aufschließen kann.');
+      else { markSaved(s.code); syncMsg = PK_DONE(); }
+    } catch (e) { syncMsg = Passkey.message(e); }
+    pkFor = null; renderSync();
+  };
+  if ($('#pkConfirm')) $('#pkConfirm').onclick = async () => {   // zweiter Schritt (Safari): eigener Tipp, sonst bricht Face ID ab
+    $('#pkConfirm').disabled = true;
+    try { await Passkey.complete(s.code, $('#pkConfirm').dataset.cred); markSaved(s.code); syncMsg = PK_DONE(); }
+    catch (e) { syncMsg = e.code === 'cancelled' ? tx('Abgebrochen – tippe nochmal auf „Jetzt bestätigen“.') : Passkey.message(e); }
+    pkFor = null; renderSync();
+  };
+  box.querySelectorAll('.pk-del').forEach(b => arm(b, tx('Nochmal tippen'), async () => {
+    try { await Passkey.remove(s.code, b.dataset.cred); } catch (e) { syncMsg = Passkey.message(e); }
+    pkFor = null; renderSync();
+  }));
   $('#syncNowBtn').onclick = async () => { $('#syncState').textContent = tx('Gleiche ab …'); await Sync.syncNow(); renderSync(); };
   arm($('#syncLeave'), tx('Nochmal tippen zum Trennen'), () => { Sync.leave(); renderSync(); });
   arm($('#syncWipe'), tx('Nochmal tippen zum Löschen'), async () => {
@@ -428,7 +415,7 @@ function loadQr() {
 const openSheet = () => { $('#langSel').innerHTML = langOptions(); applyTheme(); renderProfile(); renderPrefs(); renderSync(); sheet.showModal(); };
 // Fenster „Dein Code“: vom Knopf unten auf der Startseite, aus den Einstellungen, aus der Bestenliste und über Links (#sync, #code=…)
 const syncSheet = $('#syncSheet');
-const openSync = () => { if (!syncSheet.open) codeShown = false; renderSync(); if (!syncSheet.open) syncSheet.showModal(); };
+const openSync = () => { if (!syncSheet.open) { codeShown = false; moreOpen = false; pkFor = null; } renderSync(); if (!syncSheet.open) syncSheet.showModal(); };
 syncSheet.addEventListener('click', e => { if (e.target === syncSheet || e.target.closest('[data-close]')) syncSheet.close(); });
 $('#syncCta').onclick = openSync;
 $('#syncRow').onclick = openSync;

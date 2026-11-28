@@ -87,6 +87,8 @@
     "Zu diesem Passkey gibt es nichts mehr. Wurde er entfernt?": "Nothing is linked to this passkey any more. Was it removed?",
     "Zu diesem Passkey gibt es keinen Code mehr.": "The code for this passkey no longer exists.",
     "Mehr Passkeys gehen für diesen Code nicht.": "This code can’t have any more passkeys.",
+    "Weitere Optionen": "More options",
+    "Passkey": "Passkey",
     "Schon einen Code?": "Already have a code?",
     "Sichern": "Back up",
     "Dieses Gerät": "This device",

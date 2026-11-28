@@ -87,6 +87,8 @@
     "Zu diesem Passkey gibt es nichts mehr. Wurde er entfernt?": "Esta llave de acceso ya no tiene nada vinculado. ¿Se eliminó?",
     "Zu diesem Passkey gibt es keinen Code mehr.": "El código de esta llave de acceso ya no existe.",
     "Mehr Passkeys gehen für diesen Code nicht.": "Este código no admite más llaves de acceso.",
+    "Weitere Optionen": "Más opciones",
+    "Passkey": "Llave de acceso",
     "Schon einen Code?": "¿Ya tienes un código?",
     "Sichern": "Guardar",
     "Dieses Gerät": "Este dispositivo",

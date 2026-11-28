@@ -87,6 +87,8 @@
     "Zu diesem Passkey gibt es nichts mehr. Wurde er entfernt?": "Ingenting er knyttet til denne passnøkkelen lenger. Ble den fjernet?",
     "Zu diesem Passkey gibt es keinen Code mehr.": "Koden for denne passnøkkelen finnes ikke lenger.",
     "Mehr Passkeys gehen für diesen Code nicht.": "Denne koden kan ikke ha flere passnøkler.",
+    "Weitere Optionen": "Flere valg",
+    "Passkey": "Passnøkkel",
     "Schon einen Code?": "Har du allerede en kode?",
     "Sichern": "Sikre",
     "Dieses Gerät": "Denne enheten",

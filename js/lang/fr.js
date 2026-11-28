@@ -87,6 +87,8 @@
     "Zu diesem Passkey gibt es nichts mehr. Wurde er entfernt?": "Plus rien n’est lié à cette clé d’accès. A-t-elle été supprimée ?",
     "Zu diesem Passkey gibt es keinen Code mehr.": "Le code de cette clé d’accès n’existe plus.",
     "Mehr Passkeys gehen für diesen Code nicht.": "Ce code ne peut pas avoir plus de clés d’accès.",
+    "Weitere Optionen": "Plus d’options",
+    "Passkey": "Clé d’accès",
     "Schon einen Code?": "Tu as déjà un code ?",
     "Sichern": "Sauvegarder",
     "Dieses Gerät": "Cet appareil",
